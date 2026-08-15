@@ -1,68 +1,50 @@
-Forma — Project Vision
+# Forma — Project Vision
 
-A modern C# desktop UI framework that combines the productivity of WinForms with the rendering, styling, and component model of the modern web.
+> A modern C# desktop UI framework that combines the productivity of WinForms with the rendering, styling, and component model of the modern web.
 
-1. Vision
+## 1. Vision
 
 Forma is a Windows-first C# desktop UI framework designed to sit between traditional WinForms and modern web-based desktop frameworks such as Electron/Tauri.
 
-The goal is not to replace WinForms, WPF, Electron, or Tauri.
+The goal is **not** to replace WinForms, WPF, Electron, or Tauri.
 
 The goal is to create something new:
 
-WinForms-like developer productivity
+- WinForms-like developer productivity
+- C#/.NET application logic
+- Visual drag-and-drop designer
+- Property editor
+- Event handlers and code-behind
+- Modern HTML/CSS-based rendering
+- Web-style layouts and components
+- Modern themes and styling
+- Custom animations
+- Extensible UI providers/adapters
+- User-editable UI definitions
+- A live visual designer and code editor
 
-C#/.NET application logic
-
-Visual drag-and-drop designer
-
-Property editor
-
-Event handlers and code-behind
-
-Modern HTML/CSS-based rendering
-
-Web-style layouts and components
-
-Modern themes and styling
-
-Custom animations
-
-Extensible UI providers/adapters
-
-User-editable UI definitions
-
-A live visual designer and code editor
-
-Definition of success
+### Definition of success
 
 Forma is successful when a developer can:
 
-Open Forma Builder.
+1. Open Forma Builder.
+2. Create/open a form.
+3. Drag a component onto the form.
+4. Modify its properties visually.
+5. Open and edit the generated/user-owned UI definition.
+6. Write C# code in the editor.
+7. Run the project.
+8. See the resulting desktop application.
+9. Interact with the application normally.
+10. Have events and C# code execute correctly.
 
-Create/open a form.
+At that point, **we made Forma.**
 
-Drag a component onto the form.
+---
 
-Modify its properties visually.
+# 2. Target User
 
-Open and edit the generated/user-owned UI definition.
-
-Write C# code in the editor.
-
-Run the project.
-
-See the resulting desktop application.
-
-Interact with the application normally.
-
-Have events and C# code execute correctly.
-
-At that point, we made Forma.
-
-2. Target User
-
-V0/V1 primary target
+### V0/V1 primary target
 
 The primary user is the creator/developer of Forma.
 
@@ -70,32 +52,27 @@ The project is initially a personal engineering and learning project.
 
 The architecture should still be designed so that it can eventually serve other C# developers.
 
-3. Core Philosophy
+---
 
-3.1 WinForms productivity, modern web rendering
+# 3. Core Philosophy
+
+## 3.1 WinForms productivity, modern web rendering
 
 Forma should preserve the things that made WinForms productive:
 
-Forms
-
-Controls
-
-Properties
-
-Events
-
-Designer
-
-Drag-and-drop
-
-Double-click event generation
-
-Code-behind
-
-Simple application startup
+- Forms
+- Controls
+- Properties
+- Events
+- Designer
+- Drag-and-drop
+- Double-click event generation
+- Code-behind
+- Simple application startup
 
 But it should replace the traditional visual model with a modern web-oriented rendering model.
 
+```text
 C# Application
       |
       v
@@ -118,8 +95,9 @@ Browser rendering/compositing
       |
       v
 Desktop Window
+```
 
-3.2 Designer-first AND code-first
+## 3.2 Designer-first AND code-first
 
 The designer should never lock the developer into a visual-only workflow.
 
@@ -127,50 +105,52 @@ Everything should ultimately be accessible through code.
 
 Developers should be able to use:
 
-Designer
-
-Code
-
-Event handlers
-
-Data binding
-
-Custom components
-
-Custom styles
+- Designer
+- Code
+- Event handlers
+- Data binding
+- Custom components
+- Custom styles
 
 without one approach invalidating the others.
 
-3.3 UI definition belongs to the UI definition file
+## 3.3 UI definition belongs to the UI definition file
 
-Forma should NOT recreate the generated *.Designer.cs model used by traditional WinForms.
+Forma should NOT recreate the generated `*.Designer.cs` model used by traditional WinForms.
 
 Instead:
 
+```text
 MainForm.forma.json5
 MainForm.cs
+```
 
 The UI definition owns the visual structure.
 
 The C# file owns application behavior.
 
+```text
 MainForm.forma.json5
         +
 MainForm.cs
         |
         v
    Forma Runtime
+```
 
 Developers may manually edit the UI definition.
 
 The designer is an editor for that definition, not its sole owner.
 
-4. UI Definition Format
+---
 
-The initial UI definition format will be JSON5.
+# 4. UI Definition Format
+
+The initial UI definition format will be **JSON5**.
 
 Example:
 
+```json5
 {
     type: "Form",
     name: "MainForm",
@@ -194,151 +174,119 @@ Example:
         }
     ]
 }
+```
 
-Why JSON5?
+### Why JSON5?
 
 JSON5 provides:
 
-JSON compatibility
-
-comments
-
-trailing commas
-
-unquoted keys
-
-predictable hierarchical structure
-
-easy parsing
-
-easy tooling
-
-easy manual editing
+- JSON compatibility
+- comments
+- trailing commas
+- unquoted keys
+- predictable hierarchical structure
+- easy parsing
+- easy tooling
+- easy manual editing
 
 YAML may be reconsidered later, but it is not required for V1.
 
 Forma will not invent a proprietary UI markup language unless there is a compelling reason.
 
-5. Controls
+---
+
+# 5. Controls
 
 Forma's control model should be a hybrid between WinForms controls and web components.
 
-Layout components
+## Layout components
 
-Form
+- Form
+- Panel
+- Container
+- Stack
+- Grid
+- Card
 
-Panel
+## Basic controls
 
-Container
+- Label
+- Button
+- TextBox
+- CheckBox
+- ComboBox
+- Image
 
-Stack
-
-Grid
-
-Card
-
-Basic controls
-
-Label
-
-Button
-
-TextBox
-
-CheckBox
-
-ComboBox
-
-Image
-
-Modern components
+## Modern components
 
 Eventually:
 
-Dialog
-
-Toast
-
-Tabs
-
-Accordion
-
-Badge
-
-Avatar
-
-Navbar
-
-Table
-
-DataGrid
-
-etc.
+- Dialog
+- Toast
+- Tabs
+- Accordion
+- Badge
+- Avatar
+- Navbar
+- Table
+- DataGrid
+- etc.
 
 Forma should NOT attempt to ship hundreds of controls in V1.
 
-6. Layout
+---
+
+# 6. Layout
 
 Forma should eventually support both traditional desktop positioning and modern layout.
 
-Traditional
+## Traditional
 
-X/Y positioning
+- X/Y positioning
+- Width/Height
+- Anchor
+- Dock
 
-Width/Height
+## Modern
 
-Anchor
-
-Dock
-
-Modern
-
-Stack
-
-Grid
-
-Flex-like layouts
-
-Fill
-
-Auto sizing
-
-Responsive sizing
+- Stack
+- Grid
+- Flex-like layouts
+- Fill
+- Auto sizing
+- Responsive sizing
 
 Modern layout should be preferred where appropriate, while absolute positioning remains available.
 
-7. Styling
+---
+
+# 7. Styling
 
 Forma's styling model should be web-oriented.
 
 Core goals:
 
-CSS-based styling
-
-Themes
-
-Design tokens
-
-Dark/light themes
-
-Custom CSS
-
-Custom fonts
-
-SVG
-
-Modern visual effects
-
-Responsive styling
+- CSS-based styling
+- Themes
+- Design tokens
+- Dark/light themes
+- Custom CSS
+- Custom fonts
+- SVG
+- Modern visual effects
+- Responsive styling
 
 The developer should be able to customize the UI deeply without fighting a fixed native-control styling system.
 
-8. UI Providers / Adapters
+---
+
+# 8. UI Providers / Adapters
 
 Forma should support an extensible UI provider system.
 
 Conceptually:
 
+```text
 Forma
   |
   +-- Forma Default
@@ -352,42 +300,43 @@ Forma
   +-- Community Provider
   |
   +-- Custom Provider
+```
 
 A provider may supply:
 
-Styles
-
-Components
-
-Themes
-
-Design tokens
-
-Icons
-
-Animations
-
-Templates
+- Styles
+- Components
+- Themes
+- Design tokens
+- Icons
+- Animations
+- Templates
 
 Users should eventually be able to install providers dynamically.
 
 Example:
 
+```bash
 forma ui add bootstrap
 forma ui add daisyui
+```
 
 Exact package-management behavior will be designed later.
 
-9. Events and Code
+---
+
+# 9. Events and Code
 
 Forma should support traditional C# event handling.
 
 Example:
 
+```csharp
 button.Click += (_, _) =>
 {
     Save();
 };
+```
 
 The designer should be able to generate event handlers through actions such as double-clicking a control.
 
@@ -395,26 +344,24 @@ However, the framework should not force generated handlers.
 
 Advanced developers should be able to use:
 
-Events
-
-Lambdas
-
-Binding
-
-Commands
-
-Programmatic control creation
-
-Custom components
+- Events
+- Lambdas
+- Binding
+- Commands
+- Programmatic control creation
+- Custom components
 
 The event system should remain extensible.
 
-10. Rendering Architecture
+---
+
+# 10. Rendering Architecture
 
 WebView2 will be the initial rendering backend.
 
 The framework should abstract the renderer so the core runtime does not depend directly on WebView2.
 
+```text
 Forma.Core
      |
      v
@@ -423,21 +370,25 @@ IRenderer
      +-- WebView2Renderer
      |
      +-- FutureRenderer
+```
 
 This allows future experimentation with other rendering backends without rewriting the entire framework.
 
-11. Performance Principles
+---
+
+# 11. Performance Principles
 
 Avoid reproducing traditional WinForms repaint/flicker behavior.
 
 Forma should use a retained UI tree and incremental rendering model.
 
-Rules
+## Rules
 
-11.1 Do not rebuild the entire UI for every change
+### 11.1 Do not rebuild the entire UI for every change
 
 A property change should update only the affected element.
 
+```text
 button.Text = "Save"
         |
         v
@@ -448,13 +399,15 @@ Incremental update
         |
         v
 Only the button changes
+```
 
-11.2 Batch renderer communication
+### 11.2 Batch renderer communication
 
 Avoid excessive C# ↔ WebView communication.
 
 Prefer:
 
+```text
 Multiple state changes
         |
         v
@@ -465,42 +418,37 @@ Batched update
         |
         v
 WebView
+```
 
-11.3 Let the browser handle layout
+### 11.3 Let the browser handle layout
 
 Do not unnecessarily recreate a browser layout engine in C#.
 
-11.4 Let the browser handle animation
+### 11.4 Let the browser handle animation
 
 CSS/Web Animations should handle visual animation whenever practical.
 
-11.5 Keep application logic in C#
+### 11.5 Keep application logic in C#
 
 C# should own:
 
-Application logic
-
-State
-
-Events
-
-Networking
-
-Database access
-
-Business logic
+- Application logic
+- State
+- Events
+- Networking
+- Database access
+- Business logic
 
 JavaScript should primarily provide:
 
-DOM/runtime glue
+- DOM/runtime glue
+- Rendering integration
+- Browser-side behavior
+- Web APIs required by the renderer
 
-Rendering integration
+---
 
-Browser-side behavior
-
-Web APIs required by the renderer
-
-12. Animation
+# 12. Animation
 
 Animations are not a V0.1 requirement.
 
@@ -508,10 +456,13 @@ The architecture should allow them later.
 
 Possible future API:
 
+```csharp
 button.Animate(...);
+```
 
 and/or UI definition:
 
+```json5
 {
     animation: {
         enter: "fade",
@@ -519,15 +470,19 @@ and/or UI definition:
         exit: "slide"
     }
 }
+```
 
 Animation should preferably use browser-native mechanisms rather than C# frame-by-frame timers.
 
-13. Builder
+---
+
+# 13. Builder
 
 The Forma Builder is a future application, not the first milestone.
 
 Target architecture:
 
+```text
 +----------------------------------------------------------+
 | Forma Builder                                            |
 +--------------+--------------------------+-----------------+
@@ -543,33 +498,29 @@ Target architecture:
 +----------------------------------------------------------+
 | C# Code Editor                                           |
 +----------------------------------------------------------+
+```
 
 The builder should eventually provide:
 
-Toolbox
-
-Designer
-
-Drag-and-drop
-
-Properties panel
-
-Hierarchy/tree
-
-Code editor
-
-Live preview
-
-Save/load
-
-Event handler generation
+- Toolbox
+- Designer
+- Drag-and-drop
+- Properties panel
+- Hierarchy/tree
+- Code editor
+- Live preview
+- Save/load
+- Event handler generation
 
 The builder should NOT become a full Visual Studio replacement.
 
-14. Project Structure
+---
+
+# 14. Project Structure
 
 A Forma application will initially aim toward a structure similar to:
 
+```text
 MyApp/
 |
 +-- MyApp.csproj
@@ -599,69 +550,58 @@ MyApp/
 +-- build/
 |
 +-- release/
+```
 
 This structure is provisional and can evolve.
 
-build/ may contain messy/intermediate output.
+`build/` may contain messy/intermediate output.
 
-release/ should contain only files required to distribute the application.
+`release/` should contain only files required to distribute the application.
 
-15. Deployment
+---
+
+# 15. Deployment
 
 Long-term goals:
 
-Portable executable
-
-Installer
-
-Self-contained deployment
-
-Release packaging
+- Portable executable
+- Installer
+- Self-contained deployment
+- Release packaging
 
 Windows is the initial target.
 
 Cross-platform desktop support is intentionally deferred.
 
-16. V0.1 — Runtime Foundation
+---
+
+# 16. V0.1 — Runtime Foundation
 
 V0.1 is deliberately small.
 
 Required:
 
-C# runtime
+- C# runtime
+- .NET
+- WebView2 renderer
+- Application
+- Form
+- Control
+- Panel
+- Label
+- Button
+- TextBox
+- Events
+- Basic layout
+- Persistent control tree
+- JSON5 form definition
+- C# code-behind
 
-.NET
-
-WebView2 renderer
-
-Application
-
-Form
-
-Control
-
-Panel
-
-Label
-
-Button
-
-TextBox
-
-Events
-
-Basic layout
-
-Persistent control tree
-
-JSON5 form definition
-
-C# code-behind
-
-V0.1 success test
+### V0.1 success test
 
 A developer should be able to write something conceptually similar to:
 
+```csharp
 var form = new Form
 {
     Title = "Hello Forma"
@@ -680,81 +620,66 @@ button.Click += (_, _) =>
 form.Controls.Add(button);
 
 Application.Run(form);
+```
 
 and see a functioning desktop application rendered through WebView2.
 
-17. V0.5 — Builder
+---
+
+# 17. V0.5 — Builder
 
 V0.5 adds:
 
-Visual designer
+- Visual designer
+- Toolbox
+- Properties panel
+- Drag-and-drop
+- Selection
+- Save/load
+- UI definition editing
+- Code editor
+- Live preview
+- Basic project management
 
-Toolbox
+---
 
-Properties panel
-
-Drag-and-drop
-
-Selection
-
-Save/load
-
-UI definition editing
-
-Code editor
-
-Live preview
-
-Basic project management
-
-18. V1.0 — Usable Framework
+# 18. V1.0 — Usable Framework
 
 V1.0 aims to provide:
 
-Designer
+- Designer
+- Code editor
+- UI provider/package system
+- Themes
+- Animations
+- Custom components
+- Build tooling
+- Documentation
+- Windows installer
+- Portable/self-contained deployment
 
-Code editor
+---
 
-UI provider/package system
-
-Themes
-
-Animations
-
-Custom components
-
-Build tooling
-
-Documentation
-
-Windows installer
-
-Portable/self-contained deployment
-
-19. Explicitly Out of Scope
+# 19. Explicitly Out of Scope
 
 Forma will NOT initially:
 
-become a full IDE
+- become a full IDE
+- replace Visual Studio
+- implement its own programming language
+- implement its own browser engine
+- support mobile in V1
+- support every CSS framework in V1
+- contain hundreds of controls
+- attempt to recreate the entire .NET desktop ecosystem
 
-replace Visual Studio
+---
 
-implement its own programming language
-
-implement its own browser engine
-
-support mobile in V1
-
-support every CSS framework in V1
-
-contain hundreds of controls
-
-attempt to recreate the entire .NET desktop ecosystem
-
-20. Technology Direction
+# 20. Technology Direction
 
 Initial stack:
 
+```text
 Language:       C#
 Runtime:        .NET
 Platform:       Windows
@@ -764,39 +689,34 @@ Styling:        HTML/CSS
 Browser glue:   JavaScript
 IDE/Builder:    C# + WebView2
 Code editor:    Future Monaco-based implementation
+```
 
 The core framework should remain renderer-agnostic where practical.
 
-21. Development Principles
+---
 
-Build the smallest working thing first.
+# 21. Development Principles
 
-Do not build the designer before the runtime works.
+1. **Build the smallest working thing first.**
+2. **Do not build the designer before the runtime works.**
+3. **Do not optimize by guessing; measure.**
+4. **Keep rendering incremental.**
+5. **Keep C# responsible for application logic.**
+6. **Keep the UI definition editable by humans.**
+7. **Do not generate ugly Designer.cs files.**
+8. **Prefer composition and extensibility over giant inheritance trees.**
+9. **Treat UI providers as an extension point.**
+10. **Keep the core independent from specific UI providers.**
+11. **Do not let V1 scope explode.**
+12. **Every major feature should have a working vertical slice before adding another major subsystem.**
 
-Do not optimize by guessing; measure.
+---
 
-Keep rendering incremental.
-
-Keep C# responsible for application logic.
-
-Keep the UI definition editable by humans.
-
-Do not generate ugly Designer.cs files.
-
-Prefer composition and extensibility over giant inheritance trees.
-
-Treat UI providers as an extension point.
-
-Keep the core independent from specific UI providers.
-
-Do not let V1 scope explode.
-
-Every major feature should have a working vertical slice before adding another major subsystem.
-
-22. First Milestone
+# 22. First Milestone
 
 The first milestone is intentionally tiny:
 
+```text
 Create Forma solution
         |
         v
@@ -822,13 +742,17 @@ Render Button through WebView2
         |
         v
 Receive Click event in C#
+```
 
 Once this works, the project has officially begun.
 
-23. Long-Term Vision
+---
+
+# 23. Long-Term Vision
 
 Forma should feel like:
 
+```text
 WinForms
    +
 Modern Web UI
@@ -838,11 +762,12 @@ C#
 Visual Designer
    +
 Extensible UI Ecosystem
+```
 
 The ideal developer experience is:
 
-Drag it if you want. Code it if you want. Customize it however you want.
+> **Drag it if you want. Code it if you want. Customize it however you want.**
 
 And the final test remains simple:
 
-If I can open Forma Builder, drag a component onto a form, modify it, write C# code, run it, and see the application behave correctly, then we fucking made it.
+> **If I can open Forma Builder, drag a component onto a form, modify it, write C# code, run it, and see the application behave correctly, then we fucking made it.**
