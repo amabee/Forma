@@ -159,7 +159,9 @@
   },
   "projectFileDependencyGroups": {
     "net10.0-windows": [
-      "Forma.WebView2 >= 1.0.0"
+      "Forma.Core >= 1.0.0",
+      "Forma.WebView2 >= 1.0.0",
+      "Microsoft.Web.WebView2 >= 1.0.4129.50"
     ]
   },
   "packageFolders": {
@@ -188,6 +190,9 @@
           "framework": "net10.0-windows7.0",
           "targetAlias": "net10.0-windows",
           "projectReferences": {
+            "C:\\Users\\Angelzm\\Documents\\Projects\\Forma\\src\\Forma.Core\\Forma.Core.csproj": {
+              "projectPath": "C:\\Users\\Angelzm\\Documents\\Projects\\Forma\\src\\Forma.Core\\Forma.Core.csproj"
+            },
             "C:\\Users\\Angelzm\\Documents\\Projects\\Forma\\src\\Forma.WebView2\\Forma.WebView2.csproj": {
               "projectPath": "C:\\Users\\Angelzm\\Documents\\Projects\\Forma\\src\\Forma.WebView2\\Forma.WebView2.csproj"
             }
@@ -210,6 +215,12 @@
       "net10.0-windows": {
         "framework": "net10.0-windows7.0",
         "targetAlias": "net10.0-windows",
+        "dependencies": {
+          "Microsoft.Web.WebView2": {
+            "target": "Package",
+            "version": "[1.0.4129.50, )"
+          }
+        },
         "imports": [
           "net461",
           "net462",

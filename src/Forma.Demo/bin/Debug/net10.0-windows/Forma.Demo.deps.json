@@ -8,7 +8,9 @@
     ".NETCoreApp,Version=v10.0": {
       "Forma.Demo/1.0.0": {
         "dependencies": {
+          "Forma.Core": "1.0.0",
           "Forma.WebView2": "1.0.0",
+          "Microsoft.Web.WebView2": "1.0.4129.50",
           "Microsoft.Web.WebView2.Core": "1.0.4129.50",
           "Microsoft.Web.WebView2.WinForms": "1.0.4129.50",
           "Microsoft.Web.WebView2.Wpf": "1.0.4129.50"

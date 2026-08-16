@@ -1,0 +1,269 @@
+2026-08-16 00:27:09.527: [INFO] CurrentProfilePath: C:\Users\Angelzm\Documents\Projects\Forma\src\Forma.Demo\bin\Debug\net10.0-windows\Forma.Demo.exe.WebView2\EBWebView\Default
+2026-08-16 00:27:09.527: [INFO] Profiles total count: 1
+2026-08-16 00:27:09.527: [INFO] Profile: name=Profile 1 path=C:\Users\Angelzm\Documents\Projects\Forma\src\Forma.Demo\bin\Debug\net10.0-windows\Forma.Demo.exe.WebView2\EBWebView\Default lastActive=null
+2026-08-16 00:27:09.527: [INFO] LastUsedProfileDir: C:\Users\Angelzm\Documents\Projects\Forma\src\Forma.Demo\bin\Debug\net10.0-windows\Forma.Demo.exe.WebView2\EBWebView\Default
+2026-08-16 00:27:09.527: [INFO] OnDoneLoading sync enabled: 0
+2026-08-16 00:27:09.527: [INFO] BookmarkModelLoaded, ids_reassigned: 0
+2026-08-16 00:27:09.527: [INFO] BookmarksLoadDropped droppedNodes=0
+2026-08-16 00:27:09.527: [INFO] BookmarksSnapshot Startup total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-08-16 00:27:38.885: [INFO] BookmarksSnapshot Shutdown total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-08-16 00:27:59.761: [INFO] CurrentProfilePath: C:\Users\Angelzm\Documents\Projects\Forma\src\Forma.Demo\bin\Debug\net10.0-windows\Forma.Demo.exe.WebView2\EBWebView\Default
+2026-08-16 00:27:59.761: [INFO] Profiles total count: 1
+2026-08-16 00:27:59.766: [INFO] Profile: name=Profile 1 path=C:\Users\Angelzm\Documents\Projects\Forma\src\Forma.Demo\bin\Debug\net10.0-windows\Forma.Demo.exe.WebView2\EBWebView\Default lastActive=2026-08-16T00:27:33.033Z
+2026-08-16 00:27:59.766: [INFO] LastUsedProfileDir: C:\Users\Angelzm\Documents\Projects\Forma\src\Forma.Demo\bin\Debug\net10.0-windows\Forma.Demo.exe.WebView2\EBWebView\Default
+2026-08-16 00:27:59.766: [INFO] MostRecentlyActiveProfile: name=Profile 1 path=C:\Users\Angelzm\Documents\Projects\Forma\src\Forma.Demo\bin\Debug\net10.0-windows\Forma.Demo.exe.WebView2\EBWebView\Default lastActive=2026-08-16T00:27:33.033Z
+2026-08-16 00:27:59.766: [INFO] OnDoneLoading sync enabled: 0
+2026-08-16 00:27:59.766: [INFO] BookmarkModelLoaded, ids_reassigned: 0
+2026-08-16 00:27:59.766: [INFO] BookmarksLoadDropped droppedNodes=0
+2026-08-16 00:27:59.766: [INFO] BookmarksSnapshot Startup total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-08-16 00:28:05.343: [INFO] BookmarksSnapshot Shutdown total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-08-16 00:28:20.721: [INFO] CurrentProfilePath: C:\Users\Angelzm\Documents\Projects\Forma\src\Forma.Demo\bin\Debug\net10.0-windows\Forma.Demo.exe.WebView2\EBWebView\Default
+2026-08-16 00:28:20.721: [INFO] Profiles total count: 1
+2026-08-16 00:28:20.721: [INFO] Profile: name=Profile 1 path=C:\Users\Angelzm\Documents\Projects\Forma\src\Forma.Demo\bin\Debug\net10.0-windows\Forma.Demo.exe.WebView2\EBWebView\Default lastActive=2026-08-16T00:27:59.909Z
+2026-08-16 00:28:20.721: [INFO] LastUsedProfileDir: C:\Users\Angelzm\Documents\Projects\Forma\src\Forma.Demo\bin\Debug\net10.0-windows\Forma.Demo.exe.WebView2\EBWebView\Default
+2026-08-16 00:28:20.721: [INFO] MostRecentlyActiveProfile: name=Profile 1 path=C:\Users\Angelzm\Documents\Projects\Forma\src\Forma.Demo\bin\Debug\net10.0-windows\Forma.Demo.exe.WebView2\EBWebView\Default lastActive=2026-08-16T00:27:59.909Z
+2026-08-16 00:28:20.721: [INFO] OnDoneLoading sync enabled: 0
+2026-08-16 00:28:20.721: [INFO] BookmarkModelLoaded, ids_reassigned: 0
+2026-08-16 00:28:20.721: [INFO] BookmarksLoadDropped droppedNodes=0
+2026-08-16 00:28:20.721: [INFO] BookmarksSnapshot Startup total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-08-16 00:28:33.536: [INFO] BookmarksSnapshot Shutdown total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-08-16 00:31:12.301: [INFO] CurrentProfilePath: C:\Users\Angelzm\Documents\Projects\Forma\src\Forma.Demo\bin\Debug\net10.0-windows\Forma.Demo.exe.WebView2\EBWebView\Default
+2026-08-16 00:31:12.301: [INFO] Profiles total count: 1
+2026-08-16 00:31:12.301: [INFO] Profile: name=Profile 1 path=C:\Users\Angelzm\Documents\Projects\Forma\src\Forma.Demo\bin\Debug\net10.0-windows\Forma.Demo.exe.WebView2\EBWebView\Default lastActive=2026-08-16T00:28:20.869Z
+2026-08-16 00:31:12.301: [INFO] LastUsedProfileDir: C:\Users\Angelzm\Documents\Projects\Forma\src\Forma.Demo\bin\Debug\net10.0-windows\Forma.Demo.exe.WebView2\EBWebView\Default
+2026-08-16 00:31:12.301: [INFO] MostRecentlyActiveProfile: name=Profile 1 path=C:\Users\Angelzm\Documents\Projects\Forma\src\Forma.Demo\bin\Debug\net10.0-windows\Forma.Demo.exe.WebView2\EBWebView\Default lastActive=2026-08-16T00:28:20.869Z
+2026-08-16 00:31:12.301: [INFO] OnDoneLoading sync enabled: 0
+2026-08-16 00:31:12.301: [INFO] BookmarkModelLoaded, ids_reassigned: 0
+2026-08-16 00:31:12.301: [INFO] BookmarksLoadDropped droppedNodes=0
+2026-08-16 00:31:12.301: [INFO] BookmarksSnapshot Startup total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-08-16 00:31:21.527: [INFO] BookmarksSnapshot Shutdown total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-08-16 00:31:27.680: [INFO] CurrentProfilePath: C:\Users\Angelzm\Documents\Projects\Forma\src\Forma.Demo\bin\Debug\net10.0-windows\Forma.Demo.exe.WebView2\EBWebView\Default
+2026-08-16 00:31:27.680: [INFO] Profiles total count: 1
+2026-08-16 00:31:27.681: [INFO] Profile: name=Profile 1 path=C:\Users\Angelzm\Documents\Projects\Forma\src\Forma.Demo\bin\Debug\net10.0-windows\Forma.Demo.exe.WebView2\EBWebView\Default lastActive=2026-08-16T00:31:12.464Z
+2026-08-16 00:31:27.681: [INFO] LastUsedProfileDir: C:\Users\Angelzm\Documents\Projects\Forma\src\Forma.Demo\bin\Debug\net10.0-windows\Forma.Demo.exe.WebView2\EBWebView\Default
+2026-08-16 00:31:27.681: [INFO] MostRecentlyActiveProfile: name=Profile 1 path=C:\Users\Angelzm\Documents\Projects\Forma\src\Forma.Demo\bin\Debug\net10.0-windows\Forma.Demo.exe.WebView2\EBWebView\Default lastActive=2026-08-16T00:31:12.464Z
+2026-08-16 00:31:27.681: [INFO] OnDoneLoading sync enabled: 0
+2026-08-16 00:31:27.681: [INFO] BookmarkModelLoaded, ids_reassigned: 0
+2026-08-16 00:31:27.681: [INFO] BookmarksLoadDropped droppedNodes=0
+2026-08-16 00:31:27.681: [INFO] BookmarksSnapshot Startup total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-08-16 00:32:51.340: [INFO] BookmarksSnapshot Shutdown total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-08-16 00:33:07.205: [INFO] CurrentProfilePath: C:\Users\Angelzm\Documents\Projects\Forma\src\Forma.Demo\bin\Debug\net10.0-windows\Forma.Demo.exe.WebView2\EBWebView\Default
+2026-08-16 00:33:07.205: [INFO] Profiles total count: 1
+2026-08-16 00:33:07.205: [INFO] Profile: name=Profile 1 path=C:\Users\Angelzm\Documents\Projects\Forma\src\Forma.Demo\bin\Debug\net10.0-windows\Forma.Demo.exe.WebView2\EBWebView\Default lastActive=2026-08-16T00:32:48.191Z
+2026-08-16 00:33:07.205: [INFO] LastUsedProfileDir: C:\Users\Angelzm\Documents\Projects\Forma\src\Forma.Demo\bin\Debug\net10.0-windows\Forma.Demo.exe.WebView2\EBWebView\Default
+2026-08-16 00:33:07.205: [INFO] MostRecentlyActiveProfile: name=Profile 1 path=C:\Users\Angelzm\Documents\Projects\Forma\src\Forma.Demo\bin\Debug\net10.0-windows\Forma.Demo.exe.WebView2\EBWebView\Default lastActive=2026-08-16T00:32:48.191Z
+2026-08-16 00:33:07.205: [INFO] OnDoneLoading sync enabled: 0
+2026-08-16 00:33:07.205: [INFO] BookmarkModelLoaded, ids_reassigned: 0
+2026-08-16 00:33:07.205: [INFO] BookmarksLoadDropped droppedNodes=0
+2026-08-16 00:33:07.205: [INFO] BookmarksSnapshot Startup total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-08-16 00:33:11.913: [INFO] BookmarksSnapshot Shutdown total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-08-16 01:13:45.760: [INFO] CurrentProfilePath: C:\Users\Angelzm\Documents\Projects\Forma\src\Forma.Demo\bin\Debug\net10.0-windows\Forma.Demo.exe.WebView2\EBWebView\Default
+2026-08-16 01:13:45.760: [INFO] Profiles total count: 1
+2026-08-16 01:13:45.760: [INFO] Profile: name=Profile 1 path=C:\Users\Angelzm\Documents\Projects\Forma\src\Forma.Demo\bin\Debug\net10.0-windows\Forma.Demo.exe.WebView2\EBWebView\Default lastActive=2026-08-16T00:33:07.378Z
+2026-08-16 01:13:45.760: [INFO] LastUsedProfileDir: C:\Users\Angelzm\Documents\Projects\Forma\src\Forma.Demo\bin\Debug\net10.0-windows\Forma.Demo.exe.WebView2\EBWebView\Default
+2026-08-16 01:13:45.760: [INFO] MostRecentlyActiveProfile: name=Profile 1 path=C:\Users\Angelzm\Documents\Projects\Forma\src\Forma.Demo\bin\Debug\net10.0-windows\Forma.Demo.exe.WebView2\EBWebView\Default lastActive=2026-08-16T00:33:07.378Z
+2026-08-16 01:13:45.760: [INFO] OnDoneLoading sync enabled: 0
+2026-08-16 01:13:45.760: [INFO] BookmarkModelLoaded, ids_reassigned: 0
+2026-08-16 01:13:45.760: [INFO] BookmarksLoadDropped droppedNodes=0
+2026-08-16 01:13:45.760: [INFO] BookmarksSnapshot Startup total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-08-16 01:14:39.974: [INFO] BookmarksSnapshot Shutdown total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-08-16 01:22:36.399: [INFO] CurrentProfilePath: C:\Users\Angelzm\Documents\Projects\Forma\src\Forma.Demo\bin\Debug\net10.0-windows\Forma.Demo.exe.WebView2\EBWebView\Default
+2026-08-16 01:22:36.399: [INFO] Profiles total count: 1
+2026-08-16 01:22:36.400: [INFO] Profile: name=Profile 1 path=C:\Users\Angelzm\Documents\Projects\Forma\src\Forma.Demo\bin\Debug\net10.0-windows\Forma.Demo.exe.WebView2\EBWebView\Default lastActive=2026-08-16T01:14:39.817Z
+2026-08-16 01:22:36.400: [INFO] LastUsedProfileDir: C:\Users\Angelzm\Documents\Projects\Forma\src\Forma.Demo\bin\Debug\net10.0-windows\Forma.Demo.exe.WebView2\EBWebView\Default
+2026-08-16 01:22:36.400: [INFO] MostRecentlyActiveProfile: name=Profile 1 path=C:\Users\Angelzm\Documents\Projects\Forma\src\Forma.Demo\bin\Debug\net10.0-windows\Forma.Demo.exe.WebView2\EBWebView\Default lastActive=2026-08-16T01:14:39.817Z
+2026-08-16 01:22:36.400: [INFO] OnDoneLoading sync enabled: 0
+2026-08-16 01:22:36.400: [INFO] BookmarkModelLoaded, ids_reassigned: 0
+2026-08-16 01:22:36.400: [INFO] BookmarksLoadDropped droppedNodes=0
+2026-08-16 01:22:36.400: [INFO] BookmarksSnapshot Startup total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-08-16 01:24:42.837: [INFO] BookmarksSnapshot Shutdown total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-08-16 01:24:48.540: [INFO] CurrentProfilePath: C:\Users\Angelzm\Documents\Projects\Forma\src\Forma.Demo\bin\Debug\net10.0-windows\Forma.Demo.exe.WebView2\EBWebView\Default
+2026-08-16 01:24:48.540: [INFO] Profiles total count: 1
+2026-08-16 01:24:48.540: [INFO] Profile: name=Profile 1 path=C:\Users\Angelzm\Documents\Projects\Forma\src\Forma.Demo\bin\Debug\net10.0-windows\Forma.Demo.exe.WebView2\EBWebView\Default lastActive=2026-08-16T01:22:59.618Z
+2026-08-16 01:24:48.540: [INFO] LastUsedProfileDir: C:\Users\Angelzm\Documents\Projects\Forma\src\Forma.Demo\bin\Debug\net10.0-windows\Forma.Demo.exe.WebView2\EBWebView\Default
+2026-08-16 01:24:48.540: [INFO] MostRecentlyActiveProfile: name=Profile 1 path=C:\Users\Angelzm\Documents\Projects\Forma\src\Forma.Demo\bin\Debug\net10.0-windows\Forma.Demo.exe.WebView2\EBWebView\Default lastActive=2026-08-16T01:22:59.618Z
+2026-08-16 01:24:48.540: [INFO] OnDoneLoading sync enabled: 0
+2026-08-16 01:24:48.540: [INFO] BookmarkModelLoaded, ids_reassigned: 0
+2026-08-16 01:24:48.540: [INFO] BookmarksLoadDropped droppedNodes=0
+2026-08-16 01:24:48.540: [INFO] BookmarksSnapshot Startup total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-08-16 01:25:05.073: [INFO] BookmarksSnapshot Shutdown total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-08-16 01:26:08.829: [INFO] CurrentProfilePath: C:\Users\Angelzm\Documents\Projects\Forma\src\Forma.Demo\bin\Debug\net10.0-windows\Forma.Demo.exe.WebView2\EBWebView\Default
+2026-08-16 01:26:08.829: [INFO] Profiles total count: 1
+2026-08-16 01:26:08.829: [INFO] Profile: name=Profile 1 path=C:\Users\Angelzm\Documents\Projects\Forma\src\Forma.Demo\bin\Debug\net10.0-windows\Forma.Demo.exe.WebView2\EBWebView\Default lastActive=2026-08-16T01:25:04.482Z
+2026-08-16 01:26:08.829: [INFO] LastUsedProfileDir: C:\Users\Angelzm\Documents\Projects\Forma\src\Forma.Demo\bin\Debug\net10.0-windows\Forma.Demo.exe.WebView2\EBWebView\Default
+2026-08-16 01:26:08.829: [INFO] MostRecentlyActiveProfile: name=Profile 1 path=C:\Users\Angelzm\Documents\Projects\Forma\src\Forma.Demo\bin\Debug\net10.0-windows\Forma.Demo.exe.WebView2\EBWebView\Default lastActive=2026-08-16T01:25:04.482Z
+2026-08-16 01:26:08.829: [INFO] OnDoneLoading sync enabled: 0
+2026-08-16 01:26:08.829: [INFO] BookmarkModelLoaded, ids_reassigned: 0
+2026-08-16 01:26:08.829: [INFO] BookmarksLoadDropped droppedNodes=0
+2026-08-16 01:26:08.829: [INFO] BookmarksSnapshot Startup total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-08-16 01:26:31.418: [INFO] BookmarksSnapshot Shutdown total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-08-16 01:27:34.981: [INFO] CurrentProfilePath: C:\Users\Angelzm\Documents\Projects\Forma\src\Forma.Demo\bin\Debug\net10.0-windows\Forma.Demo.exe.WebView2\EBWebView\Default
+2026-08-16 01:27:34.981: [INFO] Profiles total count: 1
+2026-08-16 01:27:34.981: [INFO] Profile: name=Profile 1 path=C:\Users\Angelzm\Documents\Projects\Forma\src\Forma.Demo\bin\Debug\net10.0-windows\Forma.Demo.exe.WebView2\EBWebView\Default lastActive=2026-08-16T01:26:29.533Z
+2026-08-16 01:27:34.981: [INFO] LastUsedProfileDir: C:\Users\Angelzm\Documents\Projects\Forma\src\Forma.Demo\bin\Debug\net10.0-windows\Forma.Demo.exe.WebView2\EBWebView\Default
+2026-08-16 01:27:34.981: [INFO] MostRecentlyActiveProfile: name=Profile 1 path=C:\Users\Angelzm\Documents\Projects\Forma\src\Forma.Demo\bin\Debug\net10.0-windows\Forma.Demo.exe.WebView2\EBWebView\Default lastActive=2026-08-16T01:26:29.533Z
+2026-08-16 01:27:34.981: [INFO] OnDoneLoading sync enabled: 0
+2026-08-16 01:27:34.981: [INFO] BookmarkModelLoaded, ids_reassigned: 0
+2026-08-16 01:27:34.981: [INFO] BookmarksLoadDropped droppedNodes=0
+2026-08-16 01:27:34.981: [INFO] BookmarksSnapshot Startup total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-08-16 01:28:04.625: [INFO] BookmarksSnapshot Shutdown total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-08-16 01:28:26.616: [INFO] CurrentProfilePath: C:\Users\Angelzm\Documents\Projects\Forma\src\Forma.Demo\bin\Debug\net10.0-windows\Forma.Demo.exe.WebView2\EBWebView\Default
+2026-08-16 01:28:26.616: [INFO] Profiles total count: 1
+2026-08-16 01:28:26.617: [INFO] Profile: name=Profile 1 path=C:\Users\Angelzm\Documents\Projects\Forma\src\Forma.Demo\bin\Debug\net10.0-windows\Forma.Demo.exe.WebView2\EBWebView\Default lastActive=2026-08-16T01:27:48.460Z
+2026-08-16 01:28:26.617: [INFO] LastUsedProfileDir: C:\Users\Angelzm\Documents\Projects\Forma\src\Forma.Demo\bin\Debug\net10.0-windows\Forma.Demo.exe.WebView2\EBWebView\Default
+2026-08-16 01:28:26.617: [INFO] MostRecentlyActiveProfile: name=Profile 1 path=C:\Users\Angelzm\Documents\Projects\Forma\src\Forma.Demo\bin\Debug\net10.0-windows\Forma.Demo.exe.WebView2\EBWebView\Default lastActive=2026-08-16T01:27:48.460Z
+2026-08-16 01:28:26.617: [INFO] OnDoneLoading sync enabled: 0
+2026-08-16 01:28:26.617: [INFO] BookmarkModelLoaded, ids_reassigned: 0
+2026-08-16 01:28:26.617: [INFO] BookmarksLoadDropped droppedNodes=0
+2026-08-16 01:28:26.617: [INFO] BookmarksSnapshot Startup total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-08-16 01:29:04.964: [INFO] BookmarksSnapshot Shutdown total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-08-16 01:29:11.416: [INFO] CurrentProfilePath: C:\Users\Angelzm\Documents\Projects\Forma\src\Forma.Demo\bin\Debug\net10.0-windows\Forma.Demo.exe.WebView2\EBWebView\Default
+2026-08-16 01:29:11.416: [INFO] Profiles total count: 1
+2026-08-16 01:29:11.417: [INFO] Profile: name=Profile 1 path=C:\Users\Angelzm\Documents\Projects\Forma\src\Forma.Demo\bin\Debug\net10.0-windows\Forma.Demo.exe.WebView2\EBWebView\Default lastActive=2026-08-16T01:28:37.271Z
+2026-08-16 01:29:11.417: [INFO] LastUsedProfileDir: C:\Users\Angelzm\Documents\Projects\Forma\src\Forma.Demo\bin\Debug\net10.0-windows\Forma.Demo.exe.WebView2\EBWebView\Default
+2026-08-16 01:29:11.417: [INFO] MostRecentlyActiveProfile: name=Profile 1 path=C:\Users\Angelzm\Documents\Projects\Forma\src\Forma.Demo\bin\Debug\net10.0-windows\Forma.Demo.exe.WebView2\EBWebView\Default lastActive=2026-08-16T01:28:37.271Z
+2026-08-16 01:29:11.417: [INFO] OnDoneLoading sync enabled: 0
+2026-08-16 01:29:11.417: [INFO] BookmarkModelLoaded, ids_reassigned: 0
+2026-08-16 01:29:11.417: [INFO] BookmarksLoadDropped droppedNodes=0
+2026-08-16 01:29:11.417: [INFO] BookmarksSnapshot Startup total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-08-16 01:29:21.883: [INFO] BookmarksSnapshot Shutdown total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-08-16 01:29:34.217: [INFO] CurrentProfilePath: C:\Users\Angelzm\Documents\Projects\Forma\src\Forma.Demo\bin\Debug\net10.0-windows\Forma.Demo.exe.WebView2\EBWebView\Default
+2026-08-16 01:29:34.217: [INFO] Profiles total count: 1
+2026-08-16 01:29:34.218: [INFO] Profile: name=Profile 1 path=C:\Users\Angelzm\Documents\Projects\Forma\src\Forma.Demo\bin\Debug\net10.0-windows\Forma.Demo.exe.WebView2\EBWebView\Default lastActive=2026-08-16T01:29:20.914Z
+2026-08-16 01:29:34.218: [INFO] LastUsedProfileDir: C:\Users\Angelzm\Documents\Projects\Forma\src\Forma.Demo\bin\Debug\net10.0-windows\Forma.Demo.exe.WebView2\EBWebView\Default
+2026-08-16 01:29:34.218: [INFO] MostRecentlyActiveProfile: name=Profile 1 path=C:\Users\Angelzm\Documents\Projects\Forma\src\Forma.Demo\bin\Debug\net10.0-windows\Forma.Demo.exe.WebView2\EBWebView\Default lastActive=2026-08-16T01:29:20.914Z
+2026-08-16 01:29:34.218: [INFO] OnDoneLoading sync enabled: 0
+2026-08-16 01:29:34.218: [INFO] BookmarkModelLoaded, ids_reassigned: 0
+2026-08-16 01:29:34.218: [INFO] BookmarksLoadDropped droppedNodes=0
+2026-08-16 01:29:34.218: [INFO] BookmarksSnapshot Startup total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-08-16 01:30:02.193: [INFO] BookmarksSnapshot Shutdown total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-08-16 01:30:16.868: [INFO] CurrentProfilePath: C:\Users\Angelzm\Documents\Projects\Forma\src\Forma.Demo\bin\Debug\net10.0-windows\Forma.Demo.exe.WebView2\EBWebView\Default
+2026-08-16 01:30:16.868: [INFO] Profiles total count: 1
+2026-08-16 01:30:16.869: [INFO] Profile: name=Profile 1 path=C:\Users\Angelzm\Documents\Projects\Forma\src\Forma.Demo\bin\Debug\net10.0-windows\Forma.Demo.exe.WebView2\EBWebView\Default lastActive=2026-08-16T01:30:01.342Z
+2026-08-16 01:30:16.869: [INFO] LastUsedProfileDir: C:\Users\Angelzm\Documents\Projects\Forma\src\Forma.Demo\bin\Debug\net10.0-windows\Forma.Demo.exe.WebView2\EBWebView\Default
+2026-08-16 01:30:16.869: [INFO] MostRecentlyActiveProfile: name=Profile 1 path=C:\Users\Angelzm\Documents\Projects\Forma\src\Forma.Demo\bin\Debug\net10.0-windows\Forma.Demo.exe.WebView2\EBWebView\Default lastActive=2026-08-16T01:30:01.342Z
+2026-08-16 01:30:16.869: [INFO] OnDoneLoading sync enabled: 0
+2026-08-16 01:30:16.869: [INFO] BookmarkModelLoaded, ids_reassigned: 0
+2026-08-16 01:30:16.869: [INFO] BookmarksLoadDropped droppedNodes=0
+2026-08-16 01:30:16.869: [INFO] BookmarksSnapshot Startup total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-08-16 01:34:38.511: [INFO] BookmarksSnapshot Shutdown total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-08-16 01:34:57.176: [INFO] CurrentProfilePath: C:\Users\Angelzm\Documents\Projects\Forma\src\Forma.Demo\bin\Debug\net10.0-windows\Forma.Demo.exe.WebView2\EBWebView\Default
+2026-08-16 01:34:57.176: [INFO] Profiles total count: 1
+2026-08-16 01:34:57.176: [INFO] Profile: name=Profile 1 path=C:\Users\Angelzm\Documents\Projects\Forma\src\Forma.Demo\bin\Debug\net10.0-windows\Forma.Demo.exe.WebView2\EBWebView\Default lastActive=2026-08-16T01:34:37.749Z
+2026-08-16 01:34:57.176: [INFO] LastUsedProfileDir: C:\Users\Angelzm\Documents\Projects\Forma\src\Forma.Demo\bin\Debug\net10.0-windows\Forma.Demo.exe.WebView2\EBWebView\Default
+2026-08-16 01:34:57.176: [INFO] MostRecentlyActiveProfile: name=Profile 1 path=C:\Users\Angelzm\Documents\Projects\Forma\src\Forma.Demo\bin\Debug\net10.0-windows\Forma.Demo.exe.WebView2\EBWebView\Default lastActive=2026-08-16T01:34:37.749Z
+2026-08-16 01:34:57.176: [INFO] OnDoneLoading sync enabled: 0
+2026-08-16 01:34:57.176: [INFO] BookmarkModelLoaded, ids_reassigned: 0
+2026-08-16 01:34:57.176: [INFO] BookmarksLoadDropped droppedNodes=0
+2026-08-16 01:34:57.176: [INFO] BookmarksSnapshot Startup total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-08-16 01:35:21.564: [INFO] BookmarksSnapshot Shutdown total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-08-16 01:36:35.478: [INFO] CurrentProfilePath: C:\Users\Angelzm\Documents\Projects\Forma\src\Forma.Demo\bin\Debug\net10.0-windows\Forma.Demo.exe.WebView2\EBWebView\Default
+2026-08-16 01:36:35.478: [INFO] Profiles total count: 1
+2026-08-16 01:36:35.478: [INFO] Profile: name=Profile 1 path=C:\Users\Angelzm\Documents\Projects\Forma\src\Forma.Demo\bin\Debug\net10.0-windows\Forma.Demo.exe.WebView2\EBWebView\Default lastActive=2026-08-16T01:35:20.527Z
+2026-08-16 01:36:35.478: [INFO] LastUsedProfileDir: C:\Users\Angelzm\Documents\Projects\Forma\src\Forma.Demo\bin\Debug\net10.0-windows\Forma.Demo.exe.WebView2\EBWebView\Default
+2026-08-16 01:36:35.479: [INFO] MostRecentlyActiveProfile: name=Profile 1 path=C:\Users\Angelzm\Documents\Projects\Forma\src\Forma.Demo\bin\Debug\net10.0-windows\Forma.Demo.exe.WebView2\EBWebView\Default lastActive=2026-08-16T01:35:20.527Z
+2026-08-16 01:36:35.479: [INFO] OnDoneLoading sync enabled: 0
+2026-08-16 01:36:35.479: [INFO] BookmarkModelLoaded, ids_reassigned: 0
+2026-08-16 01:36:35.479: [INFO] BookmarksLoadDropped droppedNodes=0
+2026-08-16 01:36:35.479: [INFO] BookmarksSnapshot Startup total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-08-16 01:41:00.344: [INFO] BookmarksSnapshot Shutdown total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-08-16 03:55:19.153: [INFO] CurrentProfilePath: C:\Users\Angelzm\Documents\Projects\Forma\src\Forma.Demo\bin\Debug\net10.0-windows\Forma.Demo.exe.WebView2\EBWebView\Default
+2026-08-16 03:55:19.153: [INFO] Profiles total count: 1
+2026-08-16 03:55:19.153: [INFO] Profile: name=Profile 1 path=C:\Users\Angelzm\Documents\Projects\Forma\src\Forma.Demo\bin\Debug\net10.0-windows\Forma.Demo.exe.WebView2\EBWebView\Default lastActive=2026-08-16T01:40:54.902Z
+2026-08-16 03:55:19.153: [INFO] LastUsedProfileDir: C:\Users\Angelzm\Documents\Projects\Forma\src\Forma.Demo\bin\Debug\net10.0-windows\Forma.Demo.exe.WebView2\EBWebView\Default
+2026-08-16 03:55:19.153: [INFO] MostRecentlyActiveProfile: name=Profile 1 path=C:\Users\Angelzm\Documents\Projects\Forma\src\Forma.Demo\bin\Debug\net10.0-windows\Forma.Demo.exe.WebView2\EBWebView\Default lastActive=2026-08-16T01:40:54.902Z
+2026-08-16 03:55:19.153: [INFO] OnDoneLoading sync enabled: 0
+2026-08-16 03:55:19.153: [INFO] BookmarkModelLoaded, ids_reassigned: 0
+2026-08-16 03:55:19.153: [INFO] BookmarksLoadDropped droppedNodes=0
+2026-08-16 03:55:19.153: [INFO] BookmarksSnapshot Startup total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-08-16 03:55:30.263: [INFO] BookmarksSnapshot Shutdown total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-08-16 04:07:23.233: [INFO] CurrentProfilePath: C:\Users\Angelzm\Documents\Projects\Forma\src\Forma.Demo\bin\Debug\net10.0-windows\Forma.Demo.exe.WebView2\EBWebView\Default
+2026-08-16 04:07:23.233: [INFO] Profiles total count: 1
+2026-08-16 04:07:23.233: [INFO] Profile: name=Profile 1 path=C:\Users\Angelzm\Documents\Projects\Forma\src\Forma.Demo\bin\Debug\net10.0-windows\Forma.Demo.exe.WebView2\EBWebView\Default lastActive=2026-08-16T03:55:26.807Z
+2026-08-16 04:07:23.233: [INFO] LastUsedProfileDir: C:\Users\Angelzm\Documents\Projects\Forma\src\Forma.Demo\bin\Debug\net10.0-windows\Forma.Demo.exe.WebView2\EBWebView\Default
+2026-08-16 04:07:23.233: [INFO] MostRecentlyActiveProfile: name=Profile 1 path=C:\Users\Angelzm\Documents\Projects\Forma\src\Forma.Demo\bin\Debug\net10.0-windows\Forma.Demo.exe.WebView2\EBWebView\Default lastActive=2026-08-16T03:55:26.807Z
+2026-08-16 04:07:23.233: [INFO] OnDoneLoading sync enabled: 0
+2026-08-16 04:07:23.233: [INFO] BookmarkModelLoaded, ids_reassigned: 0
+2026-08-16 04:07:23.233: [INFO] BookmarksLoadDropped droppedNodes=0
+2026-08-16 04:07:23.233: [INFO] BookmarksSnapshot Startup total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-08-16 04:07:30.780: [INFO] BookmarksSnapshot Shutdown total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-08-16 04:14:33.468: [INFO] CurrentProfilePath: C:\Users\Angelzm\Documents\Projects\Forma\src\Forma.Demo\bin\Debug\net10.0-windows\Forma.Demo.exe.WebView2\EBWebView\Default
+2026-08-16 04:14:33.468: [INFO] Profiles total count: 1
+2026-08-16 04:14:33.468: [INFO] Profile: name=Profile 1 path=C:\Users\Angelzm\Documents\Projects\Forma\src\Forma.Demo\bin\Debug\net10.0-windows\Forma.Demo.exe.WebView2\EBWebView\Default lastActive=2026-08-16T04:07:29.564Z
+2026-08-16 04:14:33.468: [INFO] LastUsedProfileDir: C:\Users\Angelzm\Documents\Projects\Forma\src\Forma.Demo\bin\Debug\net10.0-windows\Forma.Demo.exe.WebView2\EBWebView\Default
+2026-08-16 04:14:33.468: [INFO] MostRecentlyActiveProfile: name=Profile 1 path=C:\Users\Angelzm\Documents\Projects\Forma\src\Forma.Demo\bin\Debug\net10.0-windows\Forma.Demo.exe.WebView2\EBWebView\Default lastActive=2026-08-16T04:07:29.564Z
+2026-08-16 04:14:33.468: [INFO] OnDoneLoading sync enabled: 0
+2026-08-16 04:14:33.468: [INFO] BookmarkModelLoaded, ids_reassigned: 0
+2026-08-16 04:14:33.468: [INFO] BookmarksLoadDropped droppedNodes=0
+2026-08-16 04:14:33.468: [INFO] BookmarksSnapshot Startup total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-08-16 04:14:37.731: [INFO] BookmarksSnapshot Shutdown total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-08-16 04:16:34.567: [INFO] CurrentProfilePath: C:\Users\Angelzm\Documents\Projects\Forma\src\Forma.Demo\bin\Debug\net10.0-windows\Forma.Demo.exe.WebView2\EBWebView\Default
+2026-08-16 04:16:34.567: [INFO] Profiles total count: 1
+2026-08-16 04:16:34.568: [INFO] Profile: name=Profile 1 path=C:\Users\Angelzm\Documents\Projects\Forma\src\Forma.Demo\bin\Debug\net10.0-windows\Forma.Demo.exe.WebView2\EBWebView\Default lastActive=2026-08-16T04:14:36.771Z
+2026-08-16 04:16:34.568: [INFO] LastUsedProfileDir: C:\Users\Angelzm\Documents\Projects\Forma\src\Forma.Demo\bin\Debug\net10.0-windows\Forma.Demo.exe.WebView2\EBWebView\Default
+2026-08-16 04:16:34.568: [INFO] MostRecentlyActiveProfile: name=Profile 1 path=C:\Users\Angelzm\Documents\Projects\Forma\src\Forma.Demo\bin\Debug\net10.0-windows\Forma.Demo.exe.WebView2\EBWebView\Default lastActive=2026-08-16T04:14:36.771Z
+2026-08-16 04:16:34.568: [INFO] OnDoneLoading sync enabled: 0
+2026-08-16 04:16:34.568: [INFO] BookmarkModelLoaded, ids_reassigned: 0
+2026-08-16 04:16:34.568: [INFO] BookmarksLoadDropped droppedNodes=0
+2026-08-16 04:16:34.568: [INFO] BookmarksSnapshot Startup total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-08-16 04:16:39.910: [INFO] BookmarksSnapshot Shutdown total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-08-16 04:24:47.357: [INFO] CurrentProfilePath: C:\Users\Angelzm\Documents\Projects\Forma\src\Forma.Demo\bin\Debug\net10.0-windows\Forma.Demo.exe.WebView2\EBWebView\Default
+2026-08-16 04:24:47.357: [INFO] Profiles total count: 1
+2026-08-16 04:24:47.357: [INFO] Profile: name=Profile 1 path=C:\Users\Angelzm\Documents\Projects\Forma\src\Forma.Demo\bin\Debug\net10.0-windows\Forma.Demo.exe.WebView2\EBWebView\Default lastActive=2026-08-16T04:16:34.725Z
+2026-08-16 04:24:47.357: [INFO] LastUsedProfileDir: C:\Users\Angelzm\Documents\Projects\Forma\src\Forma.Demo\bin\Debug\net10.0-windows\Forma.Demo.exe.WebView2\EBWebView\Default
+2026-08-16 04:24:47.357: [INFO] MostRecentlyActiveProfile: name=Profile 1 path=C:\Users\Angelzm\Documents\Projects\Forma\src\Forma.Demo\bin\Debug\net10.0-windows\Forma.Demo.exe.WebView2\EBWebView\Default lastActive=2026-08-16T04:16:34.725Z
+2026-08-16 04:24:47.357: [INFO] OnDoneLoading sync enabled: 0
+2026-08-16 04:24:47.357: [INFO] BookmarkModelLoaded, ids_reassigned: 0
+2026-08-16 04:24:47.357: [INFO] BookmarksLoadDropped droppedNodes=0
+2026-08-16 04:24:47.358: [INFO] BookmarksSnapshot Startup total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-08-16 04:26:09.090: [INFO] BookmarksSnapshot Shutdown total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-08-16 04:26:31.919: [INFO] CurrentProfilePath: C:\Users\Angelzm\Documents\Projects\Forma\src\Forma.Demo\bin\Debug\net10.0-windows\Forma.Demo.exe.WebView2\EBWebView\Default
+2026-08-16 04:26:31.919: [INFO] Profiles total count: 1
+2026-08-16 04:26:31.919: [INFO] Profile: name=Profile 1 path=C:\Users\Angelzm\Documents\Projects\Forma\src\Forma.Demo\bin\Debug\net10.0-windows\Forma.Demo.exe.WebView2\EBWebView\Default lastActive=2026-08-16T04:26:05.881Z
+2026-08-16 04:26:31.919: [INFO] LastUsedProfileDir: C:\Users\Angelzm\Documents\Projects\Forma\src\Forma.Demo\bin\Debug\net10.0-windows\Forma.Demo.exe.WebView2\EBWebView\Default
+2026-08-16 04:26:31.919: [INFO] MostRecentlyActiveProfile: name=Profile 1 path=C:\Users\Angelzm\Documents\Projects\Forma\src\Forma.Demo\bin\Debug\net10.0-windows\Forma.Demo.exe.WebView2\EBWebView\Default lastActive=2026-08-16T04:26:05.881Z
+2026-08-16 04:26:31.919: [INFO] OnDoneLoading sync enabled: 0
+2026-08-16 04:26:31.919: [INFO] BookmarkModelLoaded, ids_reassigned: 0
+2026-08-16 04:26:31.919: [INFO] BookmarksLoadDropped droppedNodes=0
+2026-08-16 04:26:31.919: [INFO] BookmarksSnapshot Startup total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-08-16 04:26:49.343: [INFO] BookmarksSnapshot Shutdown total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-08-16 04:27:01.523: [INFO] CurrentProfilePath: C:\Users\Angelzm\Documents\Projects\Forma\src\Forma.Demo\bin\Debug\net10.0-windows\Forma.Demo.exe.WebView2\EBWebView\Default
+2026-08-16 04:27:01.523: [INFO] Profiles total count: 1
+2026-08-16 04:27:01.523: [INFO] Profile: name=Profile 1 path=C:\Users\Angelzm\Documents\Projects\Forma\src\Forma.Demo\bin\Debug\net10.0-windows\Forma.Demo.exe.WebView2\EBWebView\Default lastActive=2026-08-16T04:26:44.800Z
+2026-08-16 04:27:01.523: [INFO] LastUsedProfileDir: C:\Users\Angelzm\Documents\Projects\Forma\src\Forma.Demo\bin\Debug\net10.0-windows\Forma.Demo.exe.WebView2\EBWebView\Default
+2026-08-16 04:27:01.523: [INFO] MostRecentlyActiveProfile: name=Profile 1 path=C:\Users\Angelzm\Documents\Projects\Forma\src\Forma.Demo\bin\Debug\net10.0-windows\Forma.Demo.exe.WebView2\EBWebView\Default lastActive=2026-08-16T04:26:44.800Z
+2026-08-16 04:27:01.523: [INFO] OnDoneLoading sync enabled: 0
+2026-08-16 04:27:01.523: [INFO] BookmarkModelLoaded, ids_reassigned: 0
+2026-08-16 04:27:01.523: [INFO] BookmarksLoadDropped droppedNodes=0
+2026-08-16 04:27:01.523: [INFO] BookmarksSnapshot Startup total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-08-16 04:28:58.494: [INFO] BookmarksSnapshot Shutdown total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-08-16 04:37:23.837: [INFO] CurrentProfilePath: C:\Users\Angelzm\Documents\Projects\Forma\src\Forma.Demo\bin\Debug\net10.0-windows\Forma.Demo.exe.WebView2\EBWebView\Default
+2026-08-16 04:37:23.837: [INFO] Profiles total count: 1
+2026-08-16 04:37:23.838: [INFO] Profile: name=Profile 1 path=C:\Users\Angelzm\Documents\Projects\Forma\src\Forma.Demo\bin\Debug\net10.0-windows\Forma.Demo.exe.WebView2\EBWebView\Default lastActive=2026-08-16T04:28:55.952Z
+2026-08-16 04:37:23.838: [INFO] LastUsedProfileDir: C:\Users\Angelzm\Documents\Projects\Forma\src\Forma.Demo\bin\Debug\net10.0-windows\Forma.Demo.exe.WebView2\EBWebView\Default
+2026-08-16 04:37:23.838: [INFO] MostRecentlyActiveProfile: name=Profile 1 path=C:\Users\Angelzm\Documents\Projects\Forma\src\Forma.Demo\bin\Debug\net10.0-windows\Forma.Demo.exe.WebView2\EBWebView\Default lastActive=2026-08-16T04:28:55.952Z
+2026-08-16 04:37:23.838: [INFO] OnDoneLoading sync enabled: 0
+2026-08-16 04:37:23.838: [INFO] BookmarkModelLoaded, ids_reassigned: 0
+2026-08-16 04:37:23.838: [INFO] BookmarksLoadDropped droppedNodes=0
+2026-08-16 04:37:23.838: [INFO] BookmarksSnapshot Startup total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-08-16 04:37:43.392: [INFO] BookmarksSnapshot Shutdown total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-08-16 08:10:27.205: [INFO] CurrentProfilePath: C:\Users\Angelzm\Documents\Projects\Forma\src\Forma.Demo\bin\Debug\net10.0-windows\Forma.Demo.exe.WebView2\EBWebView\Default
+2026-08-16 08:10:27.205: [INFO] Profiles total count: 1
+2026-08-16 08:10:27.206: [INFO] Profile: name=Profile 1 path=C:\Users\Angelzm\Documents\Projects\Forma\src\Forma.Demo\bin\Debug\net10.0-windows\Forma.Demo.exe.WebView2\EBWebView\Default lastActive=2026-08-16T04:37:43.231Z
+2026-08-16 08:10:27.206: [INFO] LastUsedProfileDir: C:\Users\Angelzm\Documents\Projects\Forma\src\Forma.Demo\bin\Debug\net10.0-windows\Forma.Demo.exe.WebView2\EBWebView\Default
+2026-08-16 08:10:27.206: [INFO] MostRecentlyActiveProfile: name=Profile 1 path=C:\Users\Angelzm\Documents\Projects\Forma\src\Forma.Demo\bin\Debug\net10.0-windows\Forma.Demo.exe.WebView2\EBWebView\Default lastActive=2026-08-16T04:37:43.231Z
+2026-08-16 08:10:27.206: [INFO] OnDoneLoading sync enabled: 0
+2026-08-16 08:10:27.206: [INFO] BookmarkModelLoaded, ids_reassigned: 0
+2026-08-16 08:10:27.206: [INFO] BookmarksLoadDropped droppedNodes=0
+2026-08-16 08:10:27.206: [INFO] BookmarksSnapshot Startup total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-08-16 08:11:40.446: [INFO] BookmarksSnapshot Shutdown total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-08-16 08:13:17.479: [INFO] CurrentProfilePath: C:\Users\Angelzm\Documents\Projects\Forma\src\Forma.Demo\bin\Debug\net10.0-windows\Forma.Demo.exe.WebView2\EBWebView\Default
+2026-08-16 08:13:17.479: [INFO] Profiles total count: 1
+2026-08-16 08:13:17.479: [INFO] Profile: name=Profile 1 path=C:\Users\Angelzm\Documents\Projects\Forma\src\Forma.Demo\bin\Debug\net10.0-windows\Forma.Demo.exe.WebView2\EBWebView\Default lastActive=2026-08-16T08:10:27.340Z
+2026-08-16 08:13:17.479: [INFO] LastUsedProfileDir: C:\Users\Angelzm\Documents\Projects\Forma\src\Forma.Demo\bin\Debug\net10.0-windows\Forma.Demo.exe.WebView2\EBWebView\Default
+2026-08-16 08:13:17.479: [INFO] MostRecentlyActiveProfile: name=Profile 1 path=C:\Users\Angelzm\Documents\Projects\Forma\src\Forma.Demo\bin\Debug\net10.0-windows\Forma.Demo.exe.WebView2\EBWebView\Default lastActive=2026-08-16T08:10:27.340Z
+2026-08-16 08:13:17.479: [INFO] OnDoneLoading sync enabled: 0
+2026-08-16 08:13:17.479: [INFO] BookmarkModelLoaded, ids_reassigned: 0
+2026-08-16 08:13:17.479: [INFO] BookmarksLoadDropped droppedNodes=0
+2026-08-16 08:13:17.479: [INFO] BookmarksSnapshot Startup total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-08-16 08:13:51.825: [INFO] BookmarksSnapshot Shutdown total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
