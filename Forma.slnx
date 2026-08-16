@@ -1,0 +1,7 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Forma.Core/Forma.Core.csproj" />
+    <Project Path="src/Forma.Demo/Forma.Demo.csproj" />
+    <Project Path="src/Forma.WebView2/Forma.WebView2.csproj" />
+  </Folder>
+</Solution>
