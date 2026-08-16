@@ -1,6 +1,6 @@
 namespace Forma.Core.Controls;
 
-public class Button : Control
+public sealed class Button : Control
 {
     public event EventHandler? Click;
 

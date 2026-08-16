@@ -1,0 +1,171 @@
+# ============================================
+# Forma - .gitignore
+# ============================================
+
+# --------------------------------------------
+# .NET / C#
+# --------------------------------------------
+
+# Build output
+[Bb]in/
+[Oo]bj/
+
+# Test results
+[Tt]est[Rr]esult*/
+[Bb]uild[Ll]og.*
+*.trx
+
+# Visual Studio cache / user files
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Visual Studio generated files
+*.ncb
+*.opensdf
+*.sdf
+*.cachefile
+
+# NuGet
+packages/
+*.nupkg
+*.snupkg
+.nuget/
+
+# MSBuild
+*.pidb
+*.svclog
+
+# Code coverage
+coverage/
+*.coverage
+*.coveragexml
+
+# --------------------------------------------
+# Rider / JetBrains
+# --------------------------------------------
+
+.idea/
+*.sln.iml
+
+# --------------------------------------------
+# VS Code
+# --------------------------------------------
+
+.vscode/
+
+# Keep shared VS Code configuration if you want it
+# Uncomment these if you DON'T want any VS Code files tracked:
+# .vscode/
+
+# --------------------------------------------
+# Logs
+# --------------------------------------------
+
+*.log
+logs/
+
+# --------------------------------------------
+# Temporary files
+# --------------------------------------------
+
+*.tmp
+*.temp
+*.bak
+*.swp
+*.swo
+*~
+
+# --------------------------------------------
+# OS generated files
+# --------------------------------------------
+
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+Desktop.ini
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Linux
+*~
+
+# --------------------------------------------
+# Application data
+# --------------------------------------------
+
+# Local development data
+*.db
+*.db-shm
+*.db-wal
+
+# Local settings
+appsettings.Local.json
+appsettings.*.Local.json
+
+# --------------------------------------------
+# Web / Node
+# --------------------------------------------
+
+# If we introduce npm later
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Package manager caches
+.npm/
+.yarn/
+.pnpm-store/
+
+# --------------------------------------------
+# Forma generated files
+# --------------------------------------------
+
+# Build artifacts
+/build/
+/dist/
+/release/
+
+# Temporary designer output
+/.forma-cache/
+/.forma-cache/
+
+# Generated previews
+/.preview/
+/preview/
+
+# Generated bundles
+*.bundle.js
+*.bundle.css
+
+# --------------------------------------------
+# WebView2 / Browser data
+# --------------------------------------------
+
+# Local WebView2 runtime/user data
+/webview2-data/
+/webview-data/
+/browser-data/
+
+# --------------------------------------------
+# Local development configuration
+# --------------------------------------------
+
+.env
+.env.*
+!.env.example
+
+# --------------------------------------------
+# Debug / profiling
+# --------------------------------------------
+
+*.dmp
+*.userprefs

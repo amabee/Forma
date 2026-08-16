@@ -62,10 +62,10 @@ public class Form1 : Form
             return;
         }
 
-        // 5. Create our Forma renderer
+        // Create our Forma renderer
         var renderer = new WebView2Renderer(_bridge);
 
-        // 6. Create a Forma control
+        // Create a Forma control
         var button = new Forma.Core.Controls.Button
         {
             Id = "hello",
@@ -73,10 +73,15 @@ public class Form1 : Form
             Name = "btnHello",
         };
 
-        // 7. Initialize renderer
+        button.Click += (_, _) =>
+        {
+            MessageBox.Show("HOLY FUCK! Button clicked! it works!");
+        };
+
+        // Initialize renderer
         await renderer.InitializeAsync();
 
-        // 8. Render the control
+        // Render the control
         await renderer.RenderAsync(button);
     }
 }

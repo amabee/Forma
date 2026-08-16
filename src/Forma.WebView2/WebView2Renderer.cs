@@ -7,9 +7,13 @@ public sealed class WebView2Renderer : IRenderer
 {
     private readonly IBridge _bridge;
 
+    private readonly Dictionary<string, Control> _controls = new();
+
     public WebView2Renderer(IBridge bridge)
     {
         _bridge = bridge;
+
+        _bridge.MessageReceived += OnMessageReceived;
     }
 
     public Task InitializeAsync()
@@ -19,6 +23,19 @@ public sealed class WebView2Renderer : IRenderer
 
     public Task RenderAsync(Control control)
     {
+        _controls[control.Id] = control;
+        control.PropertyChanged += async (_, _) =>
+        {
+            try
+            {
+                await UpdateAsync(control);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error updating control: {ex.Message}");
+            }
+        };
+
         return _bridge.SendAsync(
             new
             {
@@ -56,5 +73,24 @@ public sealed class WebView2Renderer : IRenderer
 
             _ => throw new NotSupportedException($"Unsupported control: {control.GetType().Name}"),
         };
+    }
+
+    private void OnMessageReceived(object? sender, BridgeMessage message)
+    {
+        if (message.Type != "event")
+            return;
+
+        if (message.Id is null)
+            return;
+
+        if (!_controls.TryGetValue(message.Id, out var control))
+        {
+            return;
+        }
+
+        if (control is Button button && message.Event == "click")
+        {
+            button.RaiseClick();
+        }
     }
 }

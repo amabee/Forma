@@ -44,6 +44,19 @@ window.forma = {
     }
 
     document.body.appendChild(element);
+
+    if (message.control === "button") {
+      element.addEventListener("click", () => {
+        window.chrome.webview.postMessage(
+          JSON.stringify({
+            type: "event",
+            id: message.id,
+            event: "click",
+            payload: {},
+          }),
+        );
+      });
+    }
   },
 
   update(message) {
