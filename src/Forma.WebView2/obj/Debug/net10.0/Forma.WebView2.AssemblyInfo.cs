@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("Forma.WebView2")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+0e12c1cef038445fe50c2906251f1386f6c16598")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+6ba0ab8c07bbab214cb4398b439ee1145e601b6f")]
 [assembly: System.Reflection.AssemblyProductAttribute("Forma.WebView2")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Forma.WebView2")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
