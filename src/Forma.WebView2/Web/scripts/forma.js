@@ -17,6 +17,12 @@ window.forma = {
     }
   },
 
+  send(message) {
+    // Posted as a structured object, not a string, so the host can read it
+    // with WebMessageAsJson.
+    window.chrome.webview.postMessage(message);
+  },
+
   create(message) {
     let element;
 
@@ -47,14 +53,12 @@ window.forma = {
 
     if (message.control === "button") {
       element.addEventListener("click", () => {
-        window.chrome.webview.postMessage(
-          JSON.stringify({
-            type: "event",
-            id: message.id,
-            event: "click",
-            payload: {},
-          }),
-        );
+        window.forma.send({
+          type: "event",
+          id: message.id,
+          event: "click",
+          payload: {},
+        });
       });
     }
   },
@@ -81,3 +85,9 @@ window.forma = {
     element?.remove();
   },
 };
+
+// The host delivers commands through PostWebMessageAsJson, which surfaces here
+// as a message event carrying the already-parsed object.
+window.chrome.webview.addEventListener("message", (event) => {
+  window.forma.receive(event.data);
+});

@@ -1,4 +1,15 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <!--
+      Targets -windows because Microsoft.Web.WebView2 ships WPF and WinForms
+      assemblies alongside the core one. On a bare net10.0 target those pull in
+      a conflicting WindowsBase and the build warns (MSB3277).
+    -->
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Forma.Core\Forma.Core.csproj" />
@@ -8,10 +19,10 @@
     <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.4129.50" />
   </ItemGroup>
 
-  <PropertyGroup>
-    <TargetFramework>net10.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
-  </PropertyGroup>
+  <ItemGroup>
+    <!-- The web runtime is part of the renderer, so it flows to any host that
+         references this project. -->
+    <Content Include="Web\**\*" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
 
 </Project>

@@ -1,7 +1,5 @@
-using System.Text.Json;
-using Forma.Core.Controls;
 using Forma.WebView2;
-using Microsoft.Web.WebView2.WinForms;
+using Microsoft.Web.WebView2.Core;
 
 namespace Forma.Demo;
 
@@ -28,20 +26,13 @@ public class Form1 : Form
     {
         await _webView.EnsureCoreWebView2Async();
 
-        _bridge = new WebView2Bridge(_webView);
-
-        _bridge.MessageReceived += (_, message) =>
-        {
-            MessageBox.Show(JsonSerializer.Serialize(message), "Forma Bridge");
-        };
-
         var htmlPath = Path.Combine(AppContext.BaseDirectory, "Web", "index.html");
 
         var navigationCompleted = new TaskCompletionSource<bool>();
 
         void OnNavigationCompleted(
             object? sender,
-            Microsoft.Web.WebView2.Core.CoreWebView2NavigationCompletedEventArgs e
+            CoreWebView2NavigationCompletedEventArgs e
         )
         {
             navigationCompleted.TrySetResult(e.IsSuccess);
@@ -61,6 +52,10 @@ public class Form1 : Form
 
             return;
         }
+
+        // Bridge is created after navigation so the page is listening before
+        // the first command is sent.
+        _bridge = new WebView2Bridge(_webView.CoreWebView2);
 
         // Create our Forma renderer
         var renderer = new WebView2Renderer(_bridge);
@@ -83,5 +78,12 @@ public class Form1 : Form
 
         // Render the control
         await renderer.RenderAsync(button);
+    }
+
+    protected override void OnFormClosed(FormClosedEventArgs e)
+    {
+        _bridge?.Dispose();
+
+        base.OnFormClosed(e);
     }
 }

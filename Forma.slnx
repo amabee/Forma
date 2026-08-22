@@ -4,4 +4,7 @@
     <Project Path="src/Forma.Demo/Forma.Demo.csproj" />
     <Project Path="src/Forma.WebView2/Forma.WebView2.csproj" />
   </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Forma.Tests/Forma.Tests.csproj" />
+  </Folder>
 </Solution>

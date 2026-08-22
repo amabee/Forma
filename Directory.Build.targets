@@ -1,0 +1,22 @@
+<Project>
+
+  <!--
+    Microsoft.Web.WebView2 adds Core.dll, WinForms.dll and Wpf.dll to every
+    managed project unconditionally (see build/Common.targets in the package).
+    The WPF assembly binds WindowsBase 5.0.0.0 while the .NET ref pack supplies
+    4.0.0.0, which produces MSB3277 on every build.
+
+    Nothing in Forma uses the WPF host, so the reference is dropped. A future
+    WPF-based host project would need to opt back in by setting
+    FormaKeepWebView2WpfReference to true.
+  -->
+  <Target Name="FormaRemoveWebView2WpfReference"
+          BeforeTargets="ResolveAssemblyReferences"
+          Condition="'$(FormaKeepWebView2WpfReference)' != 'true'">
+    <ItemGroup>
+      <Reference Remove="%(Reference.Identity)"
+                 Condition="'%(Reference.Filename)' == 'Microsoft.Web.WebView2.Wpf'" />
+    </ItemGroup>
+  </Target>
+
+</Project>
