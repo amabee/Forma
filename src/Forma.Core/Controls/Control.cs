@@ -13,6 +13,9 @@ public abstract class Control : INotifyPropertyChanged
 {
     private string _id = Guid.NewGuid().ToString();
     private string? _text;
+    private string? _value;
+    private string? _placeholder;
+    private string? label;
     private readonly List<Control> _children = [];
 
     /// <summary>
@@ -45,6 +48,58 @@ public abstract class Control : INotifyPropertyChanged
             }
         }
     }
+
+    public string? Value
+    {
+        get => _value;
+        set
+        {
+            if (_value != value)
+            {
+                _value = value;
+                OnPropertyChanged(nameof(Value));
+            }
+            else
+            {
+                return;
+            }
+        }
+    }
+
+    public string? Placeholder
+    {
+        get => _placeholder;
+        set
+        {
+            if (_placeholder != value)
+            {
+                _placeholder = value;
+                OnPropertyChanged(nameof(Placeholder));
+            }
+            else
+            {
+                return;
+            }
+        }
+    }
+
+    public string? Label
+    {
+        get => label;
+        set
+        {
+            if (label != value)
+            {
+                label = value;
+                OnPropertyChanged(nameof(Label));
+            }
+            else
+            {
+                return;
+            }
+        }
+    }
+
     /// <summary>
     /// The kind of control, as understood by a renderer.
     /// </summary>

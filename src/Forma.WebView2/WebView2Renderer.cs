@@ -179,7 +179,7 @@ public sealed class WebView2Renderer : IRenderer
 
         if (registration.Control is Button button && message.Event == "click")
         {
-            button.RaiseClick();
+            button.OnClick();
         }
     }
 }

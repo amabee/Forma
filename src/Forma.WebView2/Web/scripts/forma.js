@@ -139,3 +139,7 @@ window.forma = {
 window.chrome.webview.addEventListener("message", (event) => {
   window.forma.receive(event.data);
 });
+
+window.chrome.webview.addEventListener("load", (event) => {
+  console.log("Loaded the form succesfully");
+});
