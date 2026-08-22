@@ -40,17 +40,19 @@ public class WebView2RendererTests
     }
 
     [Fact]
-    public void RenderAsync_ThrowsForAnUnmappedControlType()
+    public async Task RenderAsync_SendsTheConventionDerivedControlType()
     {
-        var (renderer, _) = CreateRenderer();
+        var (renderer, bridge) = CreateRenderer();
 
-        // Form has no renderer mapping yet, so it must fail loudly rather than
-        // silently producing an element the web runtime cannot build.
-        Assert.Throws<NotSupportedException>(() =>
-        {
-            _ = renderer.RenderAsync(new Form { Id = "form1" });
-        });
+        // A control the renderer has never heard of still round-trips: the kind
+        // comes from the control itself, so adding a control type needs no
+        // renderer change.
+        await renderer.RenderAsync(new Gizmo { Id = "g1" });
+
+        Assert.Equal("gizmo", bridge.Single().Str("control"));
     }
+
+    private sealed class Gizmo : Control { }
 
     [Fact]
     public async Task ChangingText_SendsAnUpdateMessage()
@@ -162,11 +164,10 @@ public class WebView2RendererTests
     }
 
     // ---------------------------------------------------------------------
-    // Known defects, scheduled for M2 (control tree work). These are written
-    // out rather than left implicit so the fix has a target to turn green.
+    // Subscription lifetime
     // ---------------------------------------------------------------------
 
-    [Fact(Skip = "M2: RemoveAsync does not unsubscribe PropertyChanged or drop the control from _controls")]
+    [Fact]
     public async Task RemovedControl_NoLongerSendsUpdates()
     {
         var (renderer, bridge) = CreateRenderer();
@@ -183,7 +184,7 @@ public class WebView2RendererTests
         Assert.Empty(bridge.Sent);
     }
 
-    [Fact(Skip = "M2: RenderAsync re-subscribes PropertyChanged, so a re-render duplicates every update")]
+    [Fact]
     public async Task RenderingTwice_DoesNotDuplicateUpdates()
     {
         var (renderer, bridge) = CreateRenderer();
