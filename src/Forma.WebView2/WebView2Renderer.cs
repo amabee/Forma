@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using System.Text.Json;
 using Forma.Core.Controls;
 using Forma.Core.Rendering;
 
@@ -63,7 +64,7 @@ public sealed class WebView2Renderer : IRenderer
                 id = control.Id,
                 control = control.ControlType,
                 parentId = control.Parent?.Id,
-                properties = new { text = control.Text },
+                properties = new { text = control.Text, x = control.X, y = control.Y },
             }
         );
 
@@ -82,7 +83,7 @@ public sealed class WebView2Renderer : IRenderer
             {
                 type = "update",
                 id = control.Id,
-                properties = new { text = control.Text },
+                properties = new { text = control.Text, x = control.X, y = control.Y },
             }
         );
     }
@@ -180,6 +181,15 @@ public sealed class WebView2Renderer : IRenderer
         if (registration.Control is Button button && message.Event == "click")
         {
             button.OnClick();
+        }
+
+        if (registration.Control is TextBox textBox && message.Event == "input"
+            && message.Payload is JsonElement payload
+            && payload.ValueKind == JsonValueKind.Object
+            && payload.TryGetProperty("text", out var text)
+            && text.ValueKind == JsonValueKind.String)
+        {
+            textBox.SetText(text.GetString());
         }
     }
 }

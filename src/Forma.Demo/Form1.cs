@@ -30,10 +30,7 @@ public class Form1 : Form
 
         var navigationCompleted = new TaskCompletionSource<bool>();
 
-        void OnNavigationCompleted(
-            object? sender,
-            CoreWebView2NavigationCompletedEventArgs e
-        )
+        void OnNavigationCompleted(object? sender, CoreWebView2NavigationCompletedEventArgs e)
         {
             navigationCompleted.TrySetResult(e.IsSuccess);
         }
@@ -60,24 +57,47 @@ public class Form1 : Form
         // Create our Forma renderer
         var renderer = new WebView2Renderer(_bridge);
 
-        // Create a Forma control
+        var form = new Forma.Core.Form { Title = "Hello Forma" };
+        var panel = new Forma.Core.Controls.Panel();
+        var title = new Forma.Core.Controls.Label { Text = "My first Forma form" };
+        var nameInput = new Forma.Core.Controls.TextBox { Id = "name", Text = "" };
+        var greeting = new Forma.Core.Controls.Label { Text = "Type your name, then say hello." };
+
         var button = new Forma.Core.Controls.Button
         {
             Id = "hello",
-            Text = "Hello Forma!",
+            Text = "Say hello",
             Name = "btnHello",
         };
 
         button.Click += (_, _) =>
         {
-            MessageBox.Show("HOLY FUCK! Button clicked! it works!");
+            var name = nameInput.Text.Trim();
+
+            if (string.IsNullOrEmpty(name))
+            {
+                MessageBox.Show("Hello, friend!");
+                return;
+            }
+
+            MessageBox.Show("Hello, " + name + "!");
         };
+
+        panel.Add(title);
+        panel.Add(nameInput);
+        panel.Add(button);
+        panel.Add(greeting);
+        form.Add(panel);
+
+        // This confirms browser input reaches C# while the greeting handler
+        // above remains yours to implement.
+        nameInput.TextChanged += (_, _) => Text = $"Forma Demo — {nameInput.Text}";
 
         // Initialize renderer
         await renderer.InitializeAsync();
 
         // Render the control
-        await renderer.RenderAsync(button);
+        await renderer.RenderAsync(form);
     }
 
     protected override void OnFormClosed(FormClosedEventArgs e)

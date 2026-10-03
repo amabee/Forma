@@ -412,6 +412,28 @@ Forma/
 
 # 🧪 Current Status
 
+The current code includes a WebView2 greeting demo, a persistent control tree,
+incremental updates, Button/Label/TextBox/Panel controls, and browser input events
+that update C# TextBox state. The roadmap checkboxes below describe the broader
+plan and are not a complete inventory of the implementation.
+
+**Forma.Builder** now uses a web workspace with menus, toolbar, searchable grouped
+toolbox, centered form canvas, and appearance/layout inspector. Drag Button,
+Label, TextBox, or Panel onto the 640 × 440 form, then drag an existing control to
+move it. Selection supports text, colors, font size, dimensions, and X/Y edits.
+New Form, Delete, zoom, panel visibility, and visual Preview work. Designs live
+in memory; save/load, event binding, resizing by handles, and undo are future milestones.
+
+Run the apps from the repository root:
+
+```powershell
+dotnet run --project src/Forma.Demo
+dotnet run --project src/Forma.Builder
+```
+
+The next contributor exercise is adding CheckBox to the designer toolbox. See
+`docs/builder-first-interaction.md` for the current behavior and extension points.
+
 **Early development — architecture and foundation phase.**
 
 The immediate milestone is intentionally tiny:

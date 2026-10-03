@@ -16,6 +16,8 @@ public abstract class Control : INotifyPropertyChanged
     private string? _value;
     private string? _placeholder;
     private string? label;
+    private int? _x;
+    private int? _y;
     private readonly List<Control> _children = [];
 
     /// <summary>
@@ -32,6 +34,19 @@ public abstract class Control : INotifyPropertyChanged
     }
 
     public string? Name { get; set; }
+
+    /// <summary>Optional position within the parent; null uses normal layout.</summary>
+    public int? X
+    {
+        get => _x;
+        set { if (_x == value) return; _x = value; OnPropertyChanged(); }
+    }
+
+    public int? Y
+    {
+        get => _y;
+        set { if (_y == value) return; _y = value; OnPropertyChanged(); }
+    }
     public string? Text
     {
         get => _text;

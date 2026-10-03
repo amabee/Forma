@@ -17,3 +17,20 @@ button {
 
     cursor: pointer;
 }
+
+.forma-form > [data-forma-type="panel"] {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    width: 360px;
+    max-width: calc(100vw - 48px);
+}
+
+input {
+    padding: 12px;
+    font: inherit;
+}
+
+.forma-form, [data-forma-type="panel"] {
+    position: relative;
+}

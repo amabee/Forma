@@ -37,6 +37,10 @@ window.forma = {
         this.remove(message);
         break;
 
+      case "designer":
+        window.formaDesigner?.receive(message);
+        break;
+
       default:
         console.error("Unknown Forma command:", message.type);
     }
@@ -50,10 +54,22 @@ window.forma = {
 
   applyText(element, spec, value) {
     if (spec.text === "value") {
-      element.value = value ?? "";
+      // An input event echoes through C#. Avoid rewriting an unchanged value
+      // so typing preserves the caret and selection.
+      if (element.value !== (value ?? "")) {
+        element.value = value ?? "";
+      }
     } else if (spec.text === "content") {
       element.textContent = value ?? "";
     }
+  },
+
+  applyPosition(element, properties) {
+    if (!("x" in properties) && !("y" in properties)) return;
+    const positioned = Number.isFinite(properties.x) || Number.isFinite(properties.y);
+    element.style.position = positioned ? "absolute" : "";
+    element.style.left = Number.isFinite(properties.x) ? `${properties.x}px` : "";
+    element.style.top = Number.isFinite(properties.y) ? `${properties.y}px` : "";
   },
 
   create(message) {
@@ -96,6 +112,7 @@ window.forma = {
     }
 
     parent.appendChild(element);
+    this.applyPosition(element, properties);
 
     if (message.control === "button") {
       element.addEventListener("click", () => {
@@ -104,6 +121,17 @@ window.forma = {
           id: message.id,
           event: "click",
           payload: {},
+        });
+      });
+    }
+
+    if (message.control === "textbox") {
+      element.addEventListener("input", () => {
+        window.forma.send({
+          type: "event",
+          id: message.id,
+          event: "input",
+          payload: { text: element.value },
         });
       });
     }
@@ -123,6 +151,7 @@ window.forma = {
     if ("text" in properties) {
       this.applyText(element, spec, properties.text);
     }
+    this.applyPosition(element, properties);
   },
 
   remove(message) {
