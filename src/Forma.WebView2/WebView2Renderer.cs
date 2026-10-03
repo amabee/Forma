@@ -100,6 +100,8 @@ public sealed class WebView2Renderer : IRenderer
         if (control is LinkLabel link) { properties["url"] = link.Url; properties["visited"] = link.Visited; }
         if (control is MaskedTextBox masked) properties["mask"] = masked.Mask;
         if (control is CheckedListBox checkedList) { properties["items"] = checkedList.Items; properties["checkedIndices"] = checkedList.CheckedIndices; }
+        if (control is TreeView tree) { properties["nodes"] = tree.Nodes; properties["selectedNode"] = tree.SelectedNode; properties["expandedNodes"] = tree.ExpandedNodes; }
+        if (control is Pagination pages) { properties["page"] = pages.Page; properties["pageCount"] = pages.PageCount; }
         if (control is RichTextBox rich) {
             properties["document"] = rich.Document.Select(b => new { kind = b.Kind, runs = b.Runs!.Select(r => new { text = r.Text, bold = r.Bold, italic = r.Italic, underline = r.Underline }).ToArray() }).ToArray();
             properties["readOnly"] = rich.ReadOnly;
@@ -220,6 +222,11 @@ public sealed class WebView2Renderer : IRenderer
         }
         if (registration.Control is LinkLabel link && message.Event == "link") link.OnLinkClicked();
         if (message.Payload is not JsonElement data || data.ValueKind != JsonValueKind.Object) return;
+        if (registration.Control is TreeView tree) {
+            if (message.Event == "tree-select" && data.TryGetProperty("node", out var node) && node.ValueKind == JsonValueKind.String) tree.SelectedNode = node.GetString()!;
+            if (message.Event == "tree-expand" && data.TryGetProperty("node", out var branch) && branch.ValueKind == JsonValueKind.String && data.TryGetProperty("expanded", out var expanded) && expanded.ValueKind is JsonValueKind.True or JsonValueKind.False) tree.SetExpanded(branch.GetString()!, expanded.GetBoolean());
+        }
+        if (registration.Control is Pagination pages && message.Event == "page" && data.TryGetProperty("page", out var page) && page.ValueKind == JsonValueKind.Number && page.TryGetInt32(out var numberPage)) pages.Page = numberPage;
         if (registration.Control is RichTextBox rich && !rich.ReadOnly && message.Event == "rich-input" && data.TryGetProperty("document", out var document)) {
             try { rich.Document = document.Deserialize<RichBlock[]>(new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? []; }
             catch (Exception error) when (error is JsonException or ArgumentException) { /* Reject malformed editor messages. */ }

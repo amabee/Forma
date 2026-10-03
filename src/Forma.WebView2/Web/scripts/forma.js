@@ -5,6 +5,9 @@
 //   "value"   - written to the value property (form fields)
 //   "none"    - ignored, so containers never overwrite their own children
 const CONTROL_TYPES = {
+  listview: { tag: "select", text: "none", init: el => { el.size = 6; } },
+  treeview: { tag: "div", text: "none" },
+  pagination: { tag: "div", text: "none" },
   button: { tag: "button", text: "content" },
   linklabel: { tag: "a", text: "content" },
   maskedtextbox: { tag: "input", text: "value", init: el => { el.type = "text"; } },
@@ -152,6 +155,7 @@ function initRichText(el) {
     button.addEventListener("click", () => { if (editor.contentEditable === "true" && formatRichSelection(editor, key)) publishRichText(el, true); }); toolbar.appendChild(button);
   }
   editor.addEventListener("input", () => { if (editor.contentEditable === "true") publishRichText(el); });
+  editor.addEventListener("drop", event => event.preventDefault());
   editor.addEventListener("paste", event => {
     if (editor.contentEditable !== "true") return;
     event.preventDefault(); const selection = window.getSelection(); if (!selection?.rangeCount) return;
@@ -231,6 +235,34 @@ window.forma = {
 
   applyData(element, properties) {
     const kind = element.dataset.formaType;
+    if (kind === "treeview") {
+      const expanded = new Set(properties.expandedNodes ?? []);
+      function branch(nodes) {
+        const list = document.createElement("ul"); list.setAttribute("role", "group");
+        for (const node of nodes) {
+          const id = node.Id ?? node.id, text = node.Text ?? node.text, children = node.Children ?? node.children ?? [];
+          const li = document.createElement("li"), row = document.createElement("div"); row.className = "tree-row";
+          if (children.length) {
+            const toggle = document.createElement("button"); toggle.textContent = expanded.has(id) ? '-' : '+'; toggle.setAttribute("aria-label", `Expand or collapse ${text}`); toggle.setAttribute("aria-expanded", String(expanded.has(id)));
+            toggle.addEventListener("click", () => window.forma.send({ type: "event", id: element.id, event: "tree-expand", payload: { node: id, expanded: !expanded.has(id) } })); row.appendChild(toggle);
+          }
+          const select = document.createElement("button"); select.textContent = text; select.className = properties.selectedNode === id ? "tree-selected" : ""; select.setAttribute("aria-pressed", String(properties.selectedNode === id));
+          select.addEventListener("click", () => window.forma.send({ type: "event", id: element.id, event: "tree-select", payload: { node: id } }));
+          row.appendChild(select); li.appendChild(row); if (children.length && expanded.has(id)) li.appendChild(branch(children)); list.appendChild(li);
+        }
+        return list;
+      }
+      element.replaceChildren(branch(properties.nodes ?? []));
+    }
+    if (kind === "pagination") {
+      const page = properties.page ?? 1, count = properties.pageCount ?? 1;
+      const previous = document.createElement("button"), next = document.createElement("button"), label = document.createElement("span");
+      previous.textContent = 'Previous'; next.textContent = 'Next'; label.textContent = `${page} / ${count}`;
+      previous.dataset.boundary = String(page <= 1); next.dataset.boundary = String(page >= count);
+      previous.disabled = page <= 1; next.disabled = page >= count;
+      for (const [button, target] of [[previous, page - 1], [next, page + 1]]) button.addEventListener("click", () => window.forma.send({ type: "event", id: element.id, event: "page", payload: { page: target } }));
+      element.replaceChildren(previous, label, next);
+    }
     if (kind === "richtextbox") {
       const blocks = properties.document ?? [], signature = JSON.stringify(blocks), editor = element.querySelector(".rich-content");
       if (element.dataset.richDocument !== signature) {
@@ -290,7 +322,7 @@ window.forma = {
       const input = element.querySelector("input"); input.checked = properties.checked ?? false;
       if (kind === "radiobutton") input.name = `forma-radio-${parent?.id}`;
     }
-    if (kind === "combobox" || kind === "listbox") {
+    if (["combobox", "listbox", "listview"].includes(kind)) {
       if (properties.items) element.replaceChildren(...properties.items.map(text => {
         const option = document.createElement("option"); option.textContent = text; return option;
       }));
@@ -447,7 +479,7 @@ window.forma = {
         if (numeric && !Number.isFinite(value)) return;
         window.forma.send({ type: "event", id: element.id, event: "value", payload: { value } });
       });
-    if (message.control === "combobox" || message.control === "listbox") element.addEventListener("change", () =>
+    if (["combobox", "listbox", "listview"].includes(message.control)) element.addEventListener("change", () =>
       window.forma.send({ type: "event", id: element.id, event: "selection", payload: { selectedIndex: element.selectedIndex } }));
   },
 

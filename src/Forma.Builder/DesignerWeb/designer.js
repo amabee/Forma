@@ -1,5 +1,6 @@
 // The web workspace presents the design; C# owns controls and committed properties.
 const supportedKinds = new Set([
+ "listview", "treeview", "pagination",
   "richtextbox", "picturebox",
   "linklabel", "maskedtextbox", "checkedlistbox",
   "numericupdown",
@@ -269,7 +270,6 @@ window.formaDesigner = {
       this.state = message;
       document.querySelectorAll('[data-command="undo"]').forEach(button => { button.disabled = !message.canUndo; });
       document.querySelectorAll('[data-command="redo"]').forEach(button => { button.disabled = !message.canRedo; });
-      this.selectedId = message.selectedId;
       this.root()?.setAttribute("aria-label", message.title);
       for (const name of ["canvas-title", "form-name"])
         if (byId(name)) byId(name).textContent = message.title;
@@ -280,6 +280,14 @@ window.formaDesigner = {
     }
   },
   select(id) {
+    if (id !== this.selectedId) {
+      const previous = byId(this.selectedId);
+      if (previous?.dataset.formaType === "richtextbox") {
+        previous.dataset.editing = "false";
+        previous.querySelector(".rich-content").contentEditable = "false";
+        previous.querySelectorAll("[data-rich-format]").forEach(button => { button.disabled = true; });
+      }
+    }
     this.selectedId = id;
     document
       .querySelectorAll(".forma-selected")
@@ -417,6 +425,7 @@ window.formaDesigner = {
         (this.preview && !item.visible) ||
         (parent?.kind === "tabcontrol" &&
           item.layoutSlot !== parent.selectedTab + 1);
+      if (["treeview", "pagination"].includes(item.kind)) el.querySelectorAll("button").forEach(button => { button.disabled = (this.preview && !item.enabled) || button.dataset.boundary === "true"; });
       if (item.kind === "richtextbox") {
         const editing = this.preview || el.dataset.editing === "true";
         const allowed = editing && !item.readOnly && (this.preview ? item.enabled : !item.locked);
@@ -432,7 +441,7 @@ window.formaDesigner = {
           field.contentEditable =
             this.preview && item.enabled && !item.readOnly ? "true" : "false";
       }
-      if (["combobox", "listbox"].includes(item.kind))
+      if (["combobox", "listbox", "listview"].includes(item.kind))
         el.disabled = this.preview && !item.enabled;
       if (["button", "textbox", "maskedtextbox", "searchbox", "passwordbox", "textarea", "numericupdown", "slider", "datepicker", "timepicker", "datetimepicker", "colorpicker", "togglebutton"].includes(item.kind))
         el.disabled = this.preview && !item.enabled;

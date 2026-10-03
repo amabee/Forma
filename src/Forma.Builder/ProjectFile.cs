@@ -32,13 +32,13 @@ public static class ProjectFile
         typeof(C.CheckBox), typeof(C.RadioButton), typeof(C.ComboBox), typeof(C.ListBox), typeof(C.Image), typeof(C.DataGridView),
         typeof(Forma.Core.Controls.Timer), typeof(C.BackgroundWorker), typeof(C.NumericUpDown), typeof(C.Slider),
         typeof(C.ProgressBar), typeof(C.CircularProgress), typeof(C.ToggleSwitch), typeof(C.ToggleButton), typeof(C.DatePicker),
-        typeof(C.TimePicker), typeof(C.DateTimePicker), typeof(C.ColorPicker), typeof(C.SearchBox), typeof(C.PasswordBox), typeof(C.TextArea), typeof(C.LinkLabel), typeof(C.MaskedTextBox), typeof(C.CheckedListBox), typeof(C.RichTextBox), typeof(C.PictureBox)
+        typeof(C.TimePicker), typeof(C.DateTimePicker), typeof(C.ColorPicker), typeof(C.SearchBox), typeof(C.PasswordBox), typeof(C.TextArea), typeof(C.LinkLabel), typeof(C.MaskedTextBox), typeof(C.CheckedListBox), typeof(C.RichTextBox), typeof(C.PictureBox), typeof(C.ListView), typeof(C.TreeView), typeof(C.Pagination)
     }.ToDictionary(t => t.Name.ToLowerInvariant());
     private static readonly HashSet<string> PropertyNames = new(StringComparer.Ordinal) {
         "Name", "Text", "Value", "Placeholder", "Label", "X", "Y", "LayoutSlot", "Title", "Width", "Height",
         "Checked", "Items", "SelectedIndex", "Source", "SizeMode", "Orientation", "Gap", "Columns", "Tabs", "SelectedTab",
         "Rows", "ReadOnly", "Password", "Multiline", "SpellCheck", "MaxLength", "MinLength", "Interval",
-        "Document", "Url", "Visited", "Mask", "CheckedIndices", "WorkerReportsProgress", "WorkerSupportsCancellation", "Minimum", "Maximum", "Increment", "DateValue", "Color"
+        "Nodes", "SelectedNode", "ExpandedNodes", "TotalItems", "PageSize", "Page", "Document", "Url", "Visited", "Mask", "CheckedIndices", "WorkerReportsProgress", "WorkerSupportsCancellation", "Minimum", "Maximum", "Increment", "DateValue", "Color"
     };
     private static IEnumerable<PropertyInfo> Properties(Type type) => type.GetProperties()
         .Where(p => p.CanRead && p.SetMethod?.IsPublic == true && PropertyNames.Contains(p.Name))
@@ -92,7 +92,7 @@ public static class ProjectFile
                 numeric.Minimum = Math.Min(0, minimum); numeric.Maximum = maximum; numeric.Minimum = minimum;
             }
             // Bounds and item collections must be restored before their selected values.
-            var ordered = Properties(control.GetType()).Where(p => control is not C.NumericControl || p.Name is not ("Minimum" or "Maximum")).OrderBy(p => p.Name is "Value" or "SelectedIndex" or "SelectedTab" or "CheckedIndices" or "Document" ? 1 : 0);
+            var ordered = Properties(control.GetType()).Where(p => control is not C.NumericControl || p.Name is not ("Minimum" or "Maximum")).OrderBy(p => p.Name is "Value" or "SelectedIndex" or "SelectedTab" or "CheckedIndices" or "Document" or "SelectedNode" or "ExpandedNodes" or "Page" ? 1 : 0);
             foreach (var property in ordered) if (node.Properties.TryGetValue(property.Name, out var value)) {
                 try { property.SetValue(control, value.Deserialize(property.PropertyType)); }
                 catch (Exception error) when (error is JsonException or TargetInvocationException or ArgumentException) { throw new InvalidDataException($"Invalid {node.Kind}.{property.Name}.", error); }

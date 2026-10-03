@@ -355,6 +355,9 @@ public sealed class BuilderWindow : System.Windows.Forms.Form
             "label" => new Forma.Core.Controls.Label { Text = "Welcome to Forma" },
             "linklabel" => new Forma.Core.Controls.LinkLabel { Text = "Visit website" },
             "maskedtextbox" => new Forma.Core.Controls.MaskedTextBox(),
+            "listview" => new Forma.Core.Controls.ListView(),
+            "treeview" => new Forma.Core.Controls.TreeView(),
+            "pagination" => new Forma.Core.Controls.Pagination(),
             "checkedlistbox" => new Forma.Core.Controls.CheckedListBox(),
             "textbox" => new Forma.Core.Controls.TextBox { Text = "" },
             "panel" => new Forma.Core.Controls.Panel(),
@@ -436,7 +439,7 @@ public sealed class BuilderWindow : System.Windows.Forms.Form
                 ForeColor = "#1f2937",
                 BackColor = "#ffffff",
             },
-            "listbox" or "checkedlistbox" or "richtextbox" or "textarea" or "circularprogress" => new Appearance
+            "listbox" or "listview" or "treeview" or "checkedlistbox" or "richtextbox" or "textarea" or "circularprogress" => new Appearance
             {
                 Width = 180,
                 Height = 140,
@@ -475,6 +478,9 @@ public sealed class BuilderWindow : System.Windows.Forms.Form
             : 10;
         if (control is Forma.Core.Controls.CircularProgress) { _appearance[control.Id].Width = 120; _appearance[control.Id].Height = 120; _appearance[control.Id].BorderRadius = 100; }
         if (control is Forma.Core.Controls.LinkLabel) { _appearance[control.Id].Width = 180; _appearance[control.Id].ForeColor = "#2563eb"; _appearance[control.Id].BackColor = "#ffffff"; _appearance[control.Id].BorderWidth = 0; _appearance[control.Id].Cursor = "pointer"; }
+        if (control is Forma.Core.Controls.RichTextBox) { _appearance[control.Id].Width = 320; _appearance[control.Id].Height = 180; }
+        if (control is Forma.Core.Controls.TreeView) { _appearance[control.Id].Width = 260; _appearance[control.Id].Height = 200; }
+        if (control is Forma.Core.Controls.Pagination) { _appearance[control.Id].Width = 300; _appearance[control.Id].Height = 40; _appearance[control.Id].ForeColor = "#1f2937"; _appearance[control.Id].BackColor = "#ffffff"; }
         if (control is Forma.Core.Controls.MaskedTextBox) _appearance[control.Id].Placeholder = "000-0000";
         if (control is Forma.Core.Controls.SearchBox) _appearance[control.Id].Placeholder = "Search...";
         if (control is Forma.Core.Controls.PasswordBox) _appearance[control.Id].Placeholder = "Password";
@@ -598,6 +604,16 @@ public sealed class BuilderWindow : System.Windows.Forms.Form
             if (property == "text" && text is not null) rich.SetPlainText(text);
             if (property == "document" && text is not null) rich.Document = JsonSerializer.Deserialize<Forma.Core.Controls.RichBlock[]>(text, new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? [];
             if (property == "readOnly") rich.ReadOnly = Boolean(payload, "value", rich.ReadOnly);
+        }
+        if (control is Forma.Core.Controls.TreeView tree) {
+            if (property == "nodes" && text is not null) tree.Nodes = JsonSerializer.Deserialize<Forma.Core.Controls.TreeNode[]>(text, new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? [];
+            if (property == "selectedNode" && text is not null) tree.SelectedNode = text;
+            if (property == "expandedNodes" && text is not null) tree.ExpandedNodes = text.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
+        }
+        if (control is Forma.Core.Controls.Pagination pages && number is int pageNumber) {
+            if (property == "totalItems") pages.TotalItems = pageNumber;
+            if (property == "pageSize") pages.PageSize = pageNumber;
+            if (property == "page") pages.Page = pageNumber;
         }
         switch (property)
         {
@@ -957,6 +973,12 @@ public sealed class BuilderWindow : System.Windows.Forms.Form
                         layoutSlot = c.LayoutSlot,
                         component = c is Forma.Core.Controls.Component,
                         @checked = (c as Forma.Core.Controls.CheckBox)?.Checked ?? false,
+                        nodes = c is Forma.Core.Controls.TreeView tree ? JsonSerializer.Serialize(tree.Nodes) : "[]",
+                        selectedNode = (c as Forma.Core.Controls.TreeView)?.SelectedNode ?? "",
+                        expandedNodes = c is Forma.Core.Controls.TreeView branches ? string.Join(", ", branches.ExpandedNodes) : "",
+                        totalItems = (c as Forma.Core.Controls.Pagination)?.TotalItems ?? 0,
+                        pageSize = (c as Forma.Core.Controls.Pagination)?.PageSize ?? 10,
+                        page = (c as Forma.Core.Controls.Pagination)?.Page ?? 1,
                         document = c is Forma.Core.Controls.RichTextBox rich ? JsonSerializer.Serialize(rich.Document) : "[]",
                         url = (c as Forma.Core.Controls.LinkLabel)?.Url ?? "",
                         mask = (c as Forma.Core.Controls.MaskedTextBox)?.Mask ?? "",

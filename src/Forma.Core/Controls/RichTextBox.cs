@@ -8,7 +8,8 @@ public sealed class RichTextBox : Control
 {
     private RichBlock[] _document = [new("paragraph", [new("Write something...")])];
     private bool _readOnly;
-    public RichTextBox() => Text = "Write something...";
+    public RichTextBox() => base.Text = "Write something...";
+    public override string? Text { get => base.Text; set => SetPlainText(value ?? ""); }
     public RichBlock[] Document
     {
         get => _document.Select(b => b with { Runs = (RichRun[])b.Runs!.Clone() }).ToArray();
@@ -19,7 +20,7 @@ public sealed class RichTextBox : Control
                 throw new ArgumentException("Invalid rich text document or document limit exceeded.");
             var next = value.Select(b => new RichBlock(b.Kind is "bullet" or "number" ? b.Kind : "paragraph", (RichRun[])b.Runs!.Clone())).ToArray();
             if (_document.SequenceEqual(next)) return;
-            SetProperty(ref _document, next); Text = string.Join("\n", next.Select(b => string.Concat(b.Runs!.Select(r => r.Text))));
+            SetProperty(ref _document, next); base.Text = string.Join("\n", next.Select(b => string.Concat(b.Runs!.Select(r => r.Text))));
             TextChanged?.Invoke(this, EventArgs.Empty);
         }
     }

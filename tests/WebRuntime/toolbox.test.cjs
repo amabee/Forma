@@ -4,6 +4,18 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { JSDOM } = require('../../src/Forma.Builder/Frontend/node_modules/jsdom');
 const base = path.join(__dirname, '../..');
+test('data widgets emit selection, expansion and page events with boundary buttons', () => {
+  const { window, document, messages, create } = fixture(); window.formaDesigner.preview = true;
+  create('tree', 'treeview', 'root', { nodes: [{ Id: 'a', Text: 'Parent', Children: [{ Id: 'b', Text: 'Child' }] }], expandedNodes: ['a'] });
+  const tree = document.getElementById('tree'); tree.querySelectorAll('button')[2].click();
+  assert.equal(messages.at(-1).payload.node, 'b'); assert.equal(messages.at(-1).event, 'tree-select');
+  tree.querySelector('button').click(); assert.equal(messages.at(-1).payload.expanded, false);
+  create('pages', 'pagination', 'root', { page: 1, pageCount: 3 });
+  const buttons = document.getElementById('pages').querySelectorAll('button');
+  assert.equal(buttons[0].disabled, true); buttons[1].click(); assert.equal(messages.at(-1).payload.page, 2);
+  create('list', 'listview', 'root', { items: ['A', 'B'], selectedIndex: 1 });
+  assert.equal(document.getElementById('list').selectedIndex, 1);
+});
 test('rich formatting toggles selected runs and preserves selection without inserting HTML', () => {
   const { window, document, messages, create } = fixture();
   create('rich', 'richtextbox', 'root', { document: [{ kind: 'paragraph', runs: [{ text: '<script>text</script>', bold: false, italic: false, underline: false }] }] });

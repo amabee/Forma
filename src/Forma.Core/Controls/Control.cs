@@ -50,7 +50,7 @@ public abstract class Control : INotifyPropertyChanged
         get => _y;
         set { if (_y == value) return; _y = value; OnPropertyChanged(); }
     }
-    public string? Text
+    public virtual string? Text
     {
         get => _text;
         set

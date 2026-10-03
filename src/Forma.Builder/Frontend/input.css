@@ -36,26 +36,85 @@
   }
 }
 @layer components {
-  .forma-form [data-forma-type=richtextbox] { @apply flex flex-col overflow-hidden; }
-  .rich-toolbar { @apply flex shrink-0 flex-wrap gap-1 border-b border-slate-200 pb-1; }
-  .forma-form .rich-toolbar button { @apply h-6 rounded border border-slate-200 bg-slate-50 px-1.5 text-[11px] font-normal text-slate-800; }
-  .rich-content { @apply min-h-0 flex-1 overflow-auto whitespace-pre-wrap p-2 text-left; counter-reset: rich-list; }
-  .rich-content[contenteditable=true] { @apply cursor-text select-text; }
-  .rich-content p { @apply min-h-[1.5em]; }
-  .rich-content [data-kind=bullet]::before { content: "• "; }
-  .rich-content [data-kind=number] { counter-increment: rich-list; }
-  .rich-content [data-kind=number]::before { content: counter(rich-list) ". "; }
-  .forma-form [data-forma-type=linklabel] { @apply flex items-center underline; }
-  .forma-form [data-forma-type=checkedlistbox] { @apply overflow-auto; }
-  .forma-form [data-forma-type=checkedlistbox] label { @apply flex items-center gap-2 py-1 text-left; }
-  .forma-form textarea { @apply resize-none rounded border border-slate-300 p-2; }
-  .forma-form progress { @apply accent-blue-500; }
-  .forma-form [type=range] { @apply accent-blue-500; }
-  .forma-form [data-forma-type=circularprogress] { @apply grid place-items-center rounded-full font-semibold; background: conic-gradient(#2878ff var(--progress, 0deg), #e2e8f0 0); }
-  .forma-form [data-forma-type=toggleswitch] { @apply flex items-center gap-2; }
-  .forma-form [data-forma-type=toggleswitch] input { @apply h-[18px] w-[33px] appearance-none rounded-full border-0 bg-slate-300 p-0; background-image: radial-gradient(circle at 9px 9px, white 6px, transparent 7px); }
-  .forma-form [data-forma-type=toggleswitch] input:checked { @apply bg-blue-500; background-image: radial-gradient(circle at 24px 9px, white 6px, transparent 7px); }
-  .forma-form .toggle-active { @apply ring-2 ring-blue-700 ring-offset-2; }
+  .forma-form [data-forma-type=treeview] { @apply overflow-auto text-left; }
+  .forma-form [data-forma-type=treeview] ul { @apply list-none pl-3; }
+  .tree-row { @apply flex items-center gap-1; }
+  .forma-form .tree-row button { @apply rounded border-0 bg-transparent px-1 py-0.5 text-left font-normal; }
+  .forma-form .tree-row .tree-selected { @apply bg-blue-100 text-blue-700; }
+  .forma-form [data-forma-type=pagination] { @apply flex items-center justify-between gap-2; }
+  .forma-form [data-forma-type=pagination] button { @apply border-slate-300 bg-slate-50 px-2 text-slate-800; }
+  .forma-form [data-forma-type="richtextbox"] {
+    @apply flex flex-col overflow-hidden;
+  }
+  .rich-toolbar {
+    @apply flex shrink-0 flex-wrap gap-1 border-b border-slate-200 pb-1;
+  }
+  .forma-form .rich-toolbar button {
+    @apply h-6 rounded border border-slate-200 bg-slate-50 px-1.5 text-[11px] font-normal text-slate-800;
+  }
+  .rich-content {
+    @apply min-h-0 flex-1 overflow-auto whitespace-pre-wrap p-2 text-left;
+    counter-reset: rich-list;
+  }
+  .rich-content[contenteditable="true"] {
+    @apply cursor-text select-text;
+  }
+  .rich-content p {
+    @apply min-h-[1.5em];
+  }
+  .rich-content [data-kind="bullet"]::before {
+    content: "• ";
+  }
+  .rich-content [data-kind="number"] {
+    counter-increment: rich-list;
+  }
+  .rich-content [data-kind="number"]::before {
+    content: counter(rich-list) ". ";
+  }
+  .forma-form [data-forma-type="linklabel"] {
+    @apply flex items-center underline;
+  }
+  .forma-form [data-forma-type="checkedlistbox"] {
+    @apply overflow-auto;
+  }
+  .forma-form [data-forma-type="checkedlistbox"] label {
+    @apply flex items-center gap-2 py-1 text-left;
+  }
+  .forma-form textarea {
+    @apply resize-none rounded border border-slate-300 p-2;
+  }
+  .forma-form progress {
+    @apply accent-blue-500;
+  }
+  .forma-form [type="range"] {
+    @apply accent-blue-500;
+  }
+  .forma-form [data-forma-type="circularprogress"] {
+    @apply grid place-items-center rounded-full font-semibold;
+    background: conic-gradient(#2878ff var(--progress, 0deg), #e2e8f0 0);
+  }
+  .forma-form [data-forma-type="toggleswitch"] {
+    @apply flex items-center gap-2;
+  }
+  .forma-form [data-forma-type="toggleswitch"] input {
+    @apply h-[18px] w-[33px] appearance-none rounded-full border-0 bg-slate-300 p-0;
+    background-image: radial-gradient(
+      circle at 9px 9px,
+      white 6px,
+      transparent 7px
+    );
+  }
+  .forma-form [data-forma-type="toggleswitch"] input:checked {
+    @apply bg-blue-500;
+    background-image: radial-gradient(
+      circle at 24px 9px,
+      white 6px,
+      transparent 7px
+    );
+  }
+  .forma-form .toggle-active {
+    @apply ring-2 ring-blue-700 ring-offset-2;
+  }
   .menubar {
     @apply flex h-[30px] gap-0.5 bg-white px-3;
   }
@@ -306,7 +365,7 @@
     @apply flex flex-wrap gap-2 py-2;
   }
   .property-actions button {
-    @apply rounded border border-slate-300 bg-white px-4 py-2 text-xs hover:bg-blue-50 ;
+    @apply rounded border border-slate-300 bg-white px-4 py-2 text-xs hover:bg-blue-50;
   }
   .snap-guide {
     @apply pointer-events-none absolute border-blue-500;

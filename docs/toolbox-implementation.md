@@ -102,3 +102,17 @@ bypass snapping. Release, Escape, or cancellation clears the guides.
 Containers start behind regular controls regardless of insertion order.
 Use Bring to front / Send to back in Properties for sibling layer order;
 Advanced Z-index can also adjust the order. Layer actions work within a parent.
+
+## Data widgets
+
+ListView is currently a single-selection list using Items and Selected index;
+columns, icons, and alternate views are future enhancements.
+TreeView uses Nodes JSON with Id, Text, and Children. IDs must be unique;
+Selected node ID and comma-separated Expanded node IDs are editable properties.
+Preview exposes native buttons for selection and expand/collapse. Application
+code uses SelectedNodeChanged and SetExpanded. Node trees are copied and validated
+(up to 2,000 nodes and 24 nesting levels).
+Pagination exposes Total items, Page size, and a one-based Page. Previous/Next
+buttons honor page boundaries. Application code uses PageChanged to update its
+own data display; Pagination does not automatically filter another control.
+These widgets retain configuration in Save/Open and design Undo/Redo.

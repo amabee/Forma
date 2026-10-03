@@ -130,6 +130,12 @@ public static class InspectorCatalog
         new("dateValue", "Value", "Behavior", "time", Kind: "timepicker"),
         new("dateValue", "Value", "Behavior", "datetime-local", Kind: "datetimepicker"),
         new("color", "Selected color", "Behavior", "color", Kind: "colorpicker"),
+        new("nodes", "Nodes (JSON)", "General", "textarea", Kind: "treeview"),
+        new("selectedNode", "Selected node ID", "Behavior", Kind: "treeview"),
+        new("expandedNodes", "Expanded node IDs", "Behavior", Kind: "treeview"),
+        new("totalItems", "Total items", "Behavior", "number", 0, 2147483647, Kind: "pagination"),
+        new("pageSize", "Page size", "Behavior", "number", 1, 10000, Kind: "pagination"),
+        new("page", "Page", "Behavior", "number", 1, 2147483647, Kind: "pagination"),
         new("document", "Rich document (JSON)", "Advanced", "textarea", Kind: "richtextbox"),
         new("readOnly", "Read only", "Behavior", "checkbox", Kind: "richtextbox"),
         new("url", "URL", "Behavior", Kind: "linklabel"),
@@ -137,7 +143,7 @@ public static class InspectorCatalog
         new("maskCompleted", "Complete", "Behavior", "checkbox", Kind: "maskedtextbox", ReadOnly: true),
         new("checkedIndices", "Checked indices", "Behavior", Kind: "checkedlistbox"),
         new("checked", "Checked", "Behavior", "checkbox", Kind: "checkbox,radiobutton,toggleswitch,togglebutton"),
-        new("items", "Items (one per line)", "General", "textarea", Kind: "combobox,listbox,checkedlistbox"),
+        new("items", "Items (one per line)", "General", "textarea", Kind: "combobox,listbox,listview,checkedlistbox"),
         new(
             "selectedIndex",
             "Selected index",
@@ -145,7 +151,7 @@ public static class InspectorCatalog
             "number",
             -1,
             10000,
-            Kind: "combobox,listbox"
+            Kind: "combobox,listbox,listview"
         ),
         new("source", "Image source", "General", Kind: "image,picturebox", ReadOnly: true),
         new(
