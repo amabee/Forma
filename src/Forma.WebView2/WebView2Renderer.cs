@@ -64,7 +64,7 @@ public sealed class WebView2Renderer : IRenderer
                 id = control.Id,
                 control = control.ControlType,
                 parentId = control.Parent?.Id,
-                properties = new { text = control.Text, x = control.X, y = control.Y },
+                properties = Properties(control),
             }
         );
 
@@ -83,9 +83,35 @@ public sealed class WebView2Renderer : IRenderer
             {
                 type = "update",
                 id = control.Id,
-                properties = new { text = control.Text, x = control.X, y = control.Y },
+                properties = Properties(control),
             }
         );
+    }
+
+    private static Dictionary<string, object?> Properties(Control control)
+    {
+        var properties = new Dictionary<string, object?> { ["text"] = control.Text, ["x"] = control.X, ["y"] = control.Y, ["layoutSlot"] = control.LayoutSlot };
+        if (control is CheckBox check) properties["checked"] = check.Checked;
+        if (control is NumericControl numeric) { properties["minimum"] = numeric.Minimum; properties["maximum"] = numeric.Maximum; properties["increment"] = numeric.Increment; properties["number"] = numeric.Value; }
+        if (control is DateTimeInput date) properties["dateValue"] = date.DateValue;
+        if (control is ColorPicker color) properties["color"] = color.Color;
+        if (control is TextBox input) { properties["password"] = input.Password; properties["placeholder"] = input.Placeholder; }
+        if (control is ChoiceControl choice) { properties["items"] = choice.Items; properties["selectedIndex"] = choice.SelectedIndex; }
+        if (control is LinkLabel link) { properties["url"] = link.Url; properties["visited"] = link.Visited; }
+        if (control is MaskedTextBox masked) properties["mask"] = masked.Mask;
+        if (control is CheckedListBox checkedList) { properties["items"] = checkedList.Items; properties["checkedIndices"] = checkedList.CheckedIndices; }
+        if (control is RichTextBox rich) {
+            properties["document"] = rich.Document.Select(b => new { kind = b.Kind, runs = b.Runs!.Select(r => new { text = r.Text, bold = r.Bold, italic = r.Italic, underline = r.Underline }).ToArray() }).ToArray();
+            properties["readOnly"] = rich.ReadOnly;
+        }
+        if (control is Forma.Core.Controls.Image image) { properties["source"] = image.Source; properties["sizeMode"] = image.SizeMode; }
+        if (control is LayoutContainer layout)
+        {
+            properties["orientation"] = layout.Orientation; properties["gap"] = layout.Gap;
+            properties["columns"] = layout.Columns; properties["tabs"] = layout.Tabs; properties["selectedTab"] = layout.SelectedTab;
+        }
+        if (control is DataGridView grid) { properties["columns"] = grid.Columns; properties["rows"] = grid.Rows; properties["readOnly"] = grid.ReadOnly; }
+        return properties;
     }
 
     /// <summary>
@@ -189,7 +215,44 @@ public sealed class WebView2Renderer : IRenderer
             && payload.TryGetProperty("text", out var text)
             && text.ValueKind == JsonValueKind.String)
         {
-            textBox.SetText(text.GetString());
+            if (textBox is MaskedTextBox masked) masked.SetMaskedText(text.GetString() ?? "");
+            else textBox.SetText(text.GetString());
         }
+        if (registration.Control is LinkLabel link && message.Event == "link") link.OnLinkClicked();
+        if (message.Payload is not JsonElement data || data.ValueKind != JsonValueKind.Object) return;
+        if (registration.Control is RichTextBox rich && !rich.ReadOnly && message.Event == "rich-input" && data.TryGetProperty("document", out var document)) {
+            try { rich.Document = document.Deserialize<RichBlock[]>(new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? []; }
+            catch (Exception error) when (error is JsonException or ArgumentException) { /* Reject malformed editor messages. */ }
+        }
+        if (registration.Control is CheckedListBox checkedList && message.Event == "item-check"
+            && data.TryGetProperty("index", out var itemIndex) && itemIndex.ValueKind == JsonValueKind.Number && itemIndex.TryGetInt32(out var checkedIndex)
+            && data.TryGetProperty("checked", out var itemChecked) && itemChecked.ValueKind is JsonValueKind.True or JsonValueKind.False)
+            checkedList.SetItemChecked(checkedIndex, itemChecked.GetBoolean());
+        if (message.Event == "value" && data.TryGetProperty("value", out var inputValue))
+        {
+            if (registration.Control is NumericUpDown or Slider && inputValue.ValueKind == JsonValueKind.Number && inputValue.TryGetDouble(out var number))
+                ((NumericControl)registration.Control).Value = number;
+            if (registration.Control is DateTimeInput date && inputValue.ValueKind == JsonValueKind.String) date.DateValue = inputValue.GetString()!;
+            if (registration.Control is ColorPicker color && inputValue.ValueKind == JsonValueKind.String) color.Color = inputValue.GetString()!;
+        }
+        if (registration.Control is CheckBox check && message.Event == "checked"
+            && data.TryGetProperty("checked", out var checkedValue) && checkedValue.ValueKind is JsonValueKind.True or JsonValueKind.False)
+        {
+            if (check is RadioButton && checkedValue.GetBoolean())
+                foreach (var other in _controls.Values.Select(r => r.Control).OfType<RadioButton>())
+                    if (other != check && other.Parent == check.Parent) other.Checked = false;
+            check.Checked = checkedValue.GetBoolean();
+        }
+        if (registration.Control is ChoiceControl choice && message.Event == "selection"
+            && data.TryGetProperty("selectedIndex", out var index) && index.ValueKind == JsonValueKind.Number && index.TryGetInt32(out var selected))
+            choice.SelectedIndex = selected;
+        if (registration.Control is TabControl tabs && message.Event == "tab"
+            && data.TryGetProperty("selectedTab", out var tab) && tab.ValueKind == JsonValueKind.Number && tab.TryGetInt32(out var active))
+            tabs.SelectedTab = active;
+        if (registration.Control is DataGridView grid && message.Event == "cell"
+            && data.TryGetProperty("row", out var row) && row.ValueKind == JsonValueKind.Number && row.TryGetInt32(out var r)
+            && data.TryGetProperty("column", out var column) && column.ValueKind == JsonValueKind.Number && column.TryGetInt32(out var c)
+            && data.TryGetProperty("value", out var value) && value.ValueKind == JsonValueKind.String)
+            grid.SetCell(r, c, value.GetString()!);
     }
 }

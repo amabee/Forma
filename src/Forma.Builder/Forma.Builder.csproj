@@ -13,4 +13,8 @@
   <ItemGroup>
     <Content Include="DesignerWeb\**\*" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
+  <Target Name="BuildDesignerAssets" BeforeTargets="BeforeBuild"
+          Condition="Exists('Frontend/node_modules/.bin/tailwindcss.cmd')">
+    <Exec WorkingDirectory="$(MSBuildProjectDirectory)/Frontend" Command="npm.cmd run build" />
+  </Target>
 </Project>

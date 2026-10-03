@@ -23,5 +23,10 @@
   <ItemGroup>
     <Using Include="Xunit" />
   </ItemGroup>
+  <ItemGroup>
+    <Compile Include="..\..\src\Forma.Builder\DesignHistory.cs" Link="DesignHistory.cs" />
+    <Compile Include="..\..\src\Forma.Builder\ProjectFile.cs" Link="ProjectFile.cs" />
+    <Compile Include="..\..\src\Forma.Builder\InspectorCatalog.cs" Link="InspectorCatalog.cs" />
+  </ItemGroup>
 
 </Project>

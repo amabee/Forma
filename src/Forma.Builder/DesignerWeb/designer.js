@@ -1,31 +1,250 @@
 // The web workspace presents the design; C# owns controls and committed properties.
-const supportedKinds = new Set(["button", "label", "textbox", "panel"]);
-const byId = id => document.getElementById(id);
-const send = (event, id, payload = {}) => window.forma.send({ type: "designer", id, event, payload });
+const supportedKinds = new Set([
+  "richtextbox", "picturebox",
+  "linklabel", "maskedtextbox", "checkedlistbox",
+  "numericupdown",
+  "slider",
+  "progressbar",
+  "circularprogress",
+  "toggleswitch",
+  "togglebutton",
+  "datepicker",
+  "timepicker",
+  "datetimepicker",
+  "colorpicker",
+  "searchbox",
+  "passwordbox",
+  "textarea",
 
-function resizeBounds(item, direction, dx, dy, parentWidth, parentHeight, isRoot = false) {
+  "button",
+  "label",
+  "textbox",
+  "panel",
+  "groupbox",
+  "splitcontainer",
+  "tabcontrol",
+  "flowlayoutpanel",
+  "tablelayoutpanel",
+  "checkbox",
+  "radiobutton",
+  "combobox",
+  "listbox",
+  "image",
+  "timer",
+  "backgroundworker",
+  "datagridview",
+]);
+const containerKinds = new Set([
+  "form",
+  "panel",
+  "groupbox",
+  "splitcontainer",
+  "tabcontrol",
+  "flowlayoutpanel",
+  "tablelayoutpanel",
+]);
+const managedKinds = new Set([
+  "splitcontainer",
+  "flowlayoutpanel",
+  "tablelayoutpanel",
+]);
+const byId = (id) => document.getElementById(id);
+const send = (event, id, payload = {}) =>
+  window.forma.send({ type: "designer", id, event, payload });
+
+// Work in unscaled parent coordinates; the threshold stays six screen pixels.
+function snapPosition(item, x, y, width, height, siblings, threshold = 6) {
+  const guides = [];
+  function axis(position, size, limit, start, extent, axisName) {
+    let best = threshold + 1,
+      result = position,
+      guide;
+    const consider = (target, offset, label = "", from = null) => {
+      const candidate = target - offset,
+        distance = Math.abs(candidate - position);
+      if (
+        candidate >= 0 &&
+        candidate <= limit - size &&
+        distance <= threshold &&
+        distance < best
+      ) {
+        best = distance;
+        result = candidate;
+        guide = { axis: axisName, at: target, label, from };
+      }
+    };
+    for (const edge of [0, limit / 2, limit])
+      for (const offset of [0, size / 2, size]) consider(edge, offset);
+    for (const sibling of siblings) {
+      const origin = sibling[start] ?? 0,
+        length = sibling[extent];
+      for (const edge of [origin, origin + length / 2, origin + length])
+        for (const offset of [0, size / 2, size]) consider(edge, offset);
+      for (const gap of [8, 16]) {
+        consider(origin + length + gap, 0, `${gap}px`, origin + length);
+        consider(origin - gap, size, `${gap}px`, origin);
+      }
+    }
+    if (guide) guides.push(guide);
+    return Math.round(result);
+  }
+  return {
+    x: axis(x, item.width, width, "x", "width", "x"),
+    y: axis(y, item.height, height, "y", "height", "y"),
+    guides,
+  };
+}
+
+function resizeBounds(
+  item,
+  direction,
+  dx,
+  dy,
+  parentWidth,
+  parentHeight,
+  isRoot = false,
+) {
   const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, Math.round(v)));
-  if (isRoot) return { x: 0, y: 0,
-    width: direction.includes("e") ? clamp(item.width + dx, 240, 1600) : item.width,
-    height: direction.includes("s") ? clamp(item.height + dy, 160, 1200) : item.height };
-  let left = item.x, top = item.y, right = item.x + item.width, bottom = item.y + item.height;
-  if (direction.includes("w")) left = clamp(left + dx, 0, right - 24);
-  if (direction.includes("e")) right = clamp(right + dx, left + 24, parentWidth);
-  if (direction.includes("n")) top = clamp(top + dy, 0, bottom - 20);
-  if (direction.includes("s")) bottom = clamp(bottom + dy, top + 20, parentHeight);
+  const minWidth = clamp(
+    item.minimumWidth || (isRoot ? 240 : 24),
+    isRoot ? 240 : 24,
+    isRoot ? 1600 : parentWidth,
+  );
+  const minHeight = clamp(
+    item.minimumHeight || (isRoot ? 160 : 20),
+    isRoot ? 160 : 20,
+    isRoot ? 1200 : parentHeight,
+  );
+  const maxWidth = clamp(
+    item.maximumWidth || (isRoot ? 1600 : parentWidth),
+    minWidth,
+    isRoot ? 1600 : parentWidth,
+  );
+  const maxHeight = clamp(
+    item.maximumHeight || (isRoot ? 1200 : parentHeight),
+    minHeight,
+    isRoot ? 1200 : parentHeight,
+  );
+  if (isRoot)
+    return {
+      x: 0,
+      y: 0,
+      width: direction.includes("e")
+        ? clamp(item.width + dx, minWidth, maxWidth)
+        : item.width,
+      height: direction.includes("s")
+        ? clamp(item.height + dy, minHeight, maxHeight)
+        : item.height,
+    };
+  let left = item.x,
+    top = item.y,
+    right = item.x + item.width,
+    bottom = item.y + item.height;
+  if (direction.includes("w"))
+    left = clamp(left + dx, Math.max(0, right - maxWidth), right - minWidth);
+  if (direction.includes("e"))
+    right = clamp(
+      right + dx,
+      left + minWidth,
+      Math.min(parentWidth, left + maxWidth),
+    );
+  if (direction.includes("n"))
+    top = clamp(top + dy, Math.max(0, bottom - maxHeight), bottom - minHeight);
+  if (direction.includes("s"))
+    bottom = clamp(
+      bottom + dy,
+      top + minHeight,
+      Math.min(parentHeight, top + maxHeight),
+    );
   return { x: left, y: top, width: right - left, height: bottom - top };
 }
 
 window.formaDesigner = {
-  rootId: null, selectedId: null, state: null, zoom: 1, preview: false, drag: null,
-  root() { return byId(this.rootId); },
+  rootId: null,
+  selectedId: null,
+  state: null,
+  zoom: 1,
+  preview: false,
+  drag: null,
+  root() {
+    return byId(this.rootId);
+  },
   resizeBounds,
+  snapPosition,
+  clearGuides() {
+    document.querySelectorAll(".snap-guide").forEach((el) => el.remove());
+  },
+  showGuides(guides, parent) {
+    this.clearGuides();
+    const root = this.root(),
+      frame = byId("form-frame");
+    if (!frame || !root) return;
+    const origin = root.getBoundingClientRect(),
+      rect = parent.getBoundingClientRect();
+    const left = (rect.left - origin.left) / this.zoom,
+      top = (rect.top - origin.top) / this.zoom + 34;
+    for (const guide of guides) {
+      const el = document.createElement("div");
+      el.className = `snap-guide ${guide.axis === "x" ? "vertical" : "horizontal"}`;
+      el.setAttribute("aria-hidden", "true");
+      Object.assign(
+        el.style,
+        guide.axis === "x"
+          ? {
+              left: `${left + guide.at}px`,
+              top: `${top}px`,
+              height: `${parent.clientHeight}px`,
+            }
+          : {
+              left: `${left}px`,
+              top: `${top + guide.at}px`,
+              width: `${parent.clientWidth}px`,
+            },
+      );
+      if (guide.from != null && this.drag) {
+        el.className = `snap-guide dimension ${guide.axis === "x" ? "horizontal" : "vertical"}`;
+        Object.assign(
+          el.style,
+          guide.axis === "x"
+            ? {
+                left: `${left + Math.min(guide.from, guide.at)}px`,
+                top: `${top + this.drag.top + this.drag.height / 2}px`,
+                height: "0px",
+                width: `${Math.abs(guide.at - guide.from)}px`,
+              }
+            : {
+                left: `${left + this.drag.left + this.drag.width / 2}px`,
+                top: `${top + Math.min(guide.from, guide.at)}px`,
+                width: "0px",
+                height: `${Math.abs(guide.at - guide.from)}px`,
+              },
+        );
+      }
+      if (guide.label) {
+        const label = document.createElement("span");
+        label.textContent = guide.label;
+        el.appendChild(label);
+      }
+      frame.appendChild(el);
+    }
+  },
   layoutFrame() {
-    const root = this.root(); if (!root) return;
-    const width = parseFloat(root.style.width) || 640, height = parseFloat(root.style.height) || 440;
-    if (byId("form-frame")) Object.assign(byId("form-frame").style, { width: `${width + 2}px`, transform: `scale(${this.zoom})` });
-    if (byId("scaled-frame")) Object.assign(byId("scaled-frame").style, { width: `${(width + 2) * this.zoom}px`, height: `${(height + 36) * this.zoom}px` });
-    const device = document.querySelector?.(".device"); if (device) device.textContent = `▰  Desktop (${width} × ${height})`;
+    const root = this.root();
+    if (!root) return;
+    const width = parseFloat(root.style.width) || 640,
+      height = parseFloat(root.style.height) || 440;
+    if (byId("form-frame"))
+      Object.assign(byId("form-frame").style, {
+        width: `${width + 2}px`,
+        transform: `scale(${this.zoom})`,
+      });
+    if (byId("scaled-frame"))
+      Object.assign(byId("scaled-frame").style, {
+        width: `${(width + 2) * this.zoom}px`,
+        height: `${(height + 36) * this.zoom}px`,
+      });
+    const device = byId("device-caption");
+    if (device) device.textContent = `Desktop (${width} × ${height})`;
   },
   receive(message) {
     if (message.action === "initialize") {
@@ -36,15 +255,24 @@ window.formaDesigner = {
       const root = this.root();
       byId("canvas-host")?.appendChild(root);
       root?.setAttribute("aria-label", message.title ?? "Form1");
+      const tray = byId("component-tray");
+      if (tray) {
+        tray.replaceChildren();
+        tray.hidden = true;
+      }
       this.updatePreview();
     }
-    if (message.action === "title") this.root()?.setAttribute("aria-label", message.title);
+    if (message.action === "title")
+      this.root()?.setAttribute("aria-label", message.title);
     if (message.action === "select") this.select(message.id);
     if (message.action === "state") {
       this.state = message;
+      document.querySelectorAll('[data-command="undo"]').forEach(button => { button.disabled = !message.canUndo; });
+      document.querySelectorAll('[data-command="redo"]').forEach(button => { button.disabled = !message.canRedo; });
       this.selectedId = message.selectedId;
       this.root()?.setAttribute("aria-label", message.title);
-      for (const name of ["canvas-title", "form-name"]) if (byId(name)) byId(name).textContent = message.title;
+      for (const name of ["canvas-title", "form-name"])
+        if (byId(name)) byId(name).textContent = message.title;
       if (byId("status")) byId("status").textContent = message.status;
       for (const item of message.controls) this.applyAppearance(item);
       this.select(message.selectedId);
@@ -53,239 +281,819 @@ window.formaDesigner = {
   },
   select(id) {
     this.selectedId = id;
-    document.querySelectorAll(".forma-selected").forEach(el => el.classList.remove("forma-selected"));
+    document
+      .querySelectorAll(".forma-selected")
+      .forEach((el) => el.classList.remove("forma-selected"));
     byId(id)?.classList.add("forma-selected");
     this.outline();
   },
   applyAppearance(item) {
     const el = byId(item.id);
     if (!el) return;
-    Object.assign(el.style, { width: `${item.width}px`, height: `${item.height}px`,
-      color: item.foreColor, backgroundColor: item.backColor, fontSize: `${item.fontSize}px`,
-      fontFamily: item.fontFamily, fontWeight: item.fontWeight, fontStyle: item.fontStyle, textAlign: item.textAlign });
-    if (item.id === this.rootId) this.layoutFrame();
+    if (item.component) {
+      const tray = byId("component-tray");
+      if (tray) {
+        tray.appendChild(el);
+        tray.hidden = false;
+      }
+      el.hidden = false;
+      el.textContent = item.name;
+      el.dataset.component = "true";
+      Object.assign(el.style, {
+        position: "",
+        left: "",
+        top: "",
+        width: "",
+        height: "",
+      });
+      return;
+    }
+    if (el.style.removeProperty)
+      for (const name of (el.dataset.customProperties ?? "")
+        .split(",")
+        .filter(Boolean))
+        el.style.removeProperty(name);
+    el.dataset.tag = item.tag ?? "";
+    for (const cls of (el.dataset.userClasses ?? "")
+      .split(/\s+/)
+      .filter(Boolean))
+      el.classList.remove(cls);
+    const classes = (item.cssClass ?? "")
+      .split(/\s+/)
+      .filter(
+        (c) =>
+          /^[a-zA-Z_][\w-]*$/.test(c) &&
+          !c.startsWith("forma-") &&
+          !c.startsWith("design-"),
+      );
+    classes.forEach((c) => el.classList.add(c));
+    el.dataset.userClasses = classes.join(" ");
+    Object.assign(el.style, {
+      width: `${item.width}px`,
+      height: `${item.height}px`,
+      color: item.foreColor,
+      backgroundColor: item.backColor,
+      fontSize: `${item.fontSize}px`,
+      fontFamily: item.fontFamily,
+      fontWeight: item.fontWeight,
+      fontStyle: item.fontStyle,
+      textAlign: item.textAlign,
+    });
+    if (item.id === this.rootId) {
+      this.layoutFrame();
+      if (byId("canvas-title"))
+        Object.assign(byId("canvas-title").style, {
+          fontFamily: item.fontFamily,
+          fontWeight: item.fontWeight,
+          fontStyle: item.fontStyle,
+          fontSize: `${item.fontSize}px`,
+          color: item.foreColor,
+        });
+    }
     if (item.id !== this.rootId) {
-      Object.assign(el.style, { borderStyle: item.borderStyle, borderColor: item.borderColor,
-        borderWidth: `${item.borderWidth}px`, borderRadius: `${item.borderRadius}px`, padding: `${item.padding}px`,
-        opacity: String((item.opacity ?? 100) / 100 * (!this.preview && (!item.enabled || !item.visible) ? .5 : 1)) });
-      if (item.kind === "label") el.style.justifyContent = { left: "flex-start", center: "center", right: "flex-end" }[item.textAlign];
+      Object.assign(el.style, {
+        borderStyle: item.borderStyle,
+        borderColor: item.borderColor,
+        borderWidth: `${item.borderWidth}px`,
+        borderRadius: `${item.borderRadius}px`,
+        padding: `${item.padding}px`,
+        opacity: String(
+          ((item.opacity ?? 100) / 100) *
+            (!this.preview && (!item.enabled || !item.visible) ? 0.5 : 1),
+        ),
+      });
+      if (item.kind === "label")
+        el.style.justifyContent = {
+          left: "flex-start",
+          center: "center",
+          right: "flex-end",
+        }[item.textAlign];
+      Object.assign(el.style, {
+        lineHeight: String(item.lineHeight ?? 1.5),
+        letterSpacing: `${item.letterSpacing ?? 0}px`,
+        marginTop: `${item.marginTop ?? 0}px`,
+        marginRight: `${item.marginRight ?? 0}px`,
+        marginBottom: `${item.marginBottom ?? 0}px`,
+        marginLeft: `${item.marginLeft ?? 0}px`,
+        paddingTop: `${item.paddingTop ?? 8}px`,
+        paddingRight: `${item.paddingRight ?? 8}px`,
+        paddingBottom: `${item.paddingBottom ?? 8}px`,
+        paddingLeft: `${item.paddingLeft ?? 8}px`,
+        zIndex: String(item.zIndex ?? 0),
+        boxShadow: {
+          None: "none",
+          Small: "0 1px 3px #0002",
+          Medium: "0 4px 12px #0003",
+          Large: "0 8px 24px #0003",
+        }[item.shadow ?? "None"],
+        cursor: this.preview ? item.cursor : item.locked ? "default" : "move",
+      });
+      el.title = item.toolTip ?? "";
+      el.tabIndex =
+        this.preview && item.focusable && item.enabled
+          ? (item.tabIndex ?? 0)
+          : -1;
+      // Parse visual declarations while retaining C# geometry and designer state.
+      if (el.style.setProperty) {
+        const parser = document.createElement("div");
+        parser.style.cssText = item.customCss ?? "";
+        const applied = [];
+        for (const name of parser.style) {
+          if (
+            /^(color|background-color|font-|line-height|letter-spacing|text-|border-|box-shadow)/.test(
+              name,
+            )
+          ) {
+            el.style.setProperty(name, parser.style.getPropertyValue(name));
+            applied.push(name);
+          }
+        }
+        el.dataset.customProperties = applied.join(",");
+      }
       // Hidden and disabled controls stay selectable in design mode.
       el.classList.toggle("design-muted", !item.enabled || !item.visible);
-      el.hidden = this.preview && !item.visible;
-      if (item.kind === "button" || item.kind === "textbox") el.disabled = this.preview && !item.enabled;
-      if (item.kind === "textbox") {
-        el.placeholder = item.placeholder; el.readOnly = item.readOnly;
-        el.type = item.password ? "password" : "text"; el.maxLength = item.maxLength;
+      const parent = this.state?.controls.find((c) => c.id === item.parentId);
+      el.hidden =
+        (this.preview && !item.visible) ||
+        (parent?.kind === "tabcontrol" &&
+          item.layoutSlot !== parent.selectedTab + 1);
+      if (item.kind === "richtextbox") {
+        const editing = this.preview || el.dataset.editing === "true";
+        const allowed = editing && !item.readOnly && (this.preview ? item.enabled : !item.locked);
+        el.querySelector(".rich-content").contentEditable = allowed ? "true" : "false";
+        el.querySelectorAll("[data-rich-format]").forEach(button => { button.disabled = !allowed; });
+      }
+      if (item.kind === "linklabel") el.setAttribute("aria-disabled", String(this.preview && !item.enabled));
+      for (const field of el.querySelectorAll?.(
+        "input,select,[contenteditable]",
+      ) ?? []) {
+        field.disabled = this.preview && !item.enabled;
+        if (item.kind !== "richtextbox" && field.hasAttribute?.("contenteditable"))
+          field.contentEditable =
+            this.preview && item.enabled && !item.readOnly ? "true" : "false";
+      }
+      if (["combobox", "listbox"].includes(item.kind))
+        el.disabled = this.preview && !item.enabled;
+      if (["button", "textbox", "maskedtextbox", "searchbox", "passwordbox", "textarea", "numericupdown", "slider", "datepicker", "timepicker", "datetimepicker", "colorpicker", "togglebutton"].includes(item.kind))
+        el.disabled = this.preview && !item.enabled;
+      if (["textbox", "maskedtextbox", "searchbox", "passwordbox", "textarea"].includes(item.kind)) {
+        el.placeholder = item.placeholder;
+        el.readOnly = item.readOnly;
+        if (item.kind !== "textarea") el.type = item.password ? "password" : item.kind === "searchbox" ? "search" : "text";
+        el.maxLength = item.maxLength;
       }
     }
   },
   inspector() {
-    const selected = this.state?.controls.find(c => c.id === this.selectedId);
+    const selected = this.state?.controls.find((c) => c.id === this.selectedId);
     if (!selected) return;
     const selection = byId("selection");
     if (selection) {
-      selection.replaceChildren(...this.state.controls.map(c => {
-        const option = document.createElement("option"); option.value = c.id; option.textContent = c.name; return option;
-      }));
+      selection.replaceChildren(
+        ...this.state.controls.map((c) => {
+          const option = document.createElement("option");
+          option.value = c.id;
+          option.textContent = c.name;
+          return option;
+        }),
+      );
       selection.value = selected.id;
     }
-    for (const property of ["name", "text", "width", "height", "x", "y", "fontSize", "foreColor", "backColor", "enabled", "visible", "fontFamily", "fontWeight", "fontStyle", "textAlign", "borderStyle", "borderColor", "borderWidth", "borderRadius", "padding", "opacity", "placeholder", "readOnly", "password", "maxLength"]) {
-      const input = byId(`prop-${property}`);
+    const schema = this.state.propertySchema ?? [];
+    this.buildEditors(schema);
+    byId("property-editors")
+      ?.querySelectorAll(".property-actions button")
+      .forEach((button) => {
+        button.disabled = this.preview || selected.locked;
+      });
+    for (const descriptor of schema) {
+      const property = descriptor.id;
+      const input = byId(
+        descriptor.category === "Advanced" && property === "id"
+          ? "prop-cssId"
+          : `prop-${property}`,
+      );
       if (!input) continue;
       if (input.type === "checkbox") input.checked = selected[property];
-      else if (input.value !== String(selected[property])) input.value = selected[property];
-      input.disabled = this.preview || (selected.id === this.rootId && ["name", "x", "y", "enabled", "visible", "borderStyle", "borderColor", "borderWidth", "borderRadius", "padding", "opacity"].includes(property));
-      if (["x", "width"].includes(property)) input.max = selected.id === this.rootId ? 1600 : this.root().clientWidth;
-      if (["y", "height"].includes(property)) input.max = selected.id === this.rootId ? 1200 : this.root().clientHeight;
+      else if (input.value !== String(selected[property]))
+        input.value = selected[property];
+      input.disabled =
+        this.preview ||
+        descriptor.readOnly ||
+        (selected.locked && property !== "locked");
+      if (property === "source" && selected.source?.startsWith("data:")) {
+        input.value = "Embedded image";
+        input.disabled = true;
+      }
+      if (
+        ["x", "y"].includes(property) &&
+        managedKinds.has(
+          this.state.controls.find((c) => c.id === selected.parentId)?.kind,
+        )
+      )
+        input.disabled = true;
+      if (["x", "width"].includes(property))
+        input.max =
+          selected.id === this.rootId ? 1600 : this.root().clientWidth;
+      if (["y", "height"].includes(property))
+        input.max =
+          selected.id === this.rootId ? 1200 : this.root().clientHeight;
     }
-    if (byId("textbox-properties")) byId("textbox-properties").hidden = selected.kind !== "textbox";
-    if (byId("selection-status")) byId("selection-status").textContent = selected.id === this.rootId ? "Form selected" : "1 control selected";
+    if (byId("selection-status"))
+      byId("selection-status").textContent =
+        selected.id === this.rootId ? "Form selected" : "1 control selected";
     this.coordinates(selected.x, selected.y);
   },
-  coordinates(x, y) { if (byId("coordinates")) byId("coordinates").textContent = `X: ${x}   Y: ${y}`; },
+  buildEditors(schema) {
+    const container = byId("property-editors");
+    if (!container) return;
+    const signature = JSON.stringify(schema);
+    if (container.dataset.schema === signature) return;
+    const openCategories = new Map(
+      Array.from(container.querySelectorAll("details")).map((group) => [
+        group.dataset.category,
+        group.open,
+      ]),
+    );
+    container.replaceChildren();
+    container.dataset.schema = signature;
+    const groups = new Map();
+    for (const property of schema) {
+      let group = groups.get(property.category);
+      if (!group) {
+        group = document.createElement("details");
+        group.className = "property-group";
+        group.dataset.category = property.category;
+        group.open =
+          openCategories.get(property.category) ??
+          property.category !== "Advanced";
+        const summary = document.createElement("summary");
+        summary.textContent = property.category;
+        group.appendChild(summary);
+        groups.set(property.category, group);
+        container.appendChild(group);
+      }
+      const label = document.createElement("label");
+      label.appendChild(document.createTextNode(property.label));
+      const input = document.createElement(
+        property.editor === "select"
+          ? "select"
+          : property.editor === "textarea"
+            ? "textarea"
+            : "input",
+      );
+      // ID is shown in General and Advanced; both are read-only.
+      input.id =
+        property.category === "Advanced" && property.id === "id"
+          ? "prop-cssId"
+          : `prop-${property.id}`;
+      input.dataset.property = property.id;
+      if (property.editor === "select")
+        for (const choice of property.options) {
+          const option = document.createElement("option");
+          option.value = choice;
+          option.textContent = choice;
+          input.appendChild(option);
+        }
+      else if (property.editor !== "textarea") input.type = property.editor;
+      if (property.min != null) input.min = property.min;
+      if (property.max != null) input.max = property.max;
+      if (property.editor === "number") input.step = "any";
+      if (property.editor === "checkbox") input.setAttribute("role", "switch");
+      if (property.id === "customCss") {
+        input.placeholder = "letter-spacing: 0.5px;";
+        input.title =
+          "Visual CSS declarations; geometry remains controlled by Layout.";
+      }
+      if (property.editor === "checkbox") {
+        const wrapper = document.createElement("span");
+        wrapper.className = "switch";
+        const track = document.createElement("span");
+        track.className = "switch-track";
+        track.setAttribute("aria-hidden", "true");
+        wrapper.appendChild(input);
+        wrapper.appendChild(track);
+        label.appendChild(wrapper);
+      } else label.appendChild(input);
+      group.appendChild(label);
+    }
+    const selected = this.state?.controls.find((c) => c.id === this.selectedId);
+    if (selected && selected.id !== this.rootId && !selected.component) {
+      const actions = document.createElement("div");
+      actions.className = "property-actions";
+      const commands =
+        ["image", "picturebox"].includes(selected.kind) ? [["choose-image", "Choose image…"]] : [];
+      if (selected.kind === "richtextbox") commands.push(["edit-rich", "Edit content / Finish"]);
+      commands.push(
+        ["bring-front", "Bring to front"],
+        ["send-back", "Send to back"],
+      );
+      for (const [command, text] of commands) {
+        const button = document.createElement("button");
+        button.dataset.command = command;
+        button.textContent = text;
+        actions.appendChild(button);
+      }
+      container.prepend(actions);
+    }
+  },
+  coordinates(x, y) {
+    if (byId("coordinates"))
+      byId("coordinates").textContent = `X: ${x}   Y: ${y}`;
+  },
   outline() {
-    const root = this.root(), selected = byId(this.selectedId);
+    const root = this.root(),
+      selected = byId(this.selectedId);
+    const item = this.state?.controls.find((c) => c.id === this.selectedId);
     let outline = byId("selection-outline");
-    if (!root || !selected || this.preview) { if (outline) outline.hidden = true; return; }
+    if (!root || !selected || this.preview || item?.component) {
+      if (outline) outline.hidden = true;
+      return;
+    }
     if (!outline) {
-      outline = document.createElement("div"); outline.id = "selection-outline"; outline.setAttribute("aria-hidden", "true");
+      outline = document.createElement("div");
+      outline.id = "selection-outline";
+      outline.setAttribute("aria-hidden", "true");
       for (const direction of ["nw", "n", "ne", "e", "se", "s", "sw", "w"]) {
-        const handle = document.createElement("i"); handle.dataset.handle = direction;
-        handle.setAttribute("title", `Resize ${direction}`); outline.appendChild(handle);
+        const handle = document.createElement("i");
+        handle.dataset.handle = direction;
+        handle.setAttribute("title", `Resize ${direction}`);
+        outline.appendChild(handle);
       }
       (byId("form-frame") ?? root).appendChild(outline);
     }
     outline.hidden = false;
     const isRoot = selected === root;
-    Object.assign(outline.style, { left: isRoot ? "-1px" : selected.style.left,
-      top: isRoot ? "-1px" : `${(parseFloat(selected.style.top) || 0) + 34}px`,
+    Object.assign(outline.style, {
+      left: isRoot
+        ? "-1px"
+        : `${(parseFloat(selected.style.left) || 0) + (parseFloat(selected.style.marginLeft) || 0)}px`,
+      top: isRoot
+        ? "-1px"
+        : `${(parseFloat(selected.style.top) || 0) + (parseFloat(selected.style.marginTop) || 0) + 34}px`,
       width: `${parseFloat(selected.style.width) + (isRoot ? 2 : 0)}px`,
-      height: `${parseFloat(selected.style.height) + (isRoot ? 36 : 0)}px` });
-    outline.querySelectorAll?.("[data-handle]").forEach(h => { h.hidden = isRoot && !["e", "s", "se"].includes(h.dataset.handle); });
+      height: `${parseFloat(selected.style.height) + (isRoot ? 36 : 0)}px`,
+    });
+    if (!isRoot && selected.getBoundingClientRect) {
+      const rect = selected.getBoundingClientRect(),
+        origin = root.getBoundingClientRect();
+      Object.assign(outline.style, {
+        left: `${(rect.left - origin.left) / this.zoom}px`,
+        top: `${(rect.top - origin.top) / this.zoom + 34}px`,
+        width: `${rect.width / this.zoom}px`,
+        height: `${rect.height / this.zoom}px`,
+      });
+    }
+    outline.querySelectorAll?.("[data-handle]").forEach((h) => {
+      h.hidden =
+        item?.locked ||
+        (isRoot && !["e", "s", "se"].includes(h.dataset.handle));
+    });
   },
   cancelDrag() {
+    this.clearGuides();
     if (!this.drag) return;
-    const drag = this.drag; this.drag = null;
-    Object.assign(drag.element.style, { left: `${drag.x}px`, top: `${drag.y}px` });
-    if (drag.mode === "resize") Object.assign(drag.element.style, { width: `${drag.width}px`, height: `${drag.height}px` });
+    const drag = this.drag;
+    this.drag = null;
+    Object.assign(drag.element.style, {
+      left: `${drag.x}px`,
+      top: `${drag.y}px`,
+    });
+    if (drag.mode === "resize")
+      Object.assign(drag.element.style, {
+        width: `${drag.width}px`,
+        height: `${drag.height}px`,
+      });
     const capture = drag.capture ?? drag.element;
-    if (capture.hasPointerCapture?.(drag.pointerId)) capture.releasePointerCapture(drag.pointerId);
+    if (capture.hasPointerCapture?.(drag.pointerId))
+      capture.releasePointerCapture(drag.pointerId);
     this.coordinates(drag.x, drag.y);
-    for (const [key, value] of [["x", drag.x], ["y", drag.y]]) if (byId(`prop-${key}`)) byId(`prop-${key}`).value = value;
+    for (const [key, value] of [
+      ["x", drag.x],
+      ["y", drag.y],
+    ])
+      if (byId(`prop-${key}`)) byId(`prop-${key}`).value = value;
     this.outline();
-    this.layoutFrame(); this.inspector();
+    this.layoutFrame();
+    this.inspector();
   },
   updatePreview() {
     document.body.classList.toggle("preview-mode", this.preview);
-    if (byId("mode-label")) byId("mode-label").textContent = this.preview ? "Preview" : "Design";
-    if (byId("preview-caption")) byId("preview-caption").textContent = this.preview ? "Back to design" : "Preview";
-    this.state?.controls.forEach(item => this.applyAppearance(item));
-    this.inspector(); this.outline();
+    if (byId("mode-label"))
+      byId("mode-label").textContent = this.preview ? "Preview" : "Design";
+    if (byId("preview-caption"))
+      byId("preview-caption").textContent = this.preview
+        ? "Back to design"
+        : "Preview";
+    this.state?.controls.forEach((item) => this.applyAppearance(item));
+    this.inspector();
+    this.outline();
   },
 };
 
 function canvasPoint(event) {
-  const d = window.formaDesigner, root = d.root(), rect = root.getBoundingClientRect();
-  return { x: Math.round((event.clientX - rect.left) / d.zoom - root.clientLeft),
-    y: Math.round((event.clientY - rect.top) / d.zoom - root.clientTop) };
+  const d = window.formaDesigner,
+    root = d.root(),
+    rect = root.getBoundingClientRect();
+  return {
+    x: Math.round((event.clientX - rect.left) / d.zoom - root.clientLeft),
+    y: Math.round((event.clientY - rect.top) / d.zoom - root.clientTop),
+  };
 }
 
-document.addEventListener("dragstart", event => {
+document.addEventListener("dragstart", (event) => {
   const tool = event.target.closest("[data-kind]");
-  if (!tool || !supportedKinds.has(tool.dataset.kind) || window.formaDesigner.preview) return;
+  if (
+    !tool ||
+    !supportedKinds.has(tool.dataset.kind) ||
+    window.formaDesigner.preview
+  )
+    return;
   event.dataTransfer.setData("text/plain", `forma:${tool.dataset.kind}`);
   event.dataTransfer.effectAllowed = "copy";
 });
-document.addEventListener("dragover", event => {
-  const d = window.formaDesigner, root = d.root();
+document.addEventListener("dragover", (event) => {
+  const d = window.formaDesigner,
+    root = d.root();
   if (d.preview || !root || !root.contains(event.target)) return;
   if (!Array.from(event.dataTransfer.types).includes("text/plain")) return;
-  event.preventDefault(); event.dataTransfer.dropEffect = "copy"; root.classList.add("drop-target");
+  event.preventDefault();
+  event.dataTransfer.dropEffect = "copy";
+  root.classList.add("drop-target");
 });
-document.addEventListener("dragleave", event => {
+document.addEventListener("dragleave", (event) => {
   const root = window.formaDesigner.root();
-  if (root && !root.contains(event.relatedTarget)) root.classList.remove("drop-target");
+  if (root && !root.contains(event.relatedTarget))
+    root.classList.remove("drop-target");
 });
-document.addEventListener("drop", event => {
-  const d = window.formaDesigner, root = d.root(); root?.classList.remove("drop-target");
+document.addEventListener("drop", (event) => {
+  const d = window.formaDesigner,
+    root = d.root();
+  root?.classList.remove("drop-target");
   if (d.preview || !root || !root.contains(event.target)) return;
   event.preventDefault();
   const text = event.dataTransfer.getData("text/plain");
   if (!text.startsWith("forma:")) return;
   const kind = text.slice(6);
-  if (supportedKinds.has(kind)) send("drop", root.id, { control: kind, ...canvasPoint(event) });
+  let parent = event.target.closest("[data-forma-type]");
+  while (parent && !containerKinds.has(parent.dataset.formaType))
+    parent = parent.parentElement?.closest("[data-forma-type]");
+  parent ??= root;
+  const host = parent.querySelector?.(":scope > .layout-content") ?? parent;
+  const rect = host.getBoundingClientRect();
+  if (supportedKinds.has(kind))
+    send("drop", parent.id, {
+      control: kind,
+      x: Math.max(
+        0,
+        Math.round(
+          (event.clientX - rect.left) / d.zoom - (host.clientLeft || 0),
+        ),
+      ),
+      y: Math.max(
+        0,
+        Math.round((event.clientY - rect.top) / d.zoom - (host.clientTop || 0)),
+      ),
+    });
 });
 
-document.addEventListener("pointerdown", event => {
-  const d = window.formaDesigner, root = d.root();
+document.addEventListener(
+  "pointerdown",
+  (event) => {
+    const d = window.formaDesigner,
+      root = d.root();
+    if (d.preview && root?.contains(event.target)) {
+      const control = event.target.closest("[data-forma-type]");
+      const item = d.state?.controls.find((c) => c.id === control?.id);
+      if (item && item.focusable === false) event.preventDefault();
+      return;
+    }
+    const component = event.target.closest("[data-component]");
+    if (component) {
+      d.select(component.id);
+      send("select", component.id);
+      return;
+    }
+    if (event.target.closest("[data-tab-index]")) return;
+    const richEditor = event.target.closest('[data-forma-type="richtextbox"]');
+  if (richEditor?.dataset.editing === "true") return;
   const handle = event.target.closest("[data-handle]");
-  if (handle && !d.preview && event.button === 0) {
-    const item = d.state?.controls.find(c => c.id === d.selectedId);
-    if (!item) return;
-    event.preventDefault(); event.stopImmediatePropagation();
-    d.drag = { element: byId(item.id), capture: handle, mode: "resize", direction: handle.dataset.handle,
-      pointerId: event.pointerId, startX: event.clientX, startY: event.clientY,
-      x: item.x, y: item.y, width: item.width, height: item.height, moved: false };
-    handle.setPointerCapture(event.pointerId); return;
-  }
-  if (!d.preview && event.button === 0 && event.target.closest(".form-titlebar")) {
-    d.select(d.rootId); send("select", d.rootId); return;
-  }
-  if (d.preview || event.button !== 0 || !root?.contains(event.target)) return;
-  const control = event.target.closest("[data-forma-type]");
-  if (!control) return;
-  event.preventDefault(); event.stopImmediatePropagation();
-  d.select(control.id); send("select", control.id);
-  if (control === root) return;
-  const item = d.state?.controls.find(c => c.id === control.id);
-  if (!item) return;
-  d.drag = { element: control, pointerId: event.pointerId, startX: event.clientX, startY: event.clientY,
-    x: item.x, y: item.y, width: item.width, height: item.height, moved: false, left: item.x, top: item.y };
-  control.setPointerCapture(event.pointerId);
-}, true);
-document.addEventListener("pointermove", event => {
-  const d = window.formaDesigner, drag = d.drag;
+    if (handle && !d.preview && event.button === 0) {
+      const item = d.state?.controls.find((c) => c.id === d.selectedId);
+      if (!item || item.locked) return;
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      d.drag = {
+        ...item,
+        element: byId(item.id),
+        capture: handle,
+        mode: "resize",
+        direction: handle.dataset.handle,
+        pointerId: event.pointerId,
+        startX: event.clientX,
+        startY: event.clientY,
+        x: item.x,
+        y: item.y,
+        width: item.width,
+        height: item.height,
+        moved: false,
+      };
+      handle.setPointerCapture(event.pointerId);
+      return;
+    }
+    if (
+      !d.preview &&
+      event.button === 0 &&
+      event.target.closest(".form-titlebar")
+    ) {
+      d.select(d.rootId);
+      send("select", d.rootId);
+      return;
+    }
+    if (d.preview || event.button !== 0 || !root?.contains(event.target))
+      return;
+    const control = event.target.closest("[data-forma-type]");
+    if (!control) return;
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    d.select(control.id);
+    send("select", control.id);
+    if (control === root) return;
+    const item = d.state?.controls.find((c) => c.id === control.id);
+    if (
+      !item ||
+      item.locked ||
+      managedKinds.has(
+        d.state?.controls.find((c) => c.id === item.parentId)?.kind,
+      )
+    )
+      return;
+    d.drag = {
+      ...item,
+      element: control,
+      pointerId: event.pointerId,
+      startX: event.clientX,
+      startY: event.clientY,
+      x: item.x,
+      y: item.y,
+      width: item.width,
+      height: item.height,
+      moved: false,
+      left: item.x,
+      top: item.y,
+    };
+    control.setPointerCapture(event.pointerId);
+  },
+  true,
+);
+document.addEventListener("pointermove", (event) => {
+  const d = window.formaDesigner,
+    drag = d.drag;
   if (!drag || drag.pointerId !== event.pointerId) return;
-  const dx = (event.clientX - drag.startX) / d.zoom, dy = (event.clientY - drag.startY) / d.zoom;
+  const parent = drag.element.parentElement ?? d.root();
+  const dx = (event.clientX - drag.startX) / d.zoom,
+    dy = (event.clientY - drag.startY) / d.zoom;
   if (!drag.moved && Math.abs(dx) < 3 && Math.abs(dy) < 3) return;
   drag.moved = true;
   if (drag.mode === "resize") {
-    drag.bounds = resizeBounds(drag, drag.direction, dx, dy, d.root().clientWidth, d.root().clientHeight, drag.element === d.root());
-    Object.assign(drag.element.style, { left: `${drag.bounds.x}px`, top: `${drag.bounds.y}px`,
-      width: `${drag.bounds.width}px`, height: `${drag.bounds.height}px` });
-    for (const key of ["x", "y", "width", "height"]) if (byId(`prop-${key}`)) byId(`prop-${key}`).value = drag.bounds[key];
-    d.layoutFrame(); d.outline(); d.coordinates(drag.bounds.x, drag.bounds.y); return;
+    drag.bounds = resizeBounds(
+      drag,
+      drag.direction,
+      dx,
+      dy,
+      parent.clientWidth - (drag.marginLeft ?? 0) - (drag.marginRight ?? 0),
+      parent.clientHeight - (drag.marginTop ?? 0) - (drag.marginBottom ?? 0),
+      drag.element === d.root(),
+    );
+    Object.assign(drag.element.style, {
+      left: `${drag.bounds.x}px`,
+      top: `${drag.bounds.y}px`,
+      width: `${drag.bounds.width}px`,
+      height: `${drag.bounds.height}px`,
+    });
+    for (const key of ["x", "y", "width", "height"])
+      if (byId(`prop-${key}`)) byId(`prop-${key}`).value = drag.bounds[key];
+    d.layoutFrame();
+    d.outline();
+    d.coordinates(drag.bounds.x, drag.bounds.y);
+    return;
   }
-  drag.left = Math.max(0, Math.min(d.root().clientWidth - drag.width, Math.round(drag.x + dx)));
-  drag.top = Math.max(0, Math.min(d.root().clientHeight - drag.height, Math.round(drag.y + dy)));
-  Object.assign(drag.element.style, { left: `${drag.left}px`, top: `${drag.top}px` });
-  d.coordinates(drag.left, drag.top); d.outline();
+  drag.left = Math.max(
+    0,
+    Math.min(
+      parent.clientWidth -
+        drag.width -
+        (drag.marginLeft ?? 0) -
+        (drag.marginRight ?? 0),
+      Math.round(drag.x + dx),
+    ),
+  );
+  drag.top = Math.max(
+    0,
+    Math.min(
+      parent.clientHeight -
+        drag.height -
+        (drag.marginTop ?? 0) -
+        (drag.marginBottom ?? 0),
+      Math.round(drag.y + dy),
+    ),
+  );
+  if (!event.altKey) {
+    const siblings = (d.state?.controls ?? []).filter(
+      (c) =>
+        c.id !== drag.id &&
+        c.parentId === drag.parentId &&
+        !c.component &&
+        c.visible !== false &&
+        !byId(c.id)?.hidden,
+    );
+    const snapped = snapPosition(
+      drag,
+      drag.left,
+      drag.top,
+      parent.clientWidth,
+      parent.clientHeight,
+      siblings,
+      6 / d.zoom,
+    );
+    drag.left = snapped.x;
+    drag.top = snapped.y;
+    d.showGuides(snapped.guides, parent);
+  } else d.clearGuides();
+  Object.assign(drag.element.style, {
+    left: `${drag.left}px`,
+    top: `${drag.top}px`,
+  });
+  d.coordinates(drag.left, drag.top);
+  d.outline();
   if (byId("prop-x")) byId("prop-x").value = drag.left;
   if (byId("prop-y")) byId("prop-y").value = drag.top;
 });
-document.addEventListener("pointerup", event => {
-  const d = window.formaDesigner, drag = d.drag;
+document.addEventListener("pointerup", (event) => {
+  const d = window.formaDesigner,
+    drag = d.drag;
   if (!drag || drag.pointerId !== event.pointerId) return;
   d.drag = null;
+  d.clearGuides();
   const capture = drag.capture ?? drag.element;
-  if (capture.hasPointerCapture(event.pointerId)) capture.releasePointerCapture(event.pointerId);
-  if (drag.moved) send(drag.mode === "resize" ? "resize" : "move", drag.element.id,
-    drag.mode === "resize" ? drag.bounds : { x: drag.left, y: drag.top });
+  if (capture.hasPointerCapture(event.pointerId))
+    capture.releasePointerCapture(event.pointerId);
+  if (drag.moved)
+    send(
+      drag.mode === "resize" ? "resize" : "move",
+      drag.element.id,
+      drag.mode === "resize" ? drag.bounds : { x: drag.left, y: drag.top },
+    );
 });
-document.addEventListener("pointercancel", () => window.formaDesigner.cancelDrag());
-document.addEventListener("lostpointercapture", () => window.formaDesigner.cancelDrag());
+document.addEventListener("pointercancel", () =>
+  window.formaDesigner.cancelDrag(),
+);
+document.addEventListener("lostpointercapture", () =>
+  window.formaDesigner.cancelDrag(),
+);
 
-document.addEventListener("click", event => {
-  const d = window.formaDesigner, root = d.root();
-  if (event.target.closest("[data-handle]")) { event.preventDefault(); event.stopImmediatePropagation(); return; }
-  if (root?.contains(event.target)) {
-    if (d.preview) return;
-    const control = event.target.closest("[data-forma-type]");
-    if (control) { event.preventDefault(); event.stopImmediatePropagation(); send("select", control.id); }
-    return;
-  }
-  const command = event.target.closest("[data-command]");
-  if (command && !command.disabled) send("command", d.rootId, { command: command.dataset.command });
-  const toggle = event.target.closest("[data-toggle]");
-  if (toggle) { const panel = byId(toggle.dataset.toggle); panel.hidden = !panel.hidden; }
-  if (event.target.closest("[data-preview]")) { d.cancelDrag(); d.preview = !d.preview; d.updatePreview(); }
-  document.querySelectorAll(".menubar details").forEach(menu => { if (!menu.contains(event.target) || command || toggle) menu.open = false; });
-}, true);
-document.addEventListener("dblclick", event => {
-  const d = window.formaDesigner, tool = event.target.closest("[data-kind]");
-  if (tool && !d.preview) send("drop", d.rootId, { control: tool.dataset.kind, x: 32, y: 32 });
+document.addEventListener(
+  "click",
+  (event) => {
+    const d = window.formaDesigner,
+      root = d.root();
+    if (event.target.closest("[data-handle]")) {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      return;
+    }
+    if (root?.contains(event.target)) {
+      if (d.preview || event.target.closest("[data-tab-index]") || event.target.closest('[data-forma-type="richtextbox"]')?.dataset.editing === "true") return;
+      const control = event.target.closest("[data-forma-type]");
+      if (control) {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        send("select", control.id);
+      }
+      return;
+    }
+    const command = event.target.closest("[data-command]");
+    if (command?.dataset.command === "edit-rich" && !command.disabled) {
+      const el = byId(d.selectedId), item = d.state?.controls.find(c => c.id === d.selectedId);
+      if (el && item) {
+        el.dataset.editing = el.dataset.editing === "true" ? "false" : "true";
+        d.applyAppearance(item);
+        if (el.dataset.editing === "true") el.querySelector(".rich-content").focus();
+      }
+      return;
+    }
+    if (command && !command.disabled)
+      send("command", d.rootId, { command: command.dataset.command });
+    const toggle = event.target.closest("[data-toggle]");
+    if (toggle) {
+      const panel = byId(toggle.dataset.toggle);
+      panel.hidden = !panel.hidden;
+    }
+    if (event.target.closest("[data-preview]")) {
+      d.cancelDrag();
+      d.preview = !d.preview;
+      d.updatePreview();
+      send("preview", d.rootId, { enabled: d.preview });
+    }
+    document.querySelectorAll(".menubar details").forEach((menu) => {
+      if (!menu.contains(event.target) || command || toggle) menu.open = false;
+    });
+  },
+  true,
+);
+document.addEventListener("dblclick", (event) => {
+  const d = window.formaDesigner,
+    tool = event.target.closest("[data-kind]");
+  if (tool && !d.preview)
+    send("drop", d.rootId, { control: tool.dataset.kind, x: 32, y: 32 });
 });
-document.addEventListener("change", event => {
-  const d = window.formaDesigner, input = event.target;
+document.addEventListener("change", (event) => {
+  const d = window.formaDesigner,
+    input = event.target;
   if (input.id === "zoom") {
-    d.cancelDrag(); d.zoom = Number(input.value);
+    d.cancelDrag();
+    d.zoom = Number(input.value);
     d.layoutFrame();
   } else if (input.id === "selection") send("select", input.value);
   else if (input.dataset.property && !d.preview) {
-    const value = input.type === "checkbox" ? input.checked : input.type === "number" ? Number(input.value) : input.value;
+    const value =
+      input.type === "checkbox"
+        ? input.checked
+        : input.type === "number"
+          ? Number(input.value)
+          : input.value;
     send("property", d.selectedId, { property: input.dataset.property, value });
   }
 });
-document.addEventListener("input", event => {
+document.addEventListener("input", (event) => {
   const d = window.formaDesigner;
   if (event.target.id === "prop-text" && !d.preview) {
-    send("property", d.selectedId, { property: "text", value: event.target.value }); return;
+    send("property", d.selectedId, {
+      property: "text",
+      value: event.target.value,
+    });
+    return;
   }
   if (event.target.id !== "search") return;
   const query = event.target.value.trim().toLowerCase();
-  document.querySelectorAll(".tool-group button").forEach(tool => { tool.hidden = !tool.textContent.toLowerCase().includes(query); });
+  document.querySelectorAll(".tool-group button").forEach((tool) => {
+    tool.hidden = !tool.textContent.toLowerCase().includes(query);
+  });
 });
-document.addEventListener("keydown", event => {
+document.addEventListener("keydown", (event) => {
   const d = window.formaDesigner;
-  if (event.key === "Escape") { d.cancelDrag(); if (d.preview) { d.preview = false; d.updatePreview(); } return; }
-  if (event.target.closest("input,select,textarea")) return;
-  if (event.ctrlKey && event.key.toLowerCase() === "n") { event.preventDefault(); send("command", d.rootId, { command: "new" }); }
+  if (event.key === "Escape") {
+    d.cancelDrag();
+    if (d.preview) {
+      d.preview = false;
+      d.updatePreview();
+      send("preview", d.rootId, { enabled: false });
+    }
+    return;
+  }
+  if (event.ctrlKey && ["s", "o"].includes(event.key.toLowerCase())) {
+    event.preventDefault();
+    d.cancelDrag();
+    send("command", d.rootId, { command: event.key.toLowerCase() === "o" ? "open" : event.shiftKey ? "save-as" : "save" });
+    return;
+  }
+  if (event.target.closest("input,select,textarea,[contenteditable=true]")) return;
+  if (event.ctrlKey && ["z", "y"].includes(event.key.toLowerCase())) {
+    if (d.preview) return;
+    event.preventDefault(); d.cancelDrag();
+    send("command", d.rootId, { command: event.key.toLowerCase() === "y" || event.shiftKey ? "redo" : "undo" }); return;
+  }
+  if (event.ctrlKey && event.key.toLowerCase() === "n") {
+    event.preventDefault();
+    send("command", d.rootId, { command: "new" });
+  }
   if (d.preview) return;
-  if (event.key === "Delete") { event.preventDefault(); send("command", d.rootId, { command: "delete" }); }
-  const delta = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] }[event.key];
-  const item = d.state?.controls.find(c => c.id === d.selectedId);
-  if (delta && item && item.id !== d.rootId) {
-    event.preventDefault(); const step = event.shiftKey ? 10 : 1;
-    send("move", item.id, { x: item.x + delta[0] * step, y: item.y + delta[1] * step });
+  if (event.key === "Delete") {
+    event.preventDefault();
+    send("command", d.rootId, { command: "delete" });
+  }
+  const delta = {
+    ArrowLeft: [-1, 0],
+    ArrowRight: [1, 0],
+    ArrowUp: [0, -1],
+    ArrowDown: [0, 1],
+  }[event.key];
+  const item = d.state?.controls.find((c) => c.id === d.selectedId);
+  if (
+    delta &&
+    item &&
+    !item.locked &&
+    item.id !== d.rootId &&
+    !item.component &&
+    !managedKinds.has(
+      d.state?.controls.find((c) => c.id === item.parentId)?.kind,
+    )
+  ) {
+    event.preventDefault();
+    const step = event.shiftKey ? 10 : 1;
+    send("move", item.id, {
+      x: item.x + delta[0] * step,
+      y: item.y + delta[1] * step,
+    });
   }
 });

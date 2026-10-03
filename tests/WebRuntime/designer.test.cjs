@@ -13,7 +13,12 @@ function fixture() {
       id, dataset: { formaType: type }, style: {}, attributes: {}, clientLeft: 1, clientTop: 1,
       classList: { add: x => classes.add(x), remove: x => classes.delete(x), contains: x => classes.has(x),
         toggle: (x, on) => on ? classes.add(x) : classes.delete(x) },
-      appendChild(node) { nodes.push(node); },
+      children: [],
+      prepend(node) { nodes.push(node); this.children.unshift(node); },
+      remove() { const index = nodes.indexOf(this); if (index >= 0) nodes.splice(index, 1); },
+      appendChild(node) { nodes.push(node); this.children.push(node); },
+      replaceChildren(...children) { this.children = []; for (const node of children) this.appendChild(node); },
+      querySelectorAll(selector) { return this.children.filter(node => selector === 'details' ? node.dataset.category : node.dataset.handle); },
       setPointerCapture(id) { this.capture = id; },
       hasPointerCapture(id) { return this.capture === id; },
       releasePointerCapture() { this.capture = null; },
@@ -34,8 +39,9 @@ function fixture() {
   const document = {
     body: { classList: { remove() {}, toggle() {} } },
     createElement: tag => element('', tag),
+    createTextNode: text => ({ textContent: text }),
     getElementById: id => nodes.find(node => node.id === id),
-    querySelectorAll: () => nodes.filter(node => node.classList.contains('forma-selected')),
+    querySelectorAll: selector => nodes.filter(node => node.classList.contains(selector.slice(1))),
     addEventListener: (name, handler) => { listeners[name] = handler; },
   };
   const window = { chrome: { webview: { postMessage: message => messages.push(message), addEventListener() {} } } };
@@ -44,7 +50,7 @@ function fixture() {
     vm.runInContext(fs.readFileSync(path.join(__dirname, '../..', relative), 'utf8'), context);
   }
   window.forma.receive({ type: 'designer', action: 'initialize', id: 'form', title: 'My form' });
-  return { window, root, button, listeners, messages, nodes };
+  return { window, root, button, listeners, messages, nodes, document };
 }
 
 test('drop uses form coordinates, including its border, and carries the current form identity', () => {
@@ -185,4 +191,65 @@ test('form resize stays anchored and supports a larger canvas', () => {
   const { window } = fixture();
   const result = window.formaDesigner.resizeBounds({ x: 0, y: 0, width: 640, height: 440 }, 'se', 200, 100, 640, 440, true);
   assert.deepEqual(JSON.parse(JSON.stringify(result)), { x: 0, y: 0, width: 840, height: 540 });
+});
+
+test('locked controls can be selected but cannot be moved', () => {
+  const { window, button, listeners, messages } = fixture();
+  window.formaDesigner.state = { controls: [{ id: button.id, x: 40, y: 60, width: 120, height: 36, locked: true }] };
+  listeners.pointerdown({ target: button, button: 0, pointerId: 8, clientX: 200, clientY: 200,
+    preventDefault() {}, stopImmediatePropagation() {} });
+  listeners.pointermove({ pointerId: 8, clientX: 250, clientY: 250 });
+  assert.equal(window.formaDesigner.drag, null);
+  assert.equal(messages.length, 1); assert.equal(messages[0].event, 'select');
+});
+
+test('resize respects configured minimum and maximum dimensions', () => {
+  const { window } = fixture();
+  const item = { x: 40, y: 60, width: 120, height: 36, minimumWidth: 80, minimumHeight: 30, maximumWidth: 200, maximumHeight: 100 };
+  const grow = window.formaDesigner.resizeBounds(item, 'se', 900, 900, 640, 440);
+  assert.equal(grow.width, 200); assert.equal(grow.height, 100);
+  const shrink = window.formaDesigner.resizeBounds(item, 'nw', 900, 900, 640, 440);
+  assert.equal(shrink.width, 80); assert.equal(shrink.height, 30);
+});
+
+test('appearance applies tooltips, per-side spacing, typography, and tab order in preview', () => {
+  const { window, button } = fixture();
+  const d = window.formaDesigner;
+  d.preview = true;
+  const item = { id: button.id, kind: 'button', enabled: true, visible: true, width: 120, height: 36,
+    focusable: true, tabIndex: 3, toolTip: 'Submit form', lineHeight: 1.2, letterSpacing: 2,
+    marginLeft: 12, paddingTop: 4, shadow: 'Small', cssClass: 'my-button', tag: 'submit' };
+  d.applyAppearance(item);
+  assert.equal(button.title, 'Submit form'); assert.equal(button.tabIndex, 3);
+  assert.equal(button.style.marginLeft, '12px'); assert.equal(button.style.paddingTop, '4px');
+  assert.equal(button.style.letterSpacing, '2px'); assert.equal(button.style.lineHeight, '1.2');
+  assert.equal(button.classList.contains('my-button'), true); assert.equal(button.dataset.tag, 'submit');
+  d.applyAppearance({ ...item, cssClass: '', focusable: false });
+  assert.equal(button.classList.contains('my-button'), false); assert.equal(button.tabIndex, -1);
+});
+
+test('inspector builds contextual categories from descriptors and retains fields during updates', () => {
+  const { window, button, nodes, document } = fixture();
+  const container = document.createElement('div'); container.id = 'property-editors'; nodes.push(container);
+  const d = window.formaDesigner;
+  d.selectedId = button.id;
+  d.state = { controls: [{ id: button.id, kind: 'button', text: 'Save', x: 0, y: 0, locked: false }],
+    propertySchema: [
+      { id: 'id', label: 'ID', category: 'General', editor: 'text', readOnly: true },
+      { id: 'text', label: 'Text', category: 'General', editor: 'text' },
+      { id: 'locked', label: 'Locked', category: 'General', editor: 'checkbox' },
+      { id: 'id', label: 'CSS ID', category: 'Advanced', editor: 'text', readOnly: true },
+    ] };
+  d.inspector();
+  const categories = container.children.filter(child => child.dataset.category);
+  assert.equal(categories.length, 2);
+  assert.equal(categories[0].open, true); assert.equal(categories[1].open, false);
+  const textEditor = document.getElementById('prop-text');
+  assert.equal(textEditor.value, 'Save');
+  assert.equal(document.getElementById('prop-cssId').value, button.id);
+  assert.equal(document.getElementById('prop-cssId').disabled, true);
+  d.state.controls[0].text = 'Saved'; d.state.controls[0].locked = true; d.inspector();
+  assert.equal(document.getElementById('prop-text'), textEditor);
+  assert.equal(textEditor.value, 'Saved'); assert.equal(textEditor.disabled, true);
+  assert.equal(document.getElementById('prop-locked').disabled, false);
 });

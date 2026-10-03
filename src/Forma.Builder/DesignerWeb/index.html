@@ -1,84 +1,155 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Forma Builder</title><link rel="stylesheet" href="designer.css">
-</head>
-<body>
-  <header class="app-header">
-    <nav class="menubar" aria-label="Main menu">
-      <details><summary>File</summary><div class="menu"><button data-command="new">New Form <kbd>Ctrl+N</kbd></button><button disabled>Open…</button><button disabled>Save</button><hr><button data-command="exit">Exit</button></div></details>
-      <details><summary>Edit</summary><div class="menu"><button disabled>Undo</button><button disabled>Redo</button><button data-command="delete">Delete selected</button></div></details>
-      <details><summary>View</summary><div class="menu"><button data-toggle="toolbox">Toggle Toolbox</button><button data-toggle="properties">Toggle Properties</button></div></details>
-      <details><summary>Project</summary><div class="menu"><button disabled>Project settings</button></div></details>
-      <details><summary>Help</summary><div class="menu"><button data-command="about">About Forma</button></div></details>
-    </nav>
-    <div class="toolbar">
-      <button data-command="new"><span class="icon">▤</span>New <span class="chevron">⌄</span></button>
-      <button disabled><span class="icon">▱</span>Open <span class="chevron">⌄</span></button>
-      <button disabled><span class="icon">▣</span>Save</button><i class="separator"></i>
-      <button disabled><span class="icon">↶</span>Undo</button><button disabled><span class="icon">↷</span>Redo</button><i class="separator"></i>
-      <button data-preview><span class="icon">▷</span>Run / Preview</button>
-      <div class="toolbar-right"><span class="device">▰ &nbsp; Desktop (640 × 440) &nbsp;⌄</span>
-        <label class="zoom-label">⌕ <select id="zoom" aria-label="Canvas zoom"><option value="0.75">75%</option><option value="1" selected>100%</option><option value="1.25">125%</option><option value="1.5">150%</option></select></label>
-        <button class="primary" data-preview><span>▷</span><span id="preview-caption">Preview</span></button>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Forma Builder</title>
+    <link rel="stylesheet" href="designer.css" />
+  </head>
+  <body>
+    <header class="app-header">
+      <nav class="menubar" aria-label="Main menu">
+        <details>
+          <summary>File</summary>
+          <div class="menu">
+            <button data-command="new">New Form <kbd>Ctrl+N</kbd></button
+            ><button data-command="open">Open…</button><button data-command="save">Save <kbd>Ctrl+S</kbd></button><button data-command="save-as">Save As... <kbd>Ctrl+Shift+S</kbd></button>
+            <hr />
+            <button data-command="exit">Exit</button>
+          </div>
+        </details>
+        <details>
+          <summary>Edit</summary>
+          <div class="menu">
+            <button data-command="undo" disabled>Undo <kbd>Ctrl+Z</kbd></button><button data-command="redo" disabled>Redo <kbd>Ctrl+Y</kbd></button
+            ><button data-command="delete">Delete selected</button>
+          </div>
+        </details>
+        <details>
+          <summary>View</summary>
+          <div class="menu">
+            <button data-toggle="toolbox">Toggle Toolbox</button
+            ><button data-toggle="properties">Toggle Properties</button>
+          </div>
+        </details>
+        <details>
+          <summary>Project</summary>
+          <div class="menu"><button disabled>Project settings</button></div>
+        </details>
+        <details>
+          <summary>Help</summary>
+          <div class="menu">
+            <button data-command="about">About Forma</button>
+          </div>
+        </details>
+      </nav>
+      <div class="toolbar">
+        <button data-command="new">
+          <img class="icon-svg" src="icons/file-plus.svg" alt="" />New
+        </button>
+        <button data-command="open">
+          <img class="icon-svg" src="icons/folder-open.svg" alt="" />Open
+        </button>
+        <button data-command="save"><img class="icon-svg" src="icons/save.svg" alt="" />Save</button
+        ><i class="separator"></i>
+        <button data-command="undo" disabled><img class="icon-svg" src="icons/undo-2.svg" alt="" />Undo</button
+        ><button data-command="redo" disabled><img class="icon-svg" src="icons/redo-2.svg" alt="" />Redo</button
+        ><i class="separator"></i>
+        <button data-preview><img class="icon-svg" src="icons/play.svg" alt="" />Run / Preview</button>
+        <div class="toolbar-right">
+          <span class="device"><img class="icon-svg" src="icons/monitor.svg" alt="" /><span id="device-caption">Desktop (640 × 440)</span></span>
+          <label class="zoom-label"
+            ><img class="icon-svg" src="icons/search.svg" alt="" />
+            <select id="zoom" aria-label="Canvas zoom">
+              <option value="0.75">75%</option>
+              <option value="1" selected>100%</option>
+              <option value="1.25">125%</option>
+              <option value="1.5">150%</option>
+            </select></label
+          >
+          <button class="primary" data-preview>
+            <img class="icon-svg" src="icons/play.svg" alt="" /><span id="preview-caption">Preview</span>
+          </button>
+        </div>
       </div>
-    </div>
-  </header>
-  <main class="workspace">
-    <aside id="toolbox" class="toolbox sidebar">
-      <div class="panel-heading">Toolbox <span>⌃</span></div>
-      <label class="search">⌕ <input id="search" placeholder="Search controls…" aria-label="Search controls"></label>
-      <details open class="tool-group"><summary>Layout</summary><button draggable="true" data-kind="panel"><span>□</span>Panel</button><button disabled><span>▧</span>GroupBox</button><button disabled><span>◫</span>SplitContainer</button><button disabled><span>▤</span>TabControl</button><button disabled><span>☷</span>FlowLayoutPanel</button><button disabled><span>▦</span>TableLayoutPanel</button></details>
-      <details open class="tool-group"><summary>Controls</summary><button draggable="true" data-kind="button"><span class="small-icon">OK</span>Button</button><button draggable="true" data-kind="textbox"><span class="small-icon">T</span>TextBox</button><button draggable="true" data-kind="label"><span>A</span>Label</button><button disabled><span>☑</span>CheckBox</button><button disabled><span>◯</span>RadioButton</button><button disabled><span>▾</span>ComboBox</button><button disabled><span>▤</span>ListBox</button><button disabled><span>▧</span>Image</button></details>
-      <details open class="tool-group"><summary>Components</summary><button disabled><span>◷</span>Timer</button><button disabled><span>⚙</span>BackgroundWorker</button><button disabled><span>▦</span>DataGridView</button></details>
-      <p class="tool-note">Drag to add · double-click to insert</p>
-    </aside>
-    <section class="designer-area">
-      <div class="breadcrumb"><span>⌂</span><span id="form-name">Form1</span><span>›</span><span id="mode-label">Design</span></div>
-      <div id="stage" class="stage"><div id="scaled-frame"><div id="form-frame"><div class="form-titlebar"><span class="brand-icon">F</span><span id="canvas-title">Form1</span><div class="window-glyphs">− &nbsp;&nbsp; □ &nbsp;&nbsp; ×</div></div><div id="canvas-host"></div></div></div></div>
-    </section>
-    <aside id="properties" class="properties sidebar">
-      <div class="panel-heading">Properties <button class="close-panel" data-toggle="properties" aria-label="Hide properties">×</button></div>
-      <div class="tabs"><span class="active">Properties</span><span class="unavailable" title="Event binding is not implemented yet">Events</span></div>
-      <div class="inspector-body">
-        <select id="selection" aria-label="Selected control"></select>
-        <label class="identity-property">Name<input id="prop-name" data-property="name"></label>
-        <details open class="property-group"><summary>Appearance</summary>
-          <label>Text<input id="prop-text" data-property="text" autocomplete="off"></label>
-          <label>Font size<input id="prop-fontSize" type="number" min="8" max="48" data-property="fontSize"></label>
-          <label>ForeColor<input id="prop-foreColor" type="color" data-property="foreColor"></label>
-          <label>BackColor<input id="prop-backColor" type="color" data-property="backColor"></label>
-          <label>Font family<select id="prop-fontFamily" data-property="fontFamily"><option>Segoe UI</option><option>Arial</option><option>Consolas</option><option>Georgia</option></select></label>
-          <label>Weight<select id="prop-fontWeight" data-property="fontWeight"><option value="normal">Normal</option><option value="bold">Bold</option></select></label>
-          <label>Font style<select id="prop-fontStyle" data-property="fontStyle"><option value="normal">Normal</option><option value="italic">Italic</option></select></label>
-          <label>Text align<select id="prop-textAlign" data-property="textAlign"><option value="left">Left</option><option value="center">Center</option><option value="right">Right</option></select></label>
-          <label>Opacity (%)<input id="prop-opacity" type="number" min="10" max="100" data-property="opacity"></label>
+    </header>
+    <main class="workspace">
+      <aside id="toolbox" class="toolbox sidebar">
+        <div class="panel-heading">Toolbox <span>⌃</span></div>
+        <label class="search"
+          ><img class="icon-svg" src="icons/search.svg" alt="" />
+          <input
+            id="search"
+            placeholder="Search controls…"
+            aria-label="Search controls"
+        /></label>
+        <details open class="tool-group">
+          <summary>Layout</summary>
+          <button draggable="true" data-kind="panel"><img class="icon-svg" src="icons/panel-top.svg" alt="" />panel</button><button draggable="true" data-kind="groupbox"><img class="icon-svg" src="icons/group.svg" alt="" />GroupBox</button><button draggable="true" data-kind="splitcontainer"><img class="icon-svg" src="icons/columns-2.svg" alt="" />SplitContainer</button><button draggable="true" data-kind="tabcontrol"><img class="icon-svg" src="icons/panels-top-left.svg" alt="" />TabControl</button><button draggable="true" data-kind="flowlayoutpanel"><img class="icon-svg" src="icons/list.svg" alt="" />FlowLayoutPanel</button><button draggable="true" data-kind="tablelayoutpanel"><img class="icon-svg" src="icons/grid-2x2.svg" alt="" />TableLayoutPanel</button>
         </details>
-        <details open class="property-group"><summary>Border</summary>
-          <label>Style<select id="prop-borderStyle" data-property="borderStyle"><option value="none">None</option><option value="solid">Solid</option><option value="dashed">Dashed</option><option value="dotted">Dotted</option></select></label>
-          <label>Color<input id="prop-borderColor" type="color" data-property="borderColor"></label>
-          <label>Width<input id="prop-borderWidth" type="number" min="0" max="10" data-property="borderWidth"></label>
-          <label>Radius<input id="prop-borderRadius" type="number" min="0" max="100" data-property="borderRadius"></label>
+        <details open class="tool-group">
+          <summary>Controls</summary>
+          <button draggable="true" data-kind="button"><img class="icon-svg" src="icons/rectangle-horizontal.svg" alt="" />Button</button><button draggable="true" data-kind="textbox"><img class="icon-svg" src="icons/text-cursor-input.svg" alt="" />TextBox</button><button draggable="true" data-kind="label"><img class="icon-svg" src="icons/type.svg" alt="" />Label</button><button draggable="true" data-kind="checkbox"><img class="icon-svg" src="icons/square-check.svg" alt="" />CheckBox</button><button draggable="true" data-kind="radiobutton"><img class="icon-svg" src="icons/circle.svg" alt="" />RadioButton</button><button draggable="true" data-kind="combobox"><img class="icon-svg" src="icons/chevrons-up-down.svg" alt="" />ComboBox</button><button draggable="true" data-kind="listbox"><img class="icon-svg" src="icons/list-ordered.svg" alt="" />ListBox</button><button draggable="true" data-kind="image"><img class="icon-svg" src="icons/image.svg" alt="" />Image</button>
         </details>
-        <details open class="property-group"><summary>Layout</summary>
-          <label>Width<input id="prop-width" type="number" min="24" max="1600" data-property="width"></label>
-          <label>Height<input id="prop-height" type="number" min="20" max="1200" data-property="height"></label>
-          <label>X<input id="prop-x" type="number" min="0" max="640" data-property="x"></label>
-          <label>Y<input id="prop-y" type="number" min="0" max="440" data-property="y"></label>
-          <label>Padding<input id="prop-padding" type="number" min="0" max="64" data-property="padding"></label>
+        <details open class="tool-group">
+          <summary>Components</summary>
+          <button draggable="true" data-kind="timer"><img class="icon-svg" src="icons/timer.svg" alt="" />Timer</button><button draggable="true" data-kind="backgroundworker"><img class="icon-svg" src="icons/settings.svg" alt="" />BackgroundWorker</button><button draggable="true" data-kind="datagridview"><img class="icon-svg" src="icons/table.svg" alt="" />DataGridView</button>
         </details>
-        <details open class="property-group" id="textbox-properties"><summary>TextBox</summary>
-          <label>Placeholder<input id="prop-placeholder" data-property="placeholder"></label>
-          <label>Max length<input id="prop-maxLength" type="number" min="1" max="32767" data-property="maxLength"></label>
-          <label>Read only<input id="prop-readOnly" type="checkbox" role="switch" data-property="readOnly"></label>
-          <label>Password<input id="prop-password" type="checkbox" role="switch" data-property="password"></label>
-        </details>
-        <details open class="property-group"><summary>Behavior</summary><label>Enabled<input id="prop-enabled" type="checkbox" role="switch" data-property="enabled"></label><label>Visible<input id="prop-visible" type="checkbox" role="switch" data-property="visible"></label></details>
-      </div>
-    </aside>
-  </main>
-  <footer class="statusbar"><span><i class="ready-dot"></i><span id="status">Loading designer…</span></span><span id="selection-status">Form selected</span><span class="status-spacer"></span><span id="coordinates">X: 0 &nbsp; Y: 0</span><span>Forma 0.1.0</span></footer>
-  <script src="../Web/scripts/forma.js"></script><script src="designer.js"></script>
-</body>
+        <details open class="tool-group"><summary>More controls</summary><button draggable="true" data-kind="richtextbox"><img class="icon-svg" src="icons/type.svg" alt="" />RichTextBox</button><button draggable="true" data-kind="picturebox"><img class="icon-svg" src="icons/image.svg" alt="" />PictureBox</button>
+<button draggable="true" data-kind="linklabel"><img class="icon-svg" src="icons/link.svg" alt="" />LinkLabel</button>
+<button draggable="true" data-kind="maskedtextbox"><img class="icon-svg" src="icons/text-cursor-input.svg" alt="" />MaskedTextBox</button>
+<button draggable="true" data-kind="checkedlistbox"><img class="icon-svg" src="icons/list-checks.svg" alt="" />CheckedListBox</button>
+</details><details open class="tool-group"><summary>Inputs and progress</summary><button draggable="true" data-kind="numericupdown"><img class="icon-svg" src="icons/chevrons-up-down.svg" alt="" />NumericUpDown</button><button draggable="true" data-kind="slider"><img class="icon-svg" src="icons/sliders-horizontal.svg" alt="" />Slider</button><button draggable="true" data-kind="progressbar"><img class="icon-svg" src="icons/gauge.svg" alt="" />ProgressBar</button><button draggable="true" data-kind="circularprogress"><img class="icon-svg" src="icons/gauge.svg" alt="" />CircularProgress</button><button draggable="true" data-kind="toggleswitch"><img class="icon-svg" src="icons/toggle-left.svg" alt="" />ToggleSwitch</button><button draggable="true" data-kind="togglebutton"><img class="icon-svg" src="icons/toggle-right.svg" alt="" />ToggleButton</button><button draggable="true" data-kind="datepicker"><img class="icon-svg" src="icons/calendar.svg" alt="" />DatePicker</button><button draggable="true" data-kind="timepicker"><img class="icon-svg" src="icons/clock.svg" alt="" />TimePicker</button><button draggable="true" data-kind="datetimepicker"><img class="icon-svg" src="icons/calendar-clock.svg" alt="" />DateTimePicker</button><button draggable="true" data-kind="colorpicker"><img class="icon-svg" src="icons/palette.svg" alt="" />ColorPicker</button><button draggable="true" data-kind="searchbox"><img class="icon-svg" src="icons/search.svg" alt="" />SearchBox</button><button draggable="true" data-kind="passwordbox"><img class="icon-svg" src="icons/lock.svg" alt="" />PasswordBox</button><button draggable="true" data-kind="textarea"><img class="icon-svg" src="icons/type.svg" alt="" />TextArea</button></details>
+<p class="tool-note">Drag to add · double-click to insert</p>
+      </aside>
+      <section class="designer-area">
+        <div class="breadcrumb">
+          <img class="icon-svg" src="icons/house.svg" alt="" /><span id="form-name">Form1</span><span>›</span
+          ><span id="mode-label">Design</span>
+        </div>
+        <div id="stage" class="stage">
+          <div id="scaled-frame">
+            <div id="form-frame">
+              <div class="form-titlebar">
+                <span class="brand-icon">F</span
+                ><span id="canvas-title">Form1</span>
+                <div class="window-glyphs">− &nbsp;&nbsp; □ &nbsp;&nbsp; ×</div>
+              </div>
+              <div id="canvas-host"></div>
+            </div>
+          </div>
+        </div>
+      <div id="component-tray" class="component-tray" aria-label="Nonvisual components" hidden></div></section>
+      <aside id="properties" class="properties sidebar">
+        <div class="panel-heading">
+          Properties
+          <button
+            class="close-panel"
+            data-toggle="properties"
+            aria-label="Hide properties"
+          >
+            ×
+          </button>
+        </div>
+        <div class="tabs">
+          <span class="active">Properties</span
+          ><span
+            class="unavailable"
+            title="Event binding is not implemented yet"
+            >Events</span
+          >
+        </div>
+        <div class="inspector-body"><select id="selection" aria-label="Selected control"></select><div id="property-editors"></div></div></aside>
+    </main>
+    <footer class="statusbar">
+      <span
+        ><i class="ready-dot"></i
+        ><span id="status">Loading designer…</span></span
+      ><span id="selection-status">Form selected</span
+      ><span class="status-spacer"></span
+      ><span id="coordinates">X: 0 &nbsp; Y: 0</span><span>Forma 0.1.0</span>
+    </footer>
+    <script src="../Web/scripts/forma.js"></script>
+    <script src="designer.js"></script>
+  </body>
 </html>

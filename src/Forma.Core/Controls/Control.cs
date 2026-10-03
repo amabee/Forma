@@ -18,6 +18,7 @@ public abstract class Control : INotifyPropertyChanged
     private string? label;
     private int? _x;
     private int? _y;
+    private int _layoutSlot = 1;
     private readonly List<Control> _children = [];
 
     /// <summary>
@@ -34,6 +35,8 @@ public abstract class Control : INotifyPropertyChanged
     }
 
     public string? Name { get; set; }
+    /// <summary>One-based pane, tab, or grid cell for layout containers.</summary>
+    public int LayoutSlot { get => _layoutSlot; set => SetProperty(ref _layoutSlot, Math.Max(1, value)); }
 
     /// <summary>Optional position within the parent; null uses normal layout.</summary>
     public int? X
@@ -199,6 +202,14 @@ public abstract class Control : INotifyPropertyChanged
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;
+
+    protected void SetProperty<T>(ref T field, T value,
+        [System.Runtime.CompilerServices.CallerMemberName] string? name = null)
+    {
+        if (EqualityComparer<T>.Default.Equals(field, value)) return;
+        field = value;
+        OnPropertyChanged(name);
+    }
 
     protected void OnPropertyChanged(
         [System.Runtime.CompilerServices.CallerMemberName] string? propertyName = null
