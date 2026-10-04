@@ -19,6 +19,9 @@ public sealed class BuilderWindow : System.Windows.Forms.Form
     private readonly CoalescedRefresh _stateRefresh;
     private bool _documentStateDirty;
     private PreviewWindow? _runtimePreview;
+    private ComponentEditorView? _componentEditor;
+    private string? _editorTargetId;
+    private string _workspaceTheme = "dark";
     private readonly BuilderViewModel _viewModel = new();
 
     public BuilderWindow()
@@ -81,6 +84,7 @@ public sealed class BuilderWindow : System.Windows.Forms.Form
 
     private async Task NewFormAsync()
     {
+        CloseDockedEditor();
         if (_renderer is null || _bridge is null)
             return;
         _ready = false;
@@ -114,6 +118,12 @@ public sealed class BuilderWindow : System.Windows.Forms.Form
 
     private async Task HandleDesignerMessageAsync(BridgeMessage message)
     {
+        if (message.Type == "designer" && message.Event == "theme" && message.Payload is JsonElement themePayload
+            && themePayload.ValueKind == JsonValueKind.Object && themePayload.TryGetProperty("theme", out var themeValue)) {
+            var theme = themeValue.GetString();
+            if (theme is "light" or "dark") { _workspaceTheme = theme; _componentEditor?.ApplyTheme(theme); }
+            return;
+        }
         if (message.Type == "custom" && message.Event == "error" && _ready
             && message.Payload is JsonElement errorPayload && errorPayload.TryGetProperty("message", out var errorMessage))
         {
@@ -126,6 +136,18 @@ public sealed class BuilderWindow : System.Windows.Forms.Form
         {
             var payload = message.Payload is JsonElement json && json.ValueKind == JsonValueKind.Object
                 ? json : default;
+            if (message.Event == "editor-bounds") {
+                if (_componentEditor is not null && payload.ValueKind == JsonValueKind.Object) {
+                    var scale = _preview.DeviceDpi / 96d * _preview.ZoomFactor;
+                    int Pixel(string key) => (int)Math.Round(payload.GetProperty(key).GetDouble() * scale);
+                    var x = Math.Clamp(Pixel("x"), 0, ClientSize.Width);
+                    var y = Math.Clamp(Pixel("y"), 0, ClientSize.Height);
+                    _componentEditor.Bounds = new Rectangle(x, y, Math.Clamp(Pixel("width"), 1, Math.Max(1, ClientSize.Width - x)), Math.Clamp(Pixel("height"), 1, Math.Max(1, ClientSize.Height - y)));
+                    _componentEditor.BringToFront();
+                    await _componentEditor.StartEditorAsync();
+                }
+                return;
+            }
             if (message.Event == "preview")
             {
                 await _bridge.SendAsync(new { type = "designer", action = "return-to-design" });
@@ -157,7 +179,11 @@ public sealed class BuilderWindow : System.Windows.Forms.Form
                     case "edit-custom-properties":
                         if (_viewModel.SelectedControl is FControl selected && !_viewModel.PreviewMode && !_viewModel.Appearance[selected.Id].Locked)
                         {
-                            using var editor = new ComponentEditorWindow(
+                            if (_editorTargetId == selected.Id && _componentEditor is not null) { _componentEditor.Focus(); return; }
+                            if (_componentEditor?.HasUnsavedChanges == true && MessageBox.Show(this, "Discard unsaved component code and switch editors?", "Unsaved code", MessageBoxButtons.YesNo) != DialogResult.Yes) return;
+                            CloseDockedEditor();
+                            _editorTargetId = selected.Id;
+                            var editor = new ComponentEditorView(
                                 selected.Name ?? selected.ControlType,
                                 ComponentEditorService.Folder(_viewModel, selected),
                                 ComponentEditorService.Template(selected, _viewModel.Appearance[selected.Id]),
@@ -165,8 +191,21 @@ public sealed class BuilderWindow : System.Windows.Forms.Form
                                 {
                                     var result = _viewModel.ExecuteEdit("customize", selected.Id, JsonSerializer.SerializeToElement(source));
                                     await StateAsync(result.Status);
-                                });
-                            editor.ShowDialog(this);
+                                }, () => new { controls = Walk(_viewModel.Form).Select(c => new { id = c.Id, name = c.Name, kind = c.ControlType }).ToArray() });
+                            _componentEditor = editor;
+                            editor.ApplyTheme(_workspaceTheme);
+                            editor.MinimumSize = Size.Empty;
+                            editor.Bounds = new Rectangle(300, Math.Max(120, ClientSize.Height / 2), Math.Max(100, ClientSize.Width - 590), Math.Max(100, ClientSize.Height / 2 - 32));
+                            Controls.Add(editor);
+                            editor.Closed += (_, _) => {
+                                if (ReferenceEquals(_componentEditor, editor)) {
+                                    _componentEditor = null; _editorTargetId = null;
+                                    if (_ready && _bridge is not null) _ = _bridge.SendAsync(new { type = "designer", action = "editor-close" });
+                                }
+                                editor.Dispose();
+                            };
+                            editor.Show(); editor.BringToFront();
+                            await _bridge.SendAsync(new { type = "designer", action = "editor-open", name = selected.Name });
                         }
                         return;
                     case "exit": Close(); return;
@@ -265,6 +304,10 @@ public sealed class BuilderWindow : System.Windows.Forms.Form
         if (IsDisposed || _bridge is null || _viewModel.Form is null || _viewModel.SelectedControl is null)
             return Task.CompletedTask;
         if (_documentStateDirty) { UpdateProjectTitle(); _documentStateDirty = false; }
+        if (_componentEditor is not null) {
+            if (!Walk(_viewModel.Form).Any(c => c.Id == _editorTargetId)) CloseDockedEditor();
+            else _componentEditor.RefreshCompletionContext();
+        }
         return _bridge.SendAsync(
             new
             {
@@ -274,6 +317,7 @@ public sealed class BuilderWindow : System.Windows.Forms.Form
                 title = _viewModel.Form.Title,
                 selectedId = _viewModel.SelectedControl.Id,
                 canUndo = _viewModel.CanUndo, canRedo = _viewModel.CanRedo,
+                hasUnsavedChanges = _viewModel.HasUnsavedChanges,
                 status,
                 propertySchema = InspectorCatalog
                     .ForKind(_viewModel.SelectedControl.ControlType)
@@ -516,6 +560,7 @@ public sealed class BuilderWindow : System.Windows.Forms.Form
     private void UpdateProjectTitle() => _viewModel.RefreshDocumentState();
     private bool ConfirmDiscard()
     {
+        if (_componentEditor?.HasUnsavedChanges == true && MessageBox.Show(this, "Discard unsaved component code before continuing? Use Save in the code panel to apply it first.", "Unsaved code", MessageBoxButtons.YesNo) != DialogResult.Yes) return false;
         if (!HasUnsavedChanges) return true;
         return MessageBox.Show(this, "Save changes to this design before continuing?", "Forma Builder", MessageBoxButtons.YesNoCancel, MessageBoxIcon.Question) switch {
             DialogResult.Yes => SaveProject(), DialogResult.No => true, _ => false
@@ -554,6 +599,7 @@ public sealed class BuilderWindow : System.Windows.Forms.Form
             var restored = ProjectFile.Restore(ProjectFile.Read(dialog.FileName));
             var appearances = restored.Appearance.ToDictionary(p => p.Key, p => p.Value.Deserialize<Appearance>() ?? throw new InvalidDataException("Invalid appearance."));
             if (!ConfirmDiscard()) return;
+            CloseDockedEditor();
             _ready = false;
             if (_viewModel.Form is not null) await _renderer!.RemoveAsync(_viewModel.Form);
             DisposeComponents();
@@ -593,10 +639,17 @@ public sealed class BuilderWindow : System.Windows.Forms.Form
     {
         _ready = false;
         _runtimePreview?.Close();
+        CloseDockedEditor();
         DisposeComponents();
         if (_bridge is not null)
             _bridge.MessageReceived -= OnDesignerMessage;
         _bridge?.Dispose();
         base.OnFormClosed(e);
+    }
+
+    private void CloseDockedEditor()
+    {
+        _componentEditor?.Close();
+        _componentEditor = null; _editorTargetId = null;
     }
 }

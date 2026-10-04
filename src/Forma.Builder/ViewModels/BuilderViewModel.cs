@@ -80,7 +80,8 @@ public sealed class BuilderViewModel : INotifyPropertyChanged
                 var property = action == "property" && payload.ValueKind == JsonValueKind.Object
                     && payload.TryGetProperty("property", out var field) && field.ValueKind == JsonValueKind.String
                     ? field.GetString() : null;
-                var group = property is "text" or "document" ? $"text:{id}" : null;
+                var group = property is "text" or "document" ? $"text:{id}"
+                    : property is "gridColumns" or "gridRows" ? $"grid:{id}:{property}" : null;
                 RecordEdit(before, CaptureHistory(), group);
             }
             else if (action != "select") RefreshDocumentState();

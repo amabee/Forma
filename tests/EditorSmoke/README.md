@@ -10,10 +10,12 @@ dotnet build tests/EditorSmoke -o build/editor-smoke
 Run the executable rather than `dotnet EditorSmoke.dll` so WebView2's default
 profile directory is beside the test executable, in a writable build directory.
 The test creates its own offscreen Builder, sends a real WebView2 command to
-open Custom Properties, and checks CodeMirror readiness and initial source.
+open the docked Custom Properties panel, and checks CodeMirror readiness, native parenting, initial source and the single status bar.
 The browser tests verify line numbers, syntax colors and formatting. This test
 does not interact with an existing Builder session.
 
 WebView2 callbacks must return before opening modal UI. Designer commands and
 editor commands are posted to WinForms with BeginInvoke to avoid the nested
 message loop that previously left the editor blank.
+
+Pass an absolute PNG path to the executable to capture the rendered workspace for visual review.

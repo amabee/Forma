@@ -52,6 +52,8 @@ Select a component → **Advanced → Custom Properties**. Edit:
 - **Behavior:** JavaScript executed once per Preview start.
 - **Custom JSON:** an object available as `component.properties`.
 
+The built-in editor docks beneath the canvas. Drag its top divider to resize. Use Ctrl+Space for Forma API, component-name, supported-property and custom-value suggestions. Syntax diagnostics show underlines, gutter markers and a Problems list. Unknown literal component names and unsupported runtime properties show warnings; dynamic values and behavior still need Preview testing.
+
 The built-in editor has line numbers, syntax colors, bracket matching, folding, indentation and search (Ctrl+F). Format / Ctrl+Shift+F formats the current tab. Format on save (enabled by default) formats all three sources before saving; turn it off to skip formatting. Syntax errors stop formatting without replacing your text.
 
 Save / Ctrl+S automatically applies sources. Open external editor uses detected VS Code or an executable chosen through Choose editor. External saves auto-apply while the component editor remains open. Invalid JSON keeps the last valid version. Reopen Preview after behavior changes because an existing Preview owns an independent copy.

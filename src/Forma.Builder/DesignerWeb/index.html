@@ -8,10 +8,12 @@
   </head>
   <body>
     <header class="app-header">
+      <div class="project-bar"><span class="forma-logo">◈</span><strong>Forma</strong><span class="brand-divider" aria-hidden="true">|</span>
       <nav class="menubar" aria-label="Main menu">
         <details>
           <summary>File</summary>
           <div class="menu">
+            <button data-command="edit-custom-properties">Edit component code</button>
             <button data-command="new">New Form <kbd>Ctrl+N</kbd></button
             ><button data-command="open">Open…</button
             ><button data-command="save">Save <kbd>Ctrl+S</kbd></button
@@ -48,6 +50,7 @@
           </div>
         </details>
       </nav>
+      <button id="theme-toggle" type="button" aria-pressed="true" aria-label="Switch to light mode" title="Switch to light mode">☀ <span>Light mode</span></button></div>
       <div class="toolbar">
         <button data-command="new">
           <img class="icon-svg" src="icons/file-plus.svg" alt="" />New
@@ -92,9 +95,17 @@
       </div>
     </header>
     <main class="workspace">
+      <nav class="activity-rail" aria-label="Workspace panels">
+        <button data-library="all" aria-pressed="true"><img class="icon-svg" src="icons/toolbox.svg" alt="" />Components</button>
+        <button data-library="layouts" aria-pressed="false"><img class="icon-svg" src="icons/panel-top.svg" alt="" />Layouts</button>
+        <button data-library="controls" aria-pressed="false"><img class="icon-svg" src="icons/type.svg" alt="" />Controls</button>
+        <button data-library="components" aria-pressed="false"><img class="icon-svg" src="icons/timer.svg" alt="" />Services</button>
+        <div class="rail-spacer"></div><button data-command="edit-custom-properties"><img class="icon-svg" src="icons/file-plus.svg" alt="" />Code</button>
+        <button data-command="about"><img class="icon-svg" src="icons/settings.svg" alt="" />About</button>
+      </nav>
       <aside id="toolbox" class="toolbox sidebar">
         <div class="panel-heading">
-          Toolbox <img class="icon-svg" src="icons/toolbox.svg" alt="" />
+          Components <img class="icon-svg" src="icons/toolbox.svg" alt="" />
         </div>
         <label class="search"
           ><img class="icon-svg" src="icons/search.svg" alt="" />
@@ -457,6 +468,10 @@
           aria-label="Nonvisual components"
           hidden
         ></div>
+        <div id="editor-dock" class="editor-dock" hidden>
+          <div id="editor-splitter" role="separator" aria-label="Resize code panel" aria-orientation="horizontal" aria-valuemin="180" aria-valuemax="600" aria-valuenow="300" tabindex="0"></div>
+          <div id="editor-mount" aria-label="Component code editor"><p>Loading component editor…</p></div>
+        </div>
       </section>
       <aside id="properties" class="properties sidebar">
         <div class="panel-heading">
@@ -479,6 +494,7 @@
         </div>
         <div class="inspector-body">
           <select id="selection" aria-label="Selected control"></select>
+          <label class="search property-search"><img class="icon-svg" src="icons/search.svg" alt="" /><input id="property-search" placeholder="Search properties…" aria-label="Search properties" /></label>
           <div id="property-editors"></div>
         </div>
       </aside>
@@ -498,5 +514,6 @@
     <script src="../Web/scripts/modern-controls.js"></script>
     <script src="designer.js"></script>
     <script src="component-customization.js"></script>
+    <script src="workspace.js"></script>
   </body>
 </html>

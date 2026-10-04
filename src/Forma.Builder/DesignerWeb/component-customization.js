@@ -2,6 +2,21 @@
 (() => {
   const styles = new Map(), behaviors = new Map(), failedStyles = new Map(), failedBehaviors = new Map();
   let currentState;
+  const aliases = { doubleclick: "dblclick", mousewheel: "wheel" };
+  const lifecycle = new Set(["created", "mounted", "ready", "load", "updated", "destroyed", "resize", "move", "layout", "validating", "validated"]);
+  const eventName = name => aliases[String(name).toLowerCase()] ?? String(name).toLowerCase();
+  function emit(record, name, detail = {}, cancelable = false) {
+    return record.element.dispatchEvent(new CustomEvent(name, { detail, cancelable }));
+  }
+  function validate(record) {
+    if (!emit(record, "validating", {}, true)) return false;
+    const inputs = record.element.matches("input,select,textarea") ? [record.element]
+      : [...record.element.querySelectorAll("input,select,textarea")];
+    if (!inputs.every(input => input.checkValidity())) return false;
+    emit(record, "validated");
+    return true;
+  }
+  function snapshot(item) { return JSON.stringify(item); }
   const report = (id, error) => window.forma.send({ type: "custom", id, event: "error", payload: { message: String(error.message ?? error) } });
   const field = (object, name) => object?.[name] ?? object?.[name[0].toUpperCase() + name.slice(1)];
 
@@ -55,14 +70,24 @@
     const values = JSON.parse(characteristics || "{}");
     const api = {
       on(event, handler) {
+        event = eventName(event);
         const listener = e => {
-          if (!item.enabled || !item.visible) return;
+          if (lifecycle.has(event) && !(e instanceof CustomEvent)) return;
+          if (!lifecycle.has(event) && (!item.enabled || !item.visible)) return;
           try { Promise.resolve(handler(e)).catch(error => report(item.id, error)); }
           catch (error) { report(item.id, error); }
         };
-        element.addEventListener(event, listener);
-        cleanups.push(() => element.removeEventListener(event, listener));
+        // Focus/blur and enter/leave do not bubble from composite control inputs.
+        const options = { capture: ["focus", "blur"].includes(event), passive: false };
+        element.addEventListener(event, listener, options);
+        cleanups.push(() => element.removeEventListener(event, listener, options));
       },
+      validate() { return validate(behaviors.get(item.id)); },
+      submit() {
+        const record = behaviors.get(item.id);
+        return validate(record) && emit(record, "submit", {}, true);
+      },
+      reset() { return emit(behaviors.get(item.id), "reset", {}, true); },
       cleanup(callback) { cleanups.push(callback); },
       find(name) { return document.getElementById(target(currentState, name).id); },
       get(name, property) {
@@ -88,14 +113,37 @@
       showDialog(name) { window.forma.send({ type: "custom", id: target(currentState, name).id, event: "show-dialog", payload: { sourceId: item.id } }); }
     };
     const component = { id: item.id, name: item.name, element, properties: values, characteristics: values };
-    const record = { source, characteristics, element, item, cleanups };
+    const record = { source, characteristics, element, item, cleanups, snapshot: snapshot(item) };
     behaviors.set(item.id, record);
+    if (window.ResizeObserver) {
+      let lastSize;
+      const observer = new ResizeObserver(entries => {
+        const rect = entries[0]?.contentRect;
+        if (!rect || behaviors.get(item.id) !== record) return;
+        const size = { width: rect.width, height: rect.height };
+        if (lastSize && (lastSize.width !== size.width || lastSize.height !== size.height)) {
+          emit(record, "resize", { previous: lastSize, current: size });
+          emit(record, "layout");
+        }
+        lastSize = size;
+      });
+      observer.observe(element);
+      cleanups.push(() => observer.disconnect());
+    }
+    const onBlur = () => validate(record);
+    element.addEventListener("blur", onBlur, true);
+    cleanups.push(() => element.removeEventListener("blur", onBlur, true));
     try { new Function("api", "component", '"use strict";\n' + source)(api, component); }
     catch (error) { cleanupBehavior(item.id); throw error; }
+    return record;
   }
 
   function cleanupBehavior(id) {
-    const record = behaviors.get(id); behaviors.delete(id);
+    const record = behaviors.get(id);
+    if (record?.destroying) return;
+    if (record) record.destroying = true;
+    if (record) emit(record, "destroyed");
+    behaviors.delete(id);
     for (const cleanup of record?.cleanups ?? []) {
       try { cleanup(); } catch (error) { report(id, error); }
     }
@@ -104,6 +152,7 @@
   window.formaCustomization = {
     apply(state, runtime = false) {
       currentState = state;
+      const pending = [];
       const live = new Set(state.controls.map(item => item.id));
       for (const map of [failedStyles, failedBehaviors]) for (const id of map.keys()) if (!live.has(id)) map.delete(id);
       for (const [id, record] of styles) if (!live.has(id)) { record.element.remove(); styles.delete(id); }
@@ -126,18 +175,35 @@
         const source = field(customization, "behavior") ?? "", characteristics = field(customization, "characteristics") ?? "{}";
         const existing = behaviors.get(item.id);
         if (existing && existing.source === source && existing.characteristics === characteristics && existing.element === document.getElementById(item.id)) {
+          const previous = JSON.parse(existing.snapshot);
+          const changed = existing.snapshot !== snapshot(item);
           Object.assign(existing.item, item);
+          existing.snapshot = snapshot(item);
+          if (changed) pending.push(() => {
+            emit(existing, "updated", { previous, current: { ...item } });
+            const moved = previous.x !== item.x || previous.y !== item.y;
+            const resized = previous.width !== item.width || previous.height !== item.height;
+            if (moved) emit(existing, "move", { previous, current: { ...item } });
+            if (resized && !window.ResizeObserver) emit(existing, "resize", { previous, current: { ...item } });
+            if (moved || resized && !window.ResizeObserver || previous.parentId !== item.parentId) emit(existing, "layout");
+          });
           continue;
         }
         cleanupBehavior(item.id);
         const signature = source + "\n" + characteristics;
         if (failedBehaviors.get(item.id) !== signature) failedBehaviors.delete(item.id);
         if (source && failedBehaviors.get(item.id) !== signature) try {
-          installBehavior(item, state, source, characteristics); failedBehaviors.delete(item.id);
+          const record = installBehavior(item, state, source, characteristics);
+          pending.push(() => {
+            for (const event of ["created", "mounted", "ready", "load"]) emit(record, event);
+          });
+          failedBehaviors.delete(item.id);
         } catch (error) { failedBehaviors.set(item.id, signature); report(item.id, error); }
       }
+      // All components and their handlers exist before startup callbacks run.
+      for (const dispatch of pending) dispatch();
     },
-    event(id, event) { document.getElementById(id)?.dispatchEvent(new CustomEvent(event)); },
+    event(id, event) { document.getElementById(id)?.dispatchEvent(new CustomEvent(eventName(event))); },
     clear() {
       for (const id of behaviors.keys()) cleanupBehavior(id);
       for (const record of styles.values()) record.element.remove();

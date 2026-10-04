@@ -5,6 +5,52 @@ const path = require('node:path');
 const { JSDOM } = require('../../src/Forma.Builder/Frontend/node_modules/jsdom');
 const base = path.join(__dirname, '../..');
 
+test('grid inspector commits valid drafts before Save and preserves drafts across stale state refreshes', () => {
+  const { window, document, create, messages } = fixture();
+  create('grid', 'datagridview', 'root');
+  const state = { action: 'state', id: 'root', selectedId: 'grid', title: 'Form1', controls: [
+    { id: 'root', kind: 'form', name: 'Form1', width: 640, height: 440 },
+    { id: 'grid', kind: 'datagridview', name: 'employees', gridColumns: 'Name\nValue', gridRows: '[["First row","1"]]', width: 300, height: 200, enabled: true, visible: true }
+  ], propertySchema: [
+    { id: 'gridColumns', label: 'Columns', category: 'General', editor: 'textarea' },
+    { id: 'gridRows', label: 'Rows (JSON)', category: 'General', editor: 'textarea' }
+  ] };
+  const d = window.formaDesigner; d.receive(state);
+  const columns = document.getElementById('prop-gridColumns'); columns.focus(); columns.value = 'Employee\nDepartment';
+  columns.dispatchEvent(new window.Event('input', { bubbles: true }));
+  assert.equal(messages.at(-1).event, 'property'); assert.equal(messages.at(-1).id, 'grid');
+  d.receive(state); assert.equal(columns.value, 'Employee\nDepartment');
+  const rows = document.getElementById('prop-gridRows'); rows.focus(); rows.value = '[\n ["Angel", "Engineering"]\n]';
+  rows.dispatchEvent(new window.Event('input', { bubbles: true }));
+  assert.equal(messages.at(-1).payload.property, 'gridRows');
+  document.dispatchEvent(new window.KeyboardEvent('keydown', { key: 's', ctrlKey: true, bubbles: true }));
+  assert.equal(messages.at(-1).payload.command, 'save');
+  d.receive(state); assert.equal(rows.value, '[\n ["Angel", "Engineering"]\n]');
+  const ack = JSON.parse(JSON.stringify(state)); ack.controls[1].gridColumns = 'Employee\nDepartment'; ack.controls[1].gridRows = '[["Angel","Engineering"]]';
+  d.receive(ack); assert.equal(rows.value, '[\n ["Angel", "Engineering"]\n]');
+  rows.blur(); d.receive(ack); assert.equal(rows.value, ack.controls[1].gridRows);
+});
+
+test('invalid grid rows remain visible with a validation error and prevent saving until fixed', () => {
+  const { window, document, create, messages } = fixture(); create('grid', 'datagridview', 'root');
+  const state = { action: 'state', selectedId: 'grid', controls: [{ id: 'root', kind: 'form', width: 640, height: 440 },
+    { id: 'grid', kind: 'datagridview', gridRows: '[]', width: 300, height: 200, enabled: true, visible: true }],
+    propertySchema: [{ id: 'gridRows', label: 'Rows (JSON)', category: 'General', editor: 'textarea' }] };
+  const d = window.formaDesigner; d.receive(state); const rows = document.getElementById('prop-gridRows');
+  for (const invalid of ['[["unfinished"', '[["Angel", 42]]']) {
+    rows.value = invalid; const count = messages.length;
+    rows.dispatchEvent(new window.Event('input', { bubbles: true }));
+    assert.equal(messages.length, count); assert.equal(rows.getAttribute('aria-invalid'), 'true');
+    d.receive(state); assert.equal(rows.value, invalid); assert.ok(document.getElementById('prop-gridRows-error').textContent);
+    document.dispatchEvent(new window.KeyboardEvent('keydown', { key: 's', ctrlKey: true, bubbles: true }));
+    assert.equal(messages.some(m => m.event === 'command' && m.payload.command === 'save'), false);
+  }
+  rows.value = '[["Angel", "42"]]'; rows.dispatchEvent(new window.Event('input', { bubbles: true }));
+  assert.equal(rows.getAttribute('aria-invalid'), 'false'); assert.equal(messages.at(-1).payload.property, 'gridRows');
+  document.dispatchEvent(new window.KeyboardEvent('keydown', { key: 's', ctrlKey: true, bubbles: true }));
+  assert.equal(messages.at(-1).payload.command, 'save');
+});
+
 test('FilePicker path can set Avatar source and getter follows updated preview state', () => {
   const { window, document, create, messages } = fixture('preview.html');
   create('apply', 'button', 'root'); create('picker', 'filepicker', 'root', { selectedPath: 'C:\\Pictures\\face.png' });
@@ -422,7 +468,7 @@ test('custom properties live in Advanced for nonvisual components and the form',
   const d = window.formaDesigner;
   for (const item of [{ id: 'timer', kind: 'timer', component: true }, { id: 'root', kind: 'form' }]) {
     d.state = { controls: [item], propertySchema: [] }; d.selectedId = item.id; d.inspector();
-    const button = document.querySelector('[data-command="edit-custom-properties"]');
+    const button = document.querySelector('.inspector-body [data-command="edit-custom-properties"]');
     assert.ok(button);
     assert.equal(button.textContent, 'Custom Properties…');
     assert.equal(button.closest('details').dataset.category, 'Advanced');

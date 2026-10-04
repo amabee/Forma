@@ -7,6 +7,19 @@
   [hidden] { display: none !important; }
 }
 @layer components {
+  .embedded-editor .editor-header { @apply px-3 py-2; }
+  .embedded-editor .editor-header h1 { @apply text-xs; }
+  .embedded-editor .editor-header p { @apply hidden; }
+  .embedded-editor .editor-actions { @apply mt-1.5 gap-1; }
+  .embedded-editor .editor-actions button { @apply px-2 py-1; }
+  .embedded-editor .editor-option { @apply mt-1 text-[10px]; }
+  .embedded-editor .editor-tabs button { @apply px-3 py-2; }
+  .embedded-editor .editor-footer { @apply gap-2 px-3 py-1.5 text-[10px]; }
+  .embedded-editor .editor-actions kbd { @apply hidden; }
+  #editor-problems { @apply shrink-0 rounded px-1 text-amber-300 hover:bg-slate-700; }
+  .editor-tabs button[data-problems]::after { content: attr(data-problems); @apply ml-2 rounded bg-amber-500/20 px-1 text-amber-300; }
+}
+@layer components {
   .editor-shell { @apply flex h-full flex-col; }
   .editor-header { @apply shrink-0 border-b border-slate-700 bg-slate-800 px-5 py-3; }
   .editor-header h1 { @apply text-lg font-semibold; }
@@ -25,4 +38,18 @@
   .editor-footer { @apply flex shrink-0 items-center gap-4 border-t border-slate-700 bg-slate-800 px-4 py-2 text-xs text-slate-400; }
   #editor-message { @apply flex-1 min-w-0 truncate; }
   #editor-cursor { @apply shrink-0; }
+}
+
+@layer components {
+  [data-theme="light"] body { @apply bg-white text-slate-800; color-scheme: light; }
+  [data-theme="light"] .editor-header, [data-theme="light"] .editor-tabs,
+  [data-theme="light"] .editor-footer { @apply border-slate-200 bg-slate-50; }
+  [data-theme="light"] .editor-header p, [data-theme="light"] .editor-option,
+  [data-theme="light"] .editor-footer, [data-theme="light"] .editor-tabs button { @apply text-slate-600; }
+  [data-theme="light"] .editor-actions button { @apply border-slate-300 bg-white text-slate-700 hover:bg-slate-100; }
+  [data-theme="light"] .editor-actions .editor-primary { @apply border-blue-600 bg-blue-600 text-white hover:bg-blue-700; }
+  [data-theme="light"] .editor-tabs button { @apply border-slate-200; }
+  [data-theme="light"] .editor-tabs [aria-selected="true"] { @apply border-t-blue-500 bg-white text-blue-700; }
+  [data-theme="light"] #editor-problems { @apply text-amber-700 hover:bg-amber-50; }
+  [data-theme="light"] .editor-tabs button[data-problems]::after { @apply bg-amber-100 text-amber-800; }
 }

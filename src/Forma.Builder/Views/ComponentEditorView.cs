@@ -5,13 +5,17 @@ using Microsoft.Web.WebView2.Core;
 namespace Forma.Builder;
 
 /// <summary>Source editing with automatic design updates on successful saves.</summary>
-public sealed class ComponentEditorWindow : System.Windows.Forms.Form
+public sealed class ComponentEditorView : UserControl
 {
     private readonly string _folder;
     private readonly Microsoft.Web.WebView2.WinForms.WebView2 _web = new() { Dock = DockStyle.Fill };
     private ComponentCustomization _draft;
     private bool _editorReady;
     private readonly string _componentName;
+    private readonly Func<object>? _completionContext;
+    private Task? _initialization;
+    private string _theme = "dark";
+    public bool HasUnsavedChanges { get; private set; }
     private static readonly JsonSerializerOptions JsonOptions = new() { PropertyNamingPolicy = JsonNamingPolicy.CamelCase, PropertyNameCaseInsensitive = true };
     private readonly Label _status = new() { Dock = DockStyle.Bottom, Height = 32, Padding = new Padding(8) };
     private static string? _preferredEditor;
@@ -24,20 +28,19 @@ public sealed class ComponentEditorWindow : System.Windows.Forms.Form
     private readonly TaskCompletionSource<bool> _editorLoaded = new(TaskCreationOptions.RunContinuationsAsynchronously);
     public ComponentCustomization Result => _saveSession.Current;
 
-    public ComponentEditorWindow(string name, string folder, ComponentCustomization source, Func<ComponentCustomization, Task> apply)
+    public ComponentEditorView(string name, string folder, ComponentCustomization source, Func<ComponentCustomization, Task> apply, Func<object>? completionContext = null)
     {
         Text = $"{name} — Custom Properties";
         _componentName = name;
+        _completionContext = completionContext;
         _folder = folder; _saveSession = new ComponentSaveSession(source, apply); _draft = source;
         ClientSize = new Size(1040, 720); MinimumSize = new Size(760, 500);
-        StartPosition = FormStartPosition.CenterParent;
         _status.BackColor = Color.FromArgb(30, 41, 59); _status.ForeColor = Color.FromArgb(148, 163, 184);
         Controls.Add(_web); Controls.Add(_status);
         if (File.Exists(Path.Combine(folder, "component.css")) && File.Exists(Path.Combine(folder, "behavior.js"))
             && (File.Exists(Path.Combine(folder, ComponentEditorService.PropertiesFile)) || File.Exists(Path.Combine(folder, "characteristics.json"))))
             _draft = ComponentEditorService.Read(folder);
         _status.Text = folder;
-        Shown += async (_, _) => await InitializeEditorAsync();
         _reloadDelay.Tick += async (_, _) => await ReloadSavedFilesAsync();
     }
 
@@ -52,7 +55,7 @@ public sealed class ComponentEditorWindow : System.Windows.Forms.Form
             if (_closed || IsDisposed) return;
             _web.CoreWebView2.WebMessageReceived += EditorMessage;
             _web.CoreWebView2.NavigationCompleted += EditorNavigated;
-            _web.CoreWebView2.Navigate(new Uri(page).AbsoluteUri);
+            _web.CoreWebView2.Navigate(new Uri(page).AbsoluteUri + "?embedded=1");
             await _editorLoaded.Task.WaitAsync(TimeSpan.FromSeconds(30));
         } catch (Exception error) {
             if (!_closed && !IsDisposed) SetStatus($"Could not load code editor: {error.Message}");
@@ -67,6 +70,13 @@ public sealed class ComponentEditorWindow : System.Windows.Forms.Form
     private void SendEditor(object message)
     {
         if (_editorReady && !_closed && !IsDisposed) _web.CoreWebView2.PostWebMessageAsJson(JsonSerializer.Serialize(message, JsonOptions));
+    }
+    public Task StartEditorAsync() => _initialization ??= InitializeEditorAsync();
+    public void RefreshCompletionContext() => SendEditor(new { action = "context", context = _completionContext?.Invoke() });
+    public void ApplyTheme(string theme) {
+        var value = theme == "light" ? "light" : "dark";
+        if (value == _theme) return;
+        _theme = value; SendEditor(new { action = "theme", theme = _theme });
     }
 
     private void EditorMessage(object? sender, CoreWebView2WebMessageReceivedEventArgs e)
@@ -98,6 +108,7 @@ public sealed class ComponentEditorWindow : System.Windows.Forms.Form
                 _editorReady = true; _status.Visible = false; Populate(_draft); StartWatching(); _editorLoaded.TrySetResult(true); return;
             }
             if (command == "dirty") {
+                HasUnsavedChanges = message.GetProperty("dirty").GetBoolean();
                 Text = $"{(message.GetProperty("dirty").GetBoolean() ? "* " : "")}{_componentName} — Custom Properties"; return;
             }
             if (command is "save" or "external") {
@@ -106,7 +117,7 @@ public sealed class ComponentEditorWindow : System.Windows.Forms.Form
                 await RunAsync(command == "save" ? SaveAsync : OpenExternalEditor);
             }
             if (command == "choose-editor") ChooseEditor();
-            if (command == "close") Close();
+            if (command == "close" && (!HasUnsavedChanges || MessageBox.Show(this, "Discard unsaved component code?", "Unsaved code", MessageBoxButtons.YesNo) == DialogResult.Yes)) Close();
         } catch (Exception error) when (error is JsonException or ArgumentException or InvalidOperationException or KeyNotFoundException) {
             SendEditor(new { action = "error", status = error.Message });
         }
@@ -116,7 +127,7 @@ public sealed class ComponentEditorWindow : System.Windows.Forms.Form
     private void Populate(ComponentCustomization source)
     {
         _draft = source;
-        SendEditor(new { action = "source", source, status = "Use :host for styles. Behavior runs in Preview. Save applies automatically." });
+        SendEditor(new { action = "source", source, theme = _theme, context = _completionContext?.Invoke(), name = _componentName, status = "Use :host for styles. Behavior runs in Preview. Save applies automatically." });
     }
 
     private async Task OpenExternalEditor()
@@ -218,8 +229,12 @@ public sealed class ComponentEditorWindow : System.Windows.Forms.Form
         finally { _saving = false; }
     }
 
-    protected override void OnFormClosed(FormClosedEventArgs e)
+    public event EventHandler? Closed;
+    public void Close() { if (_closed) return; Closed?.Invoke(this, EventArgs.Empty); Dispose(); }
+
+    protected override void Dispose(bool disposing)
     {
+        if (!disposing || _closed) { base.Dispose(disposing); return; }
         _closed = true;
         _editorLoaded.TrySetCanceled();
         if (_web.CoreWebView2 is not null) {
@@ -227,7 +242,7 @@ public sealed class ComponentEditorWindow : System.Windows.Forms.Form
             _web.CoreWebView2.NavigationCompleted -= EditorNavigated;
         }
         _watcher?.Dispose(); _reloadDelay.Stop(); _reloadDelay.Dispose();
-        base.OnFormClosed(e);
+        base.Dispose(disposing);
     }
 
     private async Task RunAsync(Func<Task> action)

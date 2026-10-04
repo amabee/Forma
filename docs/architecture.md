@@ -50,7 +50,7 @@ Forma/
 │   │   ├── Views/
 │   │   │   ├── BuilderWindow.cs           Native View and bridge integration
 │   │   │   ├── PreviewWindow.cs           Runtime window and native dialogs
-│   │   │   └── ComponentEditorWindow.cs   Built-in/external source editor View
+│   │   │   └── ComponentEditorView.cs   Built-in/external source editor View
 │   │   ├── Services/
 │   │   │   ├── CoalescedRefresh.cs       Merge same-turn view state requests
 │   │   │   ├── DesignerEditingService.cs  Add/delete/move/resize/property/layer rules
@@ -195,3 +195,18 @@ browser. `Web/scripts/modern-controls.js` is View code for rendering, positionin
 animation and notification/overlay cleanup. Preview scripts issue commands through
 the bridge; PreviewWindow dispatches Toast commands and PreviewSession changes
 Active on Spinner/LoadingOverlay. DOM elements never become the saved model.
+
+### Docked workspace and code assistance
+
+`Views/ComponentEditorView.cs` is a native UserControl hosting the code WebView.
+BuilderWindow owns its lifecycle and connects saves to BuilderViewModel commands.
+`DesignerWeb/workspace.js` is View code: the activity rail, property search, divider
+and dock rectangle. It sends bounds after layout; the native editor initializes
+once those bounds are available. DesignerWeb stores no committed source state.
+
+`Frontend/code-editor.mjs` owns CodeMirror views, format/save commands and bridge
+messages. `code-assistance.mjs` supplies syntax diagnostics and completions from
+current component names and the runtime API contract. Sources remain
+ComponentCustomization model data; ComponentSaveSession and ComponentEditorService
+still validate, save and watch external files. Editor diagnostics are authoring
+feedback, not an execution engine or a generated C# application.

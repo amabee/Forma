@@ -82,3 +82,35 @@ test('selection has a contrasting color and remains visible under the active lin
   assert.equal(window.getComputedStyle(box).backgroundColor, 'rgb(37, 99, 235)');
   assert.equal(window.document.querySelectorAll('.editor-footer').length, 1);
 });
+
+test('live diagnostics render gutter markers and problem counts and clear after correction', async t => {
+  const { window, editor } = fixture(t);
+  editor.receive({ action: 'source', source: { css: '', behavior: 'const = 3;', characteristics: '{}' }, context: { controls: [{ name: 'userAvatar', kind: 'avatar' }] }, name: 'button1' });
+  editor.activate('behavior');
+  await new Promise(resolve => setTimeout(resolve, 650));
+  assert.ok(window.document.querySelector('.cm-lint-marker-error'));
+  assert.match(window.document.getElementById('editor-problems').textContent, /1 problem/);
+  assert.equal(window.document.querySelector('[data-tab="behavior"]').dataset.problems, '1');
+  await editor.command('problems'); assert.ok(window.document.querySelector('.cm-panel-lint'));
+  const view = editor.views.get('behavior'); view.dispatch({ changes: { from: 0, to: view.state.doc.length, insert: 'api.set("userAvatar", "source", "");' } });
+  await new Promise(resolve => setTimeout(resolve, 650));
+  assert.equal(window.document.getElementById('editor-problems').textContent, '0 problems');
+  assert.equal(window.document.querySelector('.cm-lint-marker-error'), null);
+});
+
+test('editor theme switches live without changing source, selection or dirty state', t => {
+  const { window, editor } = fixture(t);
+  editor.receive({ action: 'source', source: { css: '', behavior: 'const name = "Forma";', characteristics: '{}' } });
+  editor.activate('behavior'); const view = editor.views.get('behavior');
+  view.dispatch({ changes: { from: 0, insert: '// draft\n' }, selection: { anchor: 3, head: 8 } });
+  const source = JSON.stringify(editor.source()), selection = view.state.selection.main;
+  editor.receive({ action: 'theme', theme: 'light' });
+  assert.equal(window.document.documentElement.dataset.theme, 'light');
+  assert.equal(window.getComputedStyle(view.dom).backgroundColor, 'rgb(255, 255, 255)');
+  assert.equal(JSON.stringify(editor.source()), source);
+  assert.equal(view.state.selection.main.anchor, selection.anchor); assert.equal(view.state.selection.main.head, selection.head);
+  assert.equal(window.document.getElementById('editor-dirty').textContent, 'Unsaved changes');
+  editor.receive({ action: 'theme', theme: 'dark' });
+  assert.equal(window.getComputedStyle(view.dom).backgroundColor, 'rgb(15, 23, 42)');
+  assert.equal(JSON.stringify(editor.source()), source);
+});

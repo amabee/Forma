@@ -1,6 +1,12 @@
 @import "tailwindcss";
 @source "../DesignerWeb/index.html";
 @source "../DesignerWeb/designer.js";
+@source "../DesignerWeb/workspace.js";
+@layer components {
+  .property-error { @apply col-start-2 text-[10px] text-red-400 break-words; }
+  [data-theme="light"] .property-error { @apply text-red-700; }
+  .property-group textarea[aria-invalid="true"] { @apply border-red-500; }
+}
 
 @layer base {
   :root {
@@ -728,4 +734,95 @@
   .skeleton-bars[data-shape="circle"] { @apply items-start; }
   .skeleton-bars[data-shape="circle"] .skeleton-bar { @apply flex-none h-full aspect-square rounded-full; }
   .skeleton-bars[data-animated="true"] { @apply motion-safe:animate-pulse; }
+}
+
+/* Workspace chrome. Component appearance remains controlled by the model. */
+@layer components {
+  body { @apply bg-[#090f16] text-slate-300; color-scheme: dark; }
+  .project-bar { @apply flex h-12 shrink-0 items-center gap-3 border-b border-slate-800 bg-[#0c131c] px-4; }
+  .forma-logo { @apply text-2xl text-blue-500; }
+  .project-bar strong { @apply text-base text-white; }
+  .project-bar button { @apply flex items-center gap-2 rounded border border-slate-700 bg-slate-800 px-3 py-1.5 text-xs; }
+  .menubar { @apply h-7 bg-[#0c131c] text-slate-400; }
+  .menubar summary:hover, .menubar details[open] summary { @apply bg-slate-800 text-white; }
+  .menu, .menu button { @apply border-slate-700 bg-[#121c29] text-slate-200; }
+  .menu button:hover:not(:disabled) { @apply bg-slate-700; }
+  .toolbar { @apply h-11 border-slate-800 bg-none bg-[#0c131c] px-3; }
+  .toolbar button:hover:not(:disabled) { @apply bg-slate-800; }
+  .toolbar button { @apply h-7 text-[11px]; }
+  .toolbar .separator { @apply h-5 border-slate-700; }
+  .device, .zoom-label { @apply border-slate-700 bg-[#121c29] py-1 text-slate-300; }
+  .activity-rail { @apply flex w-[92px] shrink-0 flex-col gap-2 border-r border-slate-800 bg-[#0c131c] p-2; }
+  .activity-rail button { @apply flex flex-col items-center gap-1.5 rounded-md px-1 py-3 text-[10px] text-slate-400 hover:bg-slate-800 hover:text-slate-100; }
+  .activity-rail [aria-pressed="true"] { @apply bg-blue-500/15 text-blue-300; }
+  .rail-spacer { @apply flex-1; }
+  .sidebar { @apply bg-[#0c131c]; }
+  .toolbox { @apply w-[200px] border-slate-800 px-3; }
+  .properties { @apply w-[285px] border-slate-800; }
+  .panel-heading { @apply text-xs text-slate-200; }
+  .tool-group { @apply border-slate-800; }
+  .tool-group button { @apply mb-1 border border-slate-800 bg-[#111b27] py-2 hover:bg-slate-800 hover:border-slate-600; }
+  .search { @apply border-slate-700 bg-[#111b27]; }
+  .search input { @apply text-slate-200; }
+  .designer-area { @apply bg-[#090f16]; }
+  .breadcrumb { @apply h-9 border-slate-800 bg-[#0c131c] text-blue-300; }
+  .stage { @apply min-h-0 bg-none bg-[#090f16] px-6 py-8; }
+  .tabs, .property-group { @apply border-slate-800; }
+  .tabs .active { @apply text-blue-300; }
+  .inspector-body input:not([type="checkbox"]), .inspector-body select, .property-group textarea { @apply border-slate-700 bg-[#111b27] text-slate-200; }
+  .property-actions button { @apply border-slate-700 bg-[#111b27] text-slate-200 hover:bg-slate-700; }
+  .component-tray { @apply border-slate-800 bg-[#0c131c] text-slate-400; }
+  .statusbar { @apply h-8 border-slate-800 bg-[#0c131c] text-slate-400; }
+  .workspace > .sidebar .icon-svg, .activity-rail .icon-svg, .toolbar .icon-svg, .breadcrumb .icon-svg, .project-bar .icon-svg { filter: brightness(0) invert(0.75); }
+  .editor-dock { @apply flex h-[300px] min-h-[180px] shrink-0 flex-col border-t border-slate-800 bg-[#0f172a]; }
+  #editor-splitter { @apply h-1.5 shrink-0 cursor-row-resize bg-slate-800 hover:bg-blue-500 focus:bg-blue-500 outline-none; touch-action: none; }
+  #editor-mount { @apply min-h-0 flex-1 overflow-hidden; }
+  #editor-mount p { @apply px-4 py-3 text-xs text-slate-400; }
+  .forma-form { color-scheme: light; }
+  @media (max-width: 1100px) {
+    .activity-rail { @apply w-16; }
+    .activity-rail button { @apply text-[9px]; }
+    .toolbox { @apply w-[175px]; }
+    .properties { @apply w-[250px]; }
+    .toolbar-right { @apply gap-2; }
+  }
+}
+
+@layer components {
+  .brand-divider { @apply ml-1 text-slate-600; }
+  .project-bar .menubar { @apply h-auto items-center bg-transparent px-0; }
+  .project-bar #theme-toggle { @apply ml-auto shrink-0 text-xs hover:bg-slate-700; }
+  .inspector-body .property-search input { @apply border-0 bg-transparent p-0; }
+  [data-theme="light"] body { @apply bg-slate-100 text-slate-700; color-scheme: light; }
+  [data-theme="light"] .project-bar, [data-theme="light"] .toolbar, [data-theme="light"] .sidebar,
+  [data-theme="light"] .activity-rail, [data-theme="light"] .breadcrumb, [data-theme="light"] .statusbar,
+  [data-theme="light"] .component-tray { @apply border-slate-200 bg-slate-50; }
+  [data-theme="light"] .project-bar strong, [data-theme="light"] .panel-heading { @apply text-slate-900; }
+  [data-theme="light"] .brand-divider { @apply text-slate-300; }
+  [data-theme="light"] .menubar { @apply text-slate-600; }
+  [data-theme="light"] .menubar summary:hover, [data-theme="light"] .menubar details[open] summary,
+  [data-theme="light"] .toolbar button:hover:not(:disabled), [data-theme="light"] .activity-rail button:hover { @apply bg-slate-200 text-slate-900; }
+  [data-theme="light"] .menu, [data-theme="light"] .menu button { @apply border-slate-200 bg-white text-slate-700; }
+  [data-theme="light"] .menu button:hover:not(:disabled) { @apply bg-blue-50; }
+  [data-theme="light"] .project-bar #theme-toggle, [data-theme="light"] .device, [data-theme="light"] .zoom-label,
+  [data-theme="light"] .search, [data-theme="light"] .tool-group button,
+  [data-theme="light"] .inspector-body input:not([type="checkbox"]), [data-theme="light"] .inspector-body select,
+  [data-theme="light"] .property-group textarea, [data-theme="light"] .property-actions button { @apply border-slate-300 bg-white text-slate-700; }
+  [data-theme="light"] .project-bar #theme-toggle:hover, [data-theme="light"] .tool-group button:hover,
+  [data-theme="light"] .property-actions button:hover { @apply bg-blue-50; }
+  [data-theme="light"] .search input { @apply text-slate-800; }
+  [data-theme="light"] .inspector-body .property-search input { @apply border-0 bg-transparent p-0; }
+  [data-theme="light"] .activity-rail button { @apply text-slate-600; }
+  [data-theme="light"] .activity-rail [aria-pressed="true"] { @apply bg-blue-100 text-blue-700; }
+  [data-theme="light"] .designer-area, [data-theme="light"] .stage { @apply bg-slate-100; }
+  [data-theme="light"] .breadcrumb, [data-theme="light"] .tabs .active { @apply text-blue-700; }
+  [data-theme="light"] .tool-group, [data-theme="light"] .property-group, [data-theme="light"] .tabs,
+  [data-theme="light"] .separator { @apply border-slate-200; }
+  [data-theme="light"] .workspace > .sidebar .icon-svg, [data-theme="light"] .activity-rail .icon-svg,
+  [data-theme="light"] .toolbar .icon-svg, [data-theme="light"] .breadcrumb .icon-svg { filter: none; }
+  [data-theme="light"] .toolbar .primary { @apply bg-blue-500 text-white; }
+  [data-theme="light"] .toolbar .primary:hover:not(:disabled) { @apply bg-blue-600 text-white; }
+  [data-theme="light"] .toolbar .primary .icon-svg { filter: brightness(0) invert(1); }
+  [data-theme="light"] .editor-dock { @apply border-slate-300 bg-white; }
+  [data-theme="light"] #editor-splitter { @apply bg-slate-200 hover:bg-blue-500 focus:bg-blue-500; }
 }

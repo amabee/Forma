@@ -70,6 +70,33 @@ const managedKinds = new Set([
 const byId = (id) => document.getElementById(id);
 const send = (event, id, payload = {}) =>
   window.forma.send({ type: "designer", id, event, payload });
+const gridDrafts = new Map();
+const gridFields = new Set(["gridColumns", "gridRows"]);
+function gridValue(property, value) {
+  if (property === "gridColumns") return value.split("\n").map(line => line.replace(/\r$/, "")).filter(Boolean).join("\n");
+  const rows = JSON.parse(value);
+  if (!Array.isArray(rows) || rows.some(row => !Array.isArray(row) || row.some(cell => typeof cell !== "string")))
+    throw new Error('Use an array of string rows, for example [["Alice", "Engineering"]].');
+  return JSON.stringify(rows);
+}
+function gridError(input, message) {
+  input.setCustomValidity(message); input.setAttribute("aria-invalid", String(!!message));
+  let hint = byId(`${input.id}-error`);
+  if (!hint) {
+    hint = document.createElement("small"); hint.id = `${input.id}-error`; hint.className = "property-error";
+    input.parentElement.appendChild(hint); input.setAttribute("aria-describedby", hint.id);
+  }
+  hint.textContent = message; hint.hidden = !message;
+}
+function canSaveGridDrafts() {
+  const invalid = [...gridDrafts.values()].find(draft => draft.error);
+  if (!invalid) return true;
+  const d = window.formaDesigner;
+  d.select(invalid.id); send("select", invalid.id); d.inspector();
+  byId(`prop-${invalid.property}`)?.focus();
+  if (byId("status")) byId("status").textContent = "Fix the grid Rows JSON before saving. Your draft has been kept.";
+  return false;
+}
 
 function containerHost(container, x, y) {
   const host = container.querySelector?.(":scope > .layout-content") ?? container;
@@ -339,6 +366,7 @@ window.formaDesigner = {
       return;
     }
     if (message.action === "initialize") {
+      gridDrafts.clear();
       window.formaCustomization?.clear();
       this.cancelDrag();
       this.rootId = message.id;
@@ -359,6 +387,11 @@ window.formaDesigner = {
     if (message.action === "select") this.select(message.id);
     if (message.action === "state") {
       this.state = message;
+      for (const [key, draft] of gridDrafts) {
+        const item = message.controls.find(control => control.id === draft.id);
+        if (!item) { gridDrafts.delete(key); continue; }
+        try { if (!draft.error && gridValue(draft.property, item[draft.property]) === gridValue(draft.property, draft.value)) gridDrafts.delete(key); } catch {}
+      }
       document.querySelectorAll('[data-command="undo"]').forEach((button) => {
         button.disabled = !message.canUndo;
       });
@@ -678,7 +711,15 @@ window.formaDesigner = {
           : `prop-${property}`,
       );
       if (!input) continue;
-      if (input.type === "checkbox") input.checked = selected[property];
+      const sameOwner = input.dataset.controlId === selected.id;
+      input.dataset.controlId = selected.id;
+      if (gridFields.has(property)) {
+        const draft = gridDrafts.get(`${selected.id}:${property}`);
+        if (draft) { if (input.value !== draft.value) input.value = draft.value; }
+        else if (!(sameOwner && document.activeElement === input)) input.value = selected[property];
+        gridError(input, draft?.error ?? "");
+      }
+      else if (input.type === "checkbox") input.checked = selected[property];
       else if (input.value !== String(selected[property]))
         input.value = selected[property];
       input.disabled =
@@ -783,6 +824,7 @@ window.formaDesigner = {
       if (property.max != null) input.max = property.max;
       if (property.editor === "number") input.step = "any";
       if (property.editor === "checkbox") input.setAttribute("role", "switch");
+      if (property.id === "gridRows") input.placeholder = '[["Alice", "Engineering"], ["Bob", "Sales"]]';
       if (property.id === "customCss") {
         input.placeholder = "letter-spacing: 0.5px;";
         input.title =
@@ -1315,6 +1357,7 @@ document.addEventListener(
       }
       return;
     }
+    if (command && ["save", "save-as"].includes(command.dataset.command) && !canSaveGridDrafts()) return;
     if (command && !command.disabled)
       send("command", command.dataset.command === "add-tab" ? d.selectedId : d.rootId, { command: command.dataset.command });
     const toggle = event.target.closest("[data-toggle]");
@@ -1349,6 +1392,7 @@ document.addEventListener("change", (event) => {
     d.layoutFrame();
   } else if (input.id === "selection") send("select", input.value);
   else if (input.dataset.property && !d.preview) {
+    if (gridFields.has(input.dataset.property)) return; // Valid grid drafts commit on input, before selection or Save.
     const value =
       input.type === "checkbox"
         ? input.checked
@@ -1360,6 +1404,16 @@ document.addEventListener("change", (event) => {
 });
 document.addEventListener("input", (event) => {
   const d = window.formaDesigner;
+  const input = event.target;
+  if (gridFields.has(input.dataset.property) && !d.preview && !input.disabled) {
+    const id = input.dataset.controlId ?? d.selectedId, property = input.dataset.property;
+    let error = "";
+    try { gridValue(property, input.value); } catch (issue) { error = issue.message; }
+    gridDrafts.set(`${id}:${property}`, { id, property, value: input.value, error });
+    gridError(input, error);
+    if (!error) send("property", id, { property, value: input.value });
+    return;
+  }
   if (event.target.id === "prop-text" && !d.preview) {
     send("property", d.selectedId, {
       property: "text",
@@ -1387,6 +1441,7 @@ document.addEventListener("keydown", (event) => {
   }
   if (event.ctrlKey && ["s", "o"].includes(event.key.toLowerCase())) {
     event.preventDefault();
+    if (event.key.toLowerCase() === "s" && !canSaveGridDrafts()) return;
     d.cancelDrag();
     send("command", d.rootId, {
       command:

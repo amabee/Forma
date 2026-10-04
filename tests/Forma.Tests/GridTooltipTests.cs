@@ -9,6 +9,25 @@ namespace Forma.Tests;
 public class GridTooltipTests
 {
     [Fact]
+    public void InspectorColumnsAndRowsSurviveSelectionSaveOpenAndUndo()
+    {
+        var design = new BuilderViewModel(); design.CreateNew();
+        var grid = Assert.IsType<DataGridView>(design.ExecuteEdit("drop", design.Form.Id,
+            JsonSerializer.SerializeToElement(new { control = "datagridview", x = 0, y = 0 })).AddedControl);
+        design.ExecuteEdit("property", grid.Id, JsonSerializer.SerializeToElement(new { property = "gridColumns", value = "Employee\nDepartment\nStatus" }));
+        design.ExecuteEdit("property", grid.Id, JsonSerializer.SerializeToElement(new { property = "gridRows", value = "[[\"Angel\",\"Engineering\",\"Active\"]]" }));
+        design.ExecuteEdit("select", design.Form.Id, JsonSerializer.SerializeToElement(new { }));
+        var restored = ProjectFile.Restore(ProjectFile.Parse(ProjectFile.Serialize(design.CaptureProject())));
+        var copy = Assert.IsType<DataGridView>(Assert.Single(restored.Form.Children));
+        Assert.Equal(new[] { "Employee", "Department", "Status" }, copy.Columns);
+        Assert.Equal(new[] { "Angel", "Engineering", "Active" }, Assert.Single(copy.Rows));
+        var undone = ProjectFile.Restore(ProjectFile.Parse(design.Undo()!.Json));
+        Assert.Equal("First row", Assert.IsType<DataGridView>(Assert.Single(undone.Form.Children)).Rows[0][0]);
+        var redone = ProjectFile.Restore(ProjectFile.Parse(design.Redo()!.Json));
+        Assert.Equal("Angel", Assert.IsType<DataGridView>(Assert.Single(redone.Form.Children)).Rows[0][0]);
+    }
+
+    [Fact]
     public void GridSortsNumbersFiltersAndRetainsOriginalRowIdentity()
     {
         var grid = new DataGridView { Columns = ["Name", "Number"], Rows = [["Ten", "10"], ["Two", "2"], ["Another two", "2"]], SortColumn = 1, ReadOnly = false };
