@@ -16,10 +16,14 @@ public sealed class BuilderWindow : System.Windows.Forms.Form
     private WebView2Bridge? _bridge;
     private WebView2Renderer? _renderer;
     private bool _ready;
+    private readonly CoalescedRefresh _stateRefresh;
+    private bool _documentStateDirty;
+    private PreviewWindow? _runtimePreview;
     private readonly BuilderViewModel _viewModel = new();
 
     public BuilderWindow()
     {
+        _stateRefresh = new CoalescedRefresh(SendStateAsync);
         Text = _viewModel.WindowTitle;
         _viewModel.PropertyChanged += (_, change) =>
         {
@@ -98,14 +102,42 @@ public sealed class BuilderWindow : System.Windows.Forms.Form
         _ready = true;
     }
 
-    private async void OnDesignerMessage(object? sender, BridgeMessage message)
+    private void OnDesignerMessage(object? sender, BridgeMessage message)
     {
+        if (IsDisposed || Disposing) return;
+        // WebView2 forbids nested modal message loops in its callbacks. Post the
+        // command to WinForms so dialogs open after the WebView2 callback returns.
+        BeginInvoke(new Action(async () => {
+            if (!IsDisposed && !Disposing) await HandleDesignerMessageAsync(message);
+        }));
+    }
+
+    private async Task HandleDesignerMessageAsync(BridgeMessage message)
+    {
+        if (message.Type == "custom" && message.Event == "error" && _ready
+            && message.Payload is JsonElement errorPayload && errorPayload.TryGetProperty("message", out var errorMessage))
+        {
+            await StateAsync($"Component style error: {errorMessage.GetString()}");
+            return;
+        }
         if (message.Type != "designer" || !_ready || _viewModel.Form is null || _bridge is null)
             return;
         try
         {
             var payload = message.Payload is JsonElement json && json.ValueKind == JsonValueKind.Object
                 ? json : default;
+            if (message.Event == "preview")
+            {
+                await _bridge.SendAsync(new { type = "designer", action = "return-to-design" });
+                if (payload.ValueKind == JsonValueKind.Object && payload.TryGetProperty("enabled", out var enabled) && enabled.ValueKind == JsonValueKind.True)
+                {
+                    _runtimePreview?.Close();
+                    _runtimePreview = new PreviewWindow(new PreviewSession(_viewModel));
+                    _runtimePreview.Show(this);
+                }
+                await StateAsync("Preview opened in its own window");
+                return;
+            }
             if (message.Event == "command")
             {
                 switch (String(payload, "command"))
@@ -121,6 +153,22 @@ public sealed class BuilderWindow : System.Windows.Forms.Form
                     case "open": await OpenProjectAsync(); return;
                     case "new": if (ConfirmDiscard()) await NewFormAsync(); return;
                     case "about": ShowAbout(); return;
+                    case "edit-characteristics":
+                    case "edit-custom-properties":
+                        if (_viewModel.SelectedControl is FControl selected && !_viewModel.PreviewMode && !_viewModel.Appearance[selected.Id].Locked)
+                        {
+                            using var editor = new ComponentEditorWindow(
+                                selected.Name ?? selected.ControlType,
+                                ComponentEditorService.Folder(_viewModel, selected),
+                                ComponentEditorService.Template(selected, _viewModel.Appearance[selected.Id]),
+                                async source =>
+                                {
+                                    var result = _viewModel.ExecuteEdit("customize", selected.Id, JsonSerializer.SerializeToElement(source));
+                                    await StateAsync(result.Status);
+                                });
+                            editor.ShowDialog(this);
+                        }
+                        return;
                     case "exit": Close(); return;
                     case "show-dialog":
                         if (_viewModel.ShowDialog(_viewModel.SelectedControl?.Id)) await StateAsync("Dialog opened");
@@ -141,8 +189,8 @@ public sealed class BuilderWindow : System.Windows.Forms.Form
                             };
                             if (picker.ShowDialog(this) == DialogResult.OK)
                             {
-                                var result = _viewModel.ExecuteEdit("property", image.Id,
-                                    JsonSerializer.SerializeToElement(new { property = "source", value = new Uri(picker.FileName).AbsoluteUri }));
+                                var result = _viewModel.ExecuteEdit("image-source", image.Id,
+                                    JsonSerializer.SerializeToElement(new { value = new Uri(picker.FileName).AbsoluteUri }));
                                 await StateAsync(result.Status);
                             }
                         }
@@ -177,7 +225,10 @@ public sealed class BuilderWindow : System.Windows.Forms.Form
         control.PropertyChanged += async (_, _) =>
         {
             if (_ready && !IsDisposed && _viewModel.Appearance.ContainsKey(control.Id))
+            {
+                _documentStateDirty = true;
                 await StateAsync("Ready");
+            }
         };
         if (control is Forma.Core.Controls.LinkLabel link)
             link.LinkClicked += (_, _) => {
@@ -207,11 +258,13 @@ public sealed class BuilderWindow : System.Windows.Forms.Form
             };
     }
 
-    private Task StateAsync(string status)
+    private Task StateAsync(string status) => _stateRefresh.Request(status);
+
+    private Task SendStateAsync(string status)
     {
-        if (_bridge is null || _viewModel.Form is null || _viewModel.SelectedControl is null)
+        if (IsDisposed || _bridge is null || _viewModel.Form is null || _viewModel.SelectedControl is null)
             return Task.CompletedTask;
-        UpdateProjectTitle();
+        if (_documentStateDirty) { UpdateProjectTitle(); _documentStateDirty = false; }
         return _bridge.SendAsync(
             new
             {
@@ -264,7 +317,7 @@ public sealed class BuilderWindow : System.Windows.Forms.Form
                         entries = c is Forma.Core.Controls.PropertyGrid propertyGrid ? JsonSerializer.Serialize(propertyGrid.Entries) : "[]",
                         commandItems = c is Forma.Core.Controls.CommandControl commands ? JsonSerializer.Serialize(commands.Items) : "[]",
                         rightText = (c as Forma.Core.Controls.StatusBar)?.RightText ?? "",
-                        targetId = (c as Forma.Core.Controls.ContextMenu)?.TargetId ?? "",
+                        targetId = (c as Forma.Core.Controls.ContextMenu)?.TargetId ?? (c as Forma.Core.Controls.Tooltip)?.TargetId ?? (c as Forma.Core.Controls.LoadingOverlay)?.TargetId ?? "",
                         message = (c as Forma.Core.Controls.Dialog)?.Message ?? "",
                         buttons = (c as Forma.Core.Controls.Dialog)?.Buttons ?? "OK",
                         canCancel = (c as Forma.Core.Controls.Dialog)?.CanCancel ?? true,
@@ -281,10 +334,11 @@ public sealed class BuilderWindow : System.Windows.Forms.Form
                             ?? -1,
                         source = (c as Forma.Core.Controls.Image)?.Source ?? "",
                         sizeMode = (c as Forma.Core.Controls.Image)?.SizeMode ?? "contain",
-                        orientation = (c as Forma.Core.Controls.Toolbar)?.Orientation ?? (c as Forma.Core.Controls.LayoutContainer)?.Orientation
+                        orientation = (c as Forma.Core.Controls.Divider)?.Orientation ?? (c as Forma.Core.Controls.Toolbar)?.Orientation ?? (c as Forma.Core.Controls.LayoutContainer)?.Orientation
                             ?? "horizontal",
                         gap = (c as Forma.Core.Controls.LayoutContainer)?.Gap ?? 8,
                         columns = (c as Forma.Core.Controls.LayoutContainer)?.Columns ?? 2,
+                        rowCount = (c as Forma.Core.Controls.LayoutContainer)?.RowCount ?? 2,
                         tabs = c is Forma.Core.Controls.TabControl tabs
                             ? string.Join("\n", tabs.Tabs)
                             : "",
@@ -343,6 +397,31 @@ public sealed class BuilderWindow : System.Windows.Forms.Form
                         toolTip = _viewModel.Appearance[c.Id].ToolTip,
                         cssClass = _viewModel.Appearance[c.Id].CssClass,
                         customCss = _viewModel.Appearance[c.Id].CustomCss,
+                        description = (c as Forma.Core.Controls.Card)?.Description ?? (c as Forma.Core.Controls.EmptyState)?.Description ?? "",
+                        iconName = (c as Forma.Core.Controls.Icon)?.IconName ?? (c as Forma.Core.Controls.EmptyState)?.IconName ?? "image",
+                        strokeWidth = (c as Forma.Core.Controls.Icon)?.StrokeWidth ?? 2,
+                        lines = (c as Forma.Core.Controls.Skeleton)?.Lines ?? 3,
+                        headerVisible = (c as Forma.Core.Controls.Card)?.HeaderVisible ?? true,
+                        variant = (c as Forma.Core.Controls.Badge)?.Variant ?? (c as Forma.Core.Controls.Toast)?.Variant ?? "info",
+                        initials = (c as Forma.Core.Controls.Avatar)?.Initials ?? "",
+                        shape = (c as Forma.Core.Controls.Avatar)?.Shape ?? (c as Forma.Core.Controls.Skeleton)?.Shape ?? "circle",
+                        thickness = (c as Forma.Core.Controls.Divider)?.Thickness ?? 1,
+                        lineStyle = (c as Forma.Core.Controls.Divider)?.LineStyle ?? "solid",
+                        position = (c as Forma.Core.Controls.Toast)?.Position ?? "bottom-right",
+                        duration = (c as Forma.Core.Controls.Toast)?.Duration ?? 4000,
+                        dismissible = (c as Forma.Core.Controls.Toast)?.Dismissible ?? true,
+                        isActive = (c as Forma.Core.Controls.Spinner)?.IsActive ?? (c as Forma.Core.Controls.LoadingOverlay)?.IsActive ?? (c as Forma.Core.Controls.Skeleton)?.IsActive ?? false,
+                        speed = (c as Forma.Core.Controls.Spinner)?.Speed ?? 800,
+                        initialDelay = (c as Forma.Core.Controls.Tooltip)?.InitialDelay ?? 500,
+                        showDuration = (c as Forma.Core.Controls.Tooltip)?.ShowDuration ?? 5000,
+                        placement = (c as Forma.Core.Controls.Tooltip)?.Placement ?? "top",
+                        sortingEnabled = (c as Forma.Core.Controls.DataGridView)?.SortingEnabled ?? false,
+                        filteringEnabled = (c as Forma.Core.Controls.DataGridView)?.FilteringEnabled ?? false,
+                        filterText = (c as Forma.Core.Controls.DataGridView)?.FilterText ?? "",
+                        sortColumn = (c as Forma.Core.Controls.DataGridView)?.SortColumn ?? -1,
+                        sortDirection = (c as Forma.Core.Controls.DataGridView)?.SortDirection ?? "ascending",
+                        selectedRow = (c as Forma.Core.Controls.DataGridView)?.SelectedRow ?? -1,
+                        customization = _viewModel.Appearance[c.Id].Customization,
                         zIndex = _viewModel.Appearance[c.Id].ZIndex,
                         marginTop = _viewModel.Appearance[c.Id].MarginTop,
                         marginRight = _viewModel.Appearance[c.Id].MarginRight,
@@ -383,7 +462,7 @@ public sealed class BuilderWindow : System.Windows.Forms.Form
                 if (dialog.ShowDialog(this) == DialogResult.OK) selected = dialog.SelectedPath;
             }
             if (selected is null) return;
-            if (design) _viewModel.ExecuteEdit("property", picker.Id,
+            if (design) _viewModel.ExecuteEdit("path-source", picker.Id,
                 JsonSerializer.SerializeToElement(new { property = "selectedPath", value = selected }));
             else picker.SelectedPath = selected;
             await StateAsync("Path selected");
@@ -513,6 +592,7 @@ public sealed class BuilderWindow : System.Windows.Forms.Form
     protected override void OnFormClosed(FormClosedEventArgs e)
     {
         _ready = false;
+        _runtimePreview?.Close();
         DisposeComponents();
         if (_bridge is not null)
             _bridge.MessageReceived -= OnDesignerMessage;

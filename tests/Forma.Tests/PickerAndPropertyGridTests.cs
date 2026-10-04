@@ -80,7 +80,7 @@ public class PickerAndPropertyGridTests
         var model = new BuilderViewModel(); model.CreateNew();
         var control = model.ExecuteEdit("drop", model.Form!.Id, JsonSerializer.SerializeToElement(new { control = kind, x = 20, y = 20 })).AddedControl!;
         var before = model.CaptureHistory();
-        model.ExecuteEdit("property", control.Id, JsonSerializer.SerializeToElement(new { property, value }));
+        model.ExecuteEdit(control is PathPicker ? "path-source" : "property", control.Id, JsonSerializer.SerializeToElement(new { property, value }));
         var after = model.CaptureHistory();
         var restored = ProjectFile.Restore(ProjectFile.Parse(after.Json));
         var loaded = Assert.Single(restored.Form.Children);

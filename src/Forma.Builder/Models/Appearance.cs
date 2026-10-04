@@ -36,6 +36,7 @@ public sealed class Appearance
     public string ToolTip { get; set; } = "";
     public string CssClass { get; set; } = "";
     public string CustomCss { get; set; } = "";
+    public ComponentCustomization? Customization { get; set; }
     public int ZIndex { get; set; }
     public int MarginTop { get; set; }
     public int MarginRight { get; set; }

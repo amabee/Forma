@@ -24,8 +24,13 @@
     <Using Include="Xunit" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="..\..\src\Forma.Builder\Services\CoalescedRefresh.cs" Link="CoalescedRefresh.cs" />
     <Compile Include="..\..\src\Forma.Builder\Services\DesignHistory.cs" Link="DesignHistory.cs" />
     <Compile Include="..\..\src\Forma.Builder\Services\ProjectFile.cs" Link="ProjectFile.cs" />
+    <Compile Include="..\..\src\Forma.Builder\Services\PreviewSession.cs" Link="PreviewSession.cs" />
+    <Compile Include="..\..\src\Forma.Builder\Services\ComponentEditorService.cs" Link="ComponentEditorService.cs" />
+    <Compile Include="..\..\src\Forma.Builder\Services\ComponentSaveSession.cs" Link="ComponentSaveSession.cs" />
+    <Compile Include="..\..\src\Forma.Builder\Models\ComponentCustomization.cs" Link="ComponentCustomization.cs" />
     <Compile Include="..\..\src\Forma.Builder\Services\InspectorCatalog.cs" Link="InspectorCatalog.cs" />
     <Compile Include="..\..\src\Forma.Builder\Models\Appearance.cs" Link="Appearance.cs" />
     <Compile Include="..\..\src\Forma.Builder\ViewModels\BuilderViewModel.cs" Link="BuilderViewModel.cs" />

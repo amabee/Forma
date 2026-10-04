@@ -64,6 +64,7 @@ public sealed class WebView2Renderer : IRenderer
                 id = control.Id,
                 control = control.ControlType,
                 parentId = control.Parent?.Id,
+                index = control.Parent?.Children.ToList().IndexOf(control) ?? 0,
                 properties = Properties(control),
             }
         );
@@ -108,6 +109,20 @@ public sealed class WebView2Renderer : IRenderer
         if (control is Toolbar toolbar) properties["orientation"] = toolbar.Orientation;
         if (control is StatusBar status) properties["rightText"] = status.RightText;
         if (control is ContextMenu context) properties["targetId"] = context.TargetId == "" ? control.Parent?.Id : context.TargetId;
+        if (control is Tooltip tooltip) {
+            properties["targetId"] = tooltip.TargetId == "" ? control.Parent?.Id : tooltip.TargetId;
+            properties["initialDelay"] = tooltip.InitialDelay; properties["showDuration"] = tooltip.ShowDuration; properties["placement"] = tooltip.Placement;
+        }
+        if (control is Card card) { properties["description"] = card.Description; properties["headerVisible"] = card.HeaderVisible; }
+        if (control is Forma.Core.Controls.Icon icon) { properties["iconName"] = icon.IconName; properties["strokeWidth"] = icon.StrokeWidth; }
+        if (control is EmptyState empty) { properties["description"] = empty.Description; properties["iconName"] = empty.IconName; }
+        if (control is Skeleton skeleton) { properties["shape"] = skeleton.Shape; properties["lines"] = skeleton.Lines; properties["isActive"] = skeleton.IsActive; }
+        if (control is Badge badge) properties["variant"] = badge.Variant;
+        if (control is Avatar avatar) { properties["initials"] = avatar.Initials; properties["shape"] = avatar.Shape; }
+        if (control is Divider divider) { properties["orientation"] = divider.Orientation; properties["thickness"] = divider.Thickness; properties["lineStyle"] = divider.LineStyle; }
+        if (control is Spinner spinner) { properties["isActive"] = spinner.IsActive; properties["speed"] = spinner.Speed; }
+        if (control is LoadingOverlay overlay) { properties["isActive"] = overlay.IsActive; properties["targetId"] = overlay.TargetId == "" ? control.Parent?.Id : overlay.TargetId; }
+        if (control is Toast toast) { properties["variant"] = toast.Variant; properties["position"] = toast.Position; properties["duration"] = toast.Duration; properties["dismissible"] = toast.Dismissible; properties["isOpen"] = toast.IsOpen; }
         if (control is Dialog dialog) { properties["dialogTitle"] = dialog.DialogTitle; properties["message"] = dialog.Message; properties["buttons"] = dialog.Buttons; properties["canCancel"] = dialog.CanCancel; properties["isOpen"] = dialog.IsOpen; }
         if (control is RichTextBox rich) {
             properties["document"] = rich.Document.Select(b => new { kind = b.Kind, runs = b.Runs!.Select(r => new { text = r.Text, bold = r.Bold, italic = r.Italic, underline = r.Underline }).ToArray() }).ToArray();
@@ -117,9 +132,14 @@ public sealed class WebView2Renderer : IRenderer
         if (control is LayoutContainer layout)
         {
             properties["orientation"] = layout.Orientation; properties["gap"] = layout.Gap;
-            properties["columns"] = layout.Columns; properties["tabs"] = layout.Tabs; properties["selectedTab"] = layout.SelectedTab;
+            properties["columns"] = layout.Columns; properties["rowCount"] = layout.RowCount; properties["tabs"] = layout.Tabs; properties["selectedTab"] = layout.SelectedTab;
         }
-        if (control is DataGridView grid) { properties["columns"] = grid.Columns; properties["rows"] = grid.Rows; properties["readOnly"] = grid.ReadOnly; }
+        if (control is DataGridView grid) {
+            properties["columns"] = grid.Columns; properties["rows"] = grid.Rows; properties["readOnly"] = grid.ReadOnly;
+            properties["sortingEnabled"] = grid.SortingEnabled; properties["filteringEnabled"] = grid.FilteringEnabled;
+            properties["filterText"] = grid.FilterText; properties["sortColumn"] = grid.SortColumn; properties["sortDirection"] = grid.SortDirection;
+            properties["selectedRow"] = grid.SelectedRow; properties["visibleRowIndices"] = grid.VisibleRowIndices;
+        }
         return properties;
     }
 
@@ -230,6 +250,21 @@ public sealed class WebView2Renderer : IRenderer
         if (registration.Control is LinkLabel link && message.Event == "link") link.OnLinkClicked();
         if (registration.Control is PathPicker picker && message.Event == "browse") picker.RequestBrowse();
         if (message.Payload is not JsonElement data || data.ValueKind != JsonValueKind.Object) return;
+        if (registration.Control is Toast toastControl && message.Event == "toast-close"
+            && (toastControl.Dismissible || data.TryGetProperty("reason", out var reason) && reason.ValueKind == JsonValueKind.String && reason.GetString() == "timeout")) toastControl.Close();
+        if (registration.Control is DataGridView dataGrid)
+        {
+            if (message.Event == "grid-sort" && dataGrid.SortingEnabled && data.TryGetProperty("column", out var sortValue) && sortValue.ValueKind == JsonValueKind.Number && sortValue.TryGetInt32(out var sortColumn)
+                && sortColumn >= 0 && sortColumn < dataGrid.Columns.Length)
+            {
+                dataGrid.SortDirection = dataGrid.SortColumn == sortColumn && dataGrid.SortDirection == "ascending" ? "descending" : "ascending";
+                dataGrid.SortColumn = sortColumn;
+            }
+            if (message.Event == "grid-filter" && dataGrid.FilteringEnabled && data.TryGetProperty("text", out var filter) && filter.ValueKind == JsonValueKind.String)
+                dataGrid.FilterText = filter.GetString()!;
+            if (message.Event == "grid-select" && data.TryGetProperty("row", out var selectedValue) && selectedValue.ValueKind == JsonValueKind.Number && selectedValue.TryGetInt32(out var selectedRow)
+                && dataGrid.VisibleRowIndices.Contains(selectedRow)) dataGrid.SelectedRow = selectedRow;
+        }
         if (registration.Control is CommandControl commands && message.Event == "command-item"
             && data.TryGetProperty("itemId", out var itemId) && itemId.ValueKind == JsonValueKind.String)
             commands.InvokeItem(itemId.GetString()!);

@@ -5,6 +5,7 @@ public abstract class LayoutContainer : Control
     private string _orientation = "horizontal";
     private int _gap = 8;
     private int _columns = 2;
+    private int _rowCount = 2;
     private string[] _tabs = ["Tab 1", "Tab 2"];
     private int _selectedTab;
     public string Orientation
@@ -32,6 +33,7 @@ public abstract class LayoutContainer : Control
             SelectedTab = _selectedTab;
         }
     }
+    public int RowCount { get => _rowCount; set => SetProperty(ref _rowCount, Math.Clamp(value, 1, 100)); }
     public int SelectedTab
     {
         get => _selectedTab;

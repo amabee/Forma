@@ -1,0 +1,11 @@
+<!doctype html>
+<html lang="en"><head><meta charset="UTF-8" /><meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Custom Properties editor</title><link rel="stylesheet" href="code-editor.css" /></head>
+<body><div class="editor-shell">
+<header class="editor-header"><div><h1>Custom Properties</h1><p>Styles, Preview behavior, and custom values. Save applies changes automatically.</p></div>
+<div class="editor-actions"><button class="editor-primary" data-command="save">Save <kbd>Ctrl+S</kbd></button><button data-command="format">Format <kbd>Ctrl+Shift+F</kbd></button><button data-command="external">External editor</button><button data-command="choose-editor">Choose editor…</button><button data-command="close">Close</button></div>
+<label class="editor-option"><input type="checkbox" id="format-on-save" checked /> Format on save</label></header>
+<nav class="editor-tabs" role="tablist" aria-label="Source files"><button role="tab" id="tab-css" aria-controls="editor-css" data-tab="css">CSS <span>component.css</span></button><button role="tab" id="tab-behavior" aria-controls="editor-behavior" data-tab="behavior">JS <span>behavior.js</span></button><button role="tab" id="tab-characteristics" aria-controls="editor-characteristics" data-tab="characteristics">{ } <span>custom-properties.json</span></button></nav>
+<main class="editor-workspace"><div id="editor-css" class="editor-document" role="tabpanel" aria-labelledby="tab-css"></div><div id="editor-behavior" class="editor-document" role="tabpanel" aria-labelledby="tab-behavior" hidden></div><div id="editor-characteristics" class="editor-document" role="tabpanel" aria-labelledby="tab-characteristics" hidden></div></main>
+<footer class="editor-footer"><span id="editor-message" role="status">Loading editor…</span><span id="editor-dirty">Saved</span><span id="editor-cursor"></span></footer>
+</div><script src="code-editor.bundle.js"></script></body></html>

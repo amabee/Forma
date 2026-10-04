@@ -50,13 +50,27 @@ RadioButton, ComboBox, ListBox, Image, Timer, BackgroundWorker, and DataGridView
 The larger catalog in `Forma_Toolbox_Components_Layouts_Controls.md` remains a roadmap.
 
 Drag an item into the form or a container. Double-click inserts into the form.
-Panel and GroupBox support free positioning. FlowLayoutPanel wraps children;
-TableLayoutPanel arranges them in columns. SplitContainer has two grid panes:
-set a child's Layout slot to 1 or 2. TabControl uses newline-separated tab names;
-new children belong to the active tab, and Layout slot chooses their page.
-Managed layouts determine child positions, so moving children with the mouse
-is available in free-position containers. Corner resizing remains available.
-Splitter dragging and drag-to-reorder are future additions.
+Panel and GroupBox support free positioning. SplitContainer has two visible panes;
+drop into either pane or set a child's Layout slot to 1 or 2. Horizontal splits
+are side by side; vertical splits are stacked. Children use coordinates within
+their pane. Splitter dragging remains a future addition.
+FlowLayoutPanel wraps children and supports dragging to reorder them.
+TableLayoutPanel exposes Columns and Rows, shows cell outlines in Design, and
+supports dragging children between cells. Layout slot numbers cells row by row.
+These managed layouts determine positions; corner resizing remains available.
+TabControl supports horizontal or vertical tabs. Click its + button or the
+inspector's Add tab action, or edit the newline-separated Tabs names. New children
+belong to the active tab, and Layout slot chooses their page. Layout edits support
+undo/redo and project save/open.
+
+Preview opens the current form in its own desktop window at the designed client
+size, with resize and maximize enabled. The form surface fills larger windows;
+controls keep their designed positions. It runs a copy of the control tree with live inputs and native file/folder
+pickers; testing does not alter the original design. Close the window to end the
+session. This currently runs inside Builder; executable export and C# event
+code generation remain later roadmap work. Component-specific CSS, JavaScript
+behavior and custom JSON values are available through **Advanced → Custom
+Properties…**. See [component customization](component-customization.md).
 
 CheckBox/RadioButton expose Checked. RadioButton browser interactions group by
 parent container. ComboBox/ListBox expose newline-separated Items and Selected
@@ -228,3 +242,57 @@ StatusBar uses Text for its left message and Right text for its right message.
 Application code can update both properties at runtime; the browser announces
 updates as status text. Multiple status panels and automatic docking remain
 future enhancements.
+
+## Tooltips and grid interactions
+
+Drag **Tooltip** from Components to the form; it appears in the component tray.
+Set Text / Title, select its Target, and configure initial delay, duration, and
+placement. A blank Target uses the form. Hover or focus that target in Preview.
+Tooltip text is rendered as text and announced through aria-describedby. Escape,
+leaving the target, scrolling/resizing, timeout, and removal dismiss it. Disabled
+tooltip components do not display. Target deletion resets the assignment; Undo
+restores it. Existing per-control ToolTip text remains available for simpler tips.
+
+DataGridView now exposes Allow sorting, Allow filtering, Filter text, Sort column
+(-1 for none), Sort direction, and Selected row (-1 for none). In Preview, click
+column headers to toggle ascending/descending sorting, use the filter search
+box, and click rows or use arrow keys and Enter/Space to select. Numeric strings
+sort numerically; other strings sort without case sensitivity. Equal values keep
+their original order. Filtering searches the displayed columns without changing
+Rows. Editing requires Read only to be off; cells retain original row indices
+after sorting/filtering. Selection-only updates preserve the active cell and
+filter updates preserve the search input's focus.
+
+Application code subscribes to RowSelectionChanged or reads SelectedRow. In
+Custom Properties, use api.on("row-selection", event => { ...event.detail.row... })
+and api.get/api.set for selectedRow, filterText, sortColumn, and sortDirection.
+These indices always refer to source Rows, not positions in the filtered view.
+Typed editors, grouping, binding and virtualization remain future enhancements.
+
+
+## Modern UI batch
+
+Card is a free-position container with Title, Description and Show header. Drop
+children into its content area; moving the Card moves the entire group. Badge
+supports neutral/info/success/warning/danger variants. Avatar uses the existing
+Choose image action and embedded-image persistence, with automatic initials from
+Text, optional explicit Initials and circle/rounded/square shapes. Divider supports
+horizontal/vertical orientation, line thickness/style and an optional Text caption.
+
+Spinner has Active and Animation speed properties. Animation runs in Preview,
+respects reduced-motion preferences and pauses when inactive. LoadingOverlay lives in the component tray, with Active and Target; a blank
+Target covers its parent. In Preview it covers the target rectangle and blocks pointer interaction
+there while active. It restores the target's aria-busy value on cleanup. This
+is a visual loading indicator; application scripts supply the actual work.
+
+Toast lives in the component tray. Configure its text, variant, corner position,
+duration and Allow dismissal. It is shown by `Toast.Show()` in C# or
+`api.showToast("nameOrId")` in a Preview script. It closes on timeout, optional
+close-button dismissal, or `api.closeToast("nameOrId")`. Open state is transient
+and is excluded from project persistence. Notifications stack in each corner.
+
+All seven controls support contextual properties, save/open and design Undo/Redo.
+Card children keep their identities. The separate runtime helper is
+`src/Forma.WebView2/Web/scripts/modern-controls.js`; styling uses Tailwind source
+in `src/Forma.Builder/Frontend/input.css`. EmptyState, Skeleton, richer selection
+controls and the remaining stage 4 catalog are still pending.

@@ -13,7 +13,11 @@
           <summary>File</summary>
           <div class="menu">
             <button data-command="new">New Form <kbd>Ctrl+N</kbd></button
-            ><button data-command="open">Open…</button><button data-command="save">Save <kbd>Ctrl+S</kbd></button><button data-command="save-as">Save As... <kbd>Ctrl+Shift+S</kbd></button>
+            ><button data-command="open">Open…</button
+            ><button data-command="save">Save <kbd>Ctrl+S</kbd></button
+            ><button data-command="save-as">
+              Save As... <kbd>Ctrl+Shift+S</kbd>
+            </button>
             <hr />
             <button data-command="exit">Exit</button>
           </div>
@@ -21,7 +25,8 @@
         <details>
           <summary>Edit</summary>
           <div class="menu">
-            <button data-command="undo" disabled>Undo <kbd>Ctrl+Z</kbd></button><button data-command="redo" disabled>Redo <kbd>Ctrl+Y</kbd></button
+            <button data-command="undo" disabled>Undo <kbd>Ctrl+Z</kbd></button
+            ><button data-command="redo" disabled>Redo <kbd>Ctrl+Y</kbd></button
             ><button data-command="delete">Delete selected</button>
           </div>
         </details>
@@ -50,14 +55,24 @@
         <button data-command="open">
           <img class="icon-svg" src="icons/folder-open.svg" alt="" />Open
         </button>
-        <button data-command="save"><img class="icon-svg" src="icons/save.svg" alt="" />Save</button
+        <button data-command="save">
+          <img class="icon-svg" src="icons/save.svg" alt="" />Save</button
         ><i class="separator"></i>
-        <button data-command="undo" disabled><img class="icon-svg" src="icons/undo-2.svg" alt="" />Undo</button
-        ><button data-command="redo" disabled><img class="icon-svg" src="icons/redo-2.svg" alt="" />Redo</button
+        <button data-command="undo" disabled>
+          <img class="icon-svg" src="icons/undo-2.svg" alt="" />Undo</button
+        ><button data-command="redo" disabled>
+          <img class="icon-svg" src="icons/redo-2.svg" alt="" />Redo</button
         ><i class="separator"></i>
-        <button data-preview><img class="icon-svg" src="icons/play.svg" alt="" />Run / Preview</button>
+        <button data-preview>
+          <img class="icon-svg" src="icons/play.svg" alt="" />Run / Preview
+        </button>
         <div class="toolbar-right">
-          <span class="device"><img class="icon-svg" src="icons/monitor.svg" alt="" /><span id="device-caption">Desktop (640 × 440)</span></span>
+          <span class="device"
+            ><img class="icon-svg" src="icons/monitor.svg" alt="" /><span
+              id="device-caption"
+              >Desktop (640 × 440)</span
+            ></span
+          >
           <label class="zoom-label"
             ><img class="icon-svg" src="icons/search.svg" alt="" />
             <select id="zoom" aria-label="Canvas zoom">
@@ -68,14 +83,19 @@
             </select></label
           >
           <button class="primary" data-preview>
-            <img class="icon-svg" src="icons/play.svg" alt="" /><span id="preview-caption">Preview</span>
+            <img class="icon-svg" src="icons/play.svg" alt="" /><span
+              id="preview-caption"
+              >Preview</span
+            >
           </button>
         </div>
       </div>
     </header>
     <main class="workspace">
       <aside id="toolbox" class="toolbox sidebar">
-        <div class="panel-heading">Toolbox <span>⌃</span></div>
+        <div class="panel-heading">
+          Toolbox <img class="icon-svg" src="icons/toolbox.svg" alt="" />
+        </div>
         <label class="search"
           ><img class="icon-svg" src="icons/search.svg" alt="" />
           <input
@@ -85,27 +105,339 @@
         /></label>
         <details open class="tool-group">
           <summary>Layout</summary>
-          <button draggable="true" data-kind="panel"><img class="icon-svg" src="icons/panel-top.svg" alt="" />panel</button><button draggable="true" data-kind="groupbox"><img class="icon-svg" src="icons/group.svg" alt="" />GroupBox</button><button draggable="true" data-kind="splitcontainer"><img class="icon-svg" src="icons/columns-2.svg" alt="" />SplitContainer</button><button draggable="true" data-kind="tabcontrol"><img class="icon-svg" src="icons/panels-top-left.svg" alt="" />TabControl</button><button draggable="true" data-kind="flowlayoutpanel"><img class="icon-svg" src="icons/list.svg" alt="" />FlowLayoutPanel</button><button draggable="true" data-kind="tablelayoutpanel"><img class="icon-svg" src="icons/grid-2x2.svg" alt="" />TableLayoutPanel</button>
+          <button draggable="true" data-kind="card">
+            <img class="icon-svg" src="icons/panel-top.svg" alt="" />Card
+          </button>
+          <button draggable="true" data-kind="panel">
+            <img
+              class="icon-svg"
+              src="icons/panel-top.svg"
+              alt=""
+            />panel</button
+          ><button draggable="true" data-kind="groupbox">
+            <img
+              class="icon-svg"
+              src="icons/group.svg"
+              alt=""
+            />GroupBox</button
+          ><button draggable="true" data-kind="splitcontainer">
+            <img
+              class="icon-svg"
+              src="icons/columns-2.svg"
+              alt=""
+            />SplitContainer</button
+          ><button draggable="true" data-kind="tabcontrol">
+            <img
+              class="icon-svg"
+              src="icons/panels-top-left.svg"
+              alt=""
+            />TabControl</button
+          ><button draggable="true" data-kind="flowlayoutpanel">
+            <img
+              class="icon-svg"
+              src="icons/list.svg"
+              alt=""
+            />FlowLayoutPanel</button
+          ><button draggable="true" data-kind="tablelayoutpanel">
+            <img
+              class="icon-svg"
+              src="icons/grid-2x2.svg"
+              alt=""
+            />TableLayoutPanel
+          </button>
         </details>
         <details open class="tool-group">
           <summary>Controls</summary>
-          <button draggable="true" data-kind="button"><img class="icon-svg" src="icons/rectangle-horizontal.svg" alt="" />Button</button><button draggable="true" data-kind="textbox"><img class="icon-svg" src="icons/text-cursor-input.svg" alt="" />TextBox</button><button draggable="true" data-kind="label"><img class="icon-svg" src="icons/type.svg" alt="" />Label</button><button draggable="true" data-kind="checkbox"><img class="icon-svg" src="icons/square-check.svg" alt="" />CheckBox</button><button draggable="true" data-kind="radiobutton"><img class="icon-svg" src="icons/circle.svg" alt="" />RadioButton</button><button draggable="true" data-kind="combobox"><img class="icon-svg" src="icons/chevrons-up-down.svg" alt="" />ComboBox</button><button draggable="true" data-kind="listbox"><img class="icon-svg" src="icons/list-ordered.svg" alt="" />ListBox</button><button draggable="true" data-kind="image"><img class="icon-svg" src="icons/image.svg" alt="" />Image</button>
+          <button draggable="true" data-kind="button">
+            <img
+              class="icon-svg"
+              src="icons/rectangle-horizontal.svg"
+              alt=""
+            />Button</button
+          ><button draggable="true" data-kind="textbox">
+            <img
+              class="icon-svg"
+              src="icons/text-cursor-input.svg"
+              alt=""
+            />TextBox</button
+          ><button draggable="true" data-kind="label">
+            <img class="icon-svg" src="icons/type.svg" alt="" />Label</button
+          ><button draggable="true" data-kind="checkbox">
+            <img
+              class="icon-svg"
+              src="icons/square-check.svg"
+              alt=""
+            />CheckBox</button
+          ><button draggable="true" data-kind="radiobutton">
+            <img
+              class="icon-svg"
+              src="icons/circle.svg"
+              alt=""
+            />RadioButton</button
+          ><button draggable="true" data-kind="combobox">
+            <img
+              class="icon-svg"
+              src="icons/chevrons-up-down.svg"
+              alt=""
+            />ComboBox</button
+          ><button draggable="true" data-kind="listbox">
+            <img
+              class="icon-svg"
+              src="icons/list-ordered.svg"
+              alt=""
+            />ListBox</button
+          ><button draggable="true" data-kind="image">
+            <img class="icon-svg" src="icons/image.svg" alt="" />Image
+          </button>
         </details>
         <details open class="tool-group">
           <summary>Components</summary>
-          <button draggable="true" data-kind="timer"><img class="icon-svg" src="icons/timer.svg" alt="" />Timer</button><button draggable="true" data-kind="backgroundworker"><img class="icon-svg" src="icons/settings.svg" alt="" />BackgroundWorker</button><button draggable="true" data-kind="datagridview"><img class="icon-svg" src="icons/table.svg" alt="" />DataGridView</button>
+          <button draggable="true" data-kind="loadingoverlay">
+            <img
+              class="icon-svg"
+              src="icons/panel-top.svg"
+              alt=""
+            />LoadingOverlay
+          </button>
+          <button draggable="true" data-kind="toast">
+            <img class="icon-svg" src="icons/type.svg" alt="" />Toast
+          </button>
+          <button draggable="true" data-kind="tooltip">
+            <img class="icon-svg" src="icons/type.svg" alt="" />Tooltip
+          </button>
+          <button draggable="true" data-kind="timer">
+            <img class="icon-svg" src="icons/timer.svg" alt="" />Timer</button
+          ><button draggable="true" data-kind="backgroundworker">
+            <img
+              class="icon-svg"
+              src="icons/settings.svg"
+              alt=""
+            />BackgroundWorker</button
+          ><button draggable="true" data-kind="datagridview">
+            <img class="icon-svg" src="icons/table.svg" alt="" />DataGridView
+          </button>
         </details>
-        <details open class="tool-group"><summary>More controls</summary><button draggable="true" data-kind="contextmenu"><img class="icon-svg" src="icons/list.svg" alt="" />ContextMenu</button><button draggable="true" data-kind="contextmenustrip"><img class="icon-svg" src="icons/list.svg" alt="" />ContextMenuStrip</button><button draggable="true" data-kind="dialog"><img class="icon-svg" src="icons/panel-top.svg" alt="" />Dialog</button><button draggable="true" data-kind="confirmationdialog"><img class="icon-svg" src="icons/square-check.svg" alt="" />ConfirmationDialog</button><button draggable="true" data-kind="menustrip"><img class="icon-svg" src="icons/list.svg" alt="" />MenuStrip</button><button draggable="true" data-kind="toolbar"><img class="icon-svg" src="icons/panel-top.svg" alt="" />Toolbar</button><button draggable="true" data-kind="toolstrip"><img class="icon-svg" src="icons/panel-top.svg" alt="" />ToolStrip</button><button draggable="true" data-kind="statusbar"><img class="icon-svg" src="icons/rectangle-horizontal.svg" alt="" />StatusBar</button><button draggable="true" data-kind="filepicker"><img class="icon-svg" src="icons/folder-open.svg" alt="" />FilePicker</button><button draggable="true" data-kind="folderpicker"><img class="icon-svg" src="icons/folder-open.svg" alt="" />FolderPicker</button><button draggable="true" data-kind="propertygrid"><img class="icon-svg" src="icons/table.svg" alt="" />PropertyGrid</button><button draggable="true" data-kind="listview"><img class="icon-svg" src="icons/list.svg" alt="" />ListView</button><button draggable="true" data-kind="treeview"><img class="icon-svg" src="icons/list.svg" alt="" />TreeView</button><button draggable="true" data-kind="pagination"><img class="icon-svg" src="icons/chevron-right.svg" alt="" />Pagination</button><button draggable="true" data-kind="richtextbox"><img class="icon-svg" src="icons/type.svg" alt="" />RichTextBox</button><button draggable="true" data-kind="picturebox"><img class="icon-svg" src="icons/image.svg" alt="" />PictureBox</button>
-<button draggable="true" data-kind="linklabel"><img class="icon-svg" src="icons/link.svg" alt="" />LinkLabel</button>
-<button draggable="true" data-kind="maskedtextbox"><img class="icon-svg" src="icons/text-cursor-input.svg" alt="" />MaskedTextBox</button>
-<button draggable="true" data-kind="checkedlistbox"><img class="icon-svg" src="icons/list-checks.svg" alt="" />CheckedListBox</button>
-</details><details open class="tool-group"><summary>Inputs and progress</summary><button draggable="true" data-kind="numericupdown"><img class="icon-svg" src="icons/chevrons-up-down.svg" alt="" />NumericUpDown</button><button draggable="true" data-kind="slider"><img class="icon-svg" src="icons/sliders-horizontal.svg" alt="" />Slider</button><button draggable="true" data-kind="progressbar"><img class="icon-svg" src="icons/gauge.svg" alt="" />ProgressBar</button><button draggable="true" data-kind="circularprogress"><img class="icon-svg" src="icons/gauge.svg" alt="" />CircularProgress</button><button draggable="true" data-kind="toggleswitch"><img class="icon-svg" src="icons/toggle-left.svg" alt="" />ToggleSwitch</button><button draggable="true" data-kind="togglebutton"><img class="icon-svg" src="icons/toggle-right.svg" alt="" />ToggleButton</button><button draggable="true" data-kind="datepicker"><img class="icon-svg" src="icons/calendar.svg" alt="" />DatePicker</button><button draggable="true" data-kind="timepicker"><img class="icon-svg" src="icons/clock.svg" alt="" />TimePicker</button><button draggable="true" data-kind="datetimepicker"><img class="icon-svg" src="icons/calendar-clock.svg" alt="" />DateTimePicker</button><button draggable="true" data-kind="colorpicker"><img class="icon-svg" src="icons/palette.svg" alt="" />ColorPicker</button><button draggable="true" data-kind="searchbox"><img class="icon-svg" src="icons/search.svg" alt="" />SearchBox</button><button draggable="true" data-kind="passwordbox"><img class="icon-svg" src="icons/lock.svg" alt="" />PasswordBox</button><button draggable="true" data-kind="textarea"><img class="icon-svg" src="icons/type.svg" alt="" />TextArea</button></details>
-<p class="tool-note">Drag to add · double-click to insert</p>
+        <details open class="tool-group">
+          <summary>More controls</summary>
+          <button draggable="true" data-kind="contextmenu">
+            <img
+              class="icon-svg"
+              src="icons/list.svg"
+              alt=""
+            />ContextMenu</button
+          ><button draggable="true" data-kind="contextmenustrip">
+            <img
+              class="icon-svg"
+              src="icons/list.svg"
+              alt=""
+            />ContextMenuStrip</button
+          ><button draggable="true" data-kind="dialog">
+            <img
+              class="icon-svg"
+              src="icons/panel-top.svg"
+              alt=""
+            />Dialog</button
+          ><button draggable="true" data-kind="confirmationdialog">
+            <img
+              class="icon-svg"
+              src="icons/square-check.svg"
+              alt=""
+            />ConfirmationDialog</button
+          ><button draggable="true" data-kind="menustrip">
+            <img
+              class="icon-svg"
+              src="icons/list.svg"
+              alt=""
+            />MenuStrip</button
+          ><button draggable="true" data-kind="toolbar">
+            <img
+              class="icon-svg"
+              src="icons/panel-top.svg"
+              alt=""
+            />Toolbar</button
+          ><button draggable="true" data-kind="toolstrip">
+            <img
+              class="icon-svg"
+              src="icons/panel-top.svg"
+              alt=""
+            />ToolStrip</button
+          ><button draggable="true" data-kind="statusbar">
+            <img
+              class="icon-svg"
+              src="icons/rectangle-horizontal.svg"
+              alt=""
+            />StatusBar</button
+          ><button draggable="true" data-kind="filepicker">
+            <img
+              class="icon-svg"
+              src="icons/folder-open.svg"
+              alt=""
+            />FilePicker</button
+          ><button draggable="true" data-kind="folderpicker">
+            <img
+              class="icon-svg"
+              src="icons/folder-open.svg"
+              alt=""
+            />FolderPicker</button
+          ><button draggable="true" data-kind="propertygrid">
+            <img
+              class="icon-svg"
+              src="icons/table.svg"
+              alt=""
+            />PropertyGrid</button
+          ><button draggable="true" data-kind="listview">
+            <img class="icon-svg" src="icons/list.svg" alt="" />ListView</button
+          ><button draggable="true" data-kind="treeview">
+            <img class="icon-svg" src="icons/list.svg" alt="" />TreeView</button
+          ><button draggable="true" data-kind="pagination">
+            <img
+              class="icon-svg"
+              src="icons/chevron-right.svg"
+              alt=""
+            />Pagination</button
+          ><button draggable="true" data-kind="richtextbox">
+            <img
+              class="icon-svg"
+              src="icons/type.svg"
+              alt=""
+            />RichTextBox</button
+          ><button draggable="true" data-kind="picturebox">
+            <img class="icon-svg" src="icons/image.svg" alt="" />PictureBox
+          </button>
+          <button draggable="true" data-kind="linklabel">
+            <img class="icon-svg" src="icons/link.svg" alt="" />LinkLabel
+          </button>
+          <button draggable="true" data-kind="maskedtextbox">
+            <img
+              class="icon-svg"
+              src="icons/text-cursor-input.svg"
+              alt=""
+            />MaskedTextBox
+          </button>
+          <button draggable="true" data-kind="checkedlistbox">
+            <img
+              class="icon-svg"
+              src="icons/list-checks.svg"
+              alt=""
+            />CheckedListBox
+          </button>
+        </details>
+        <details open class="tool-group">
+          <summary>Inputs and progress</summary>
+          <button draggable="true" data-kind="numericupdown">
+            <img
+              class="icon-svg"
+              src="icons/chevrons-up-down.svg"
+              alt=""
+            />NumericUpDown</button
+          ><button draggable="true" data-kind="slider">
+            <img
+              class="icon-svg"
+              src="icons/sliders-horizontal.svg"
+              alt=""
+            />Slider</button
+          ><button draggable="true" data-kind="progressbar">
+            <img
+              class="icon-svg"
+              src="icons/gauge.svg"
+              alt=""
+            />ProgressBar</button
+          ><button draggable="true" data-kind="circularprogress">
+            <img
+              class="icon-svg"
+              src="icons/gauge.svg"
+              alt=""
+            />CircularProgress</button
+          ><button draggable="true" data-kind="toggleswitch">
+            <img
+              class="icon-svg"
+              src="icons/toggle-left.svg"
+              alt=""
+            />ToggleSwitch</button
+          ><button draggable="true" data-kind="togglebutton">
+            <img
+              class="icon-svg"
+              src="icons/toggle-right.svg"
+              alt=""
+            />ToggleButton</button
+          ><button draggable="true" data-kind="datepicker">
+            <img
+              class="icon-svg"
+              src="icons/calendar.svg"
+              alt=""
+            />DatePicker</button
+          ><button draggable="true" data-kind="timepicker">
+            <img
+              class="icon-svg"
+              src="icons/clock.svg"
+              alt=""
+            />TimePicker</button
+          ><button draggable="true" data-kind="datetimepicker">
+            <img
+              class="icon-svg"
+              src="icons/calendar-clock.svg"
+              alt=""
+            />DateTimePicker</button
+          ><button draggable="true" data-kind="colorpicker">
+            <img
+              class="icon-svg"
+              src="icons/palette.svg"
+              alt=""
+            />ColorPicker</button
+          ><button draggable="true" data-kind="searchbox">
+            <img
+              class="icon-svg"
+              src="icons/search.svg"
+              alt=""
+            />SearchBox</button
+          ><button draggable="true" data-kind="passwordbox">
+            <img
+              class="icon-svg"
+              src="icons/lock.svg"
+              alt=""
+            />PasswordBox</button
+          ><button draggable="true" data-kind="textarea">
+            <img class="icon-svg" src="icons/type.svg" alt="" />TextArea
+          </button>
+        </details>
+        <details open class="tool-group">
+          <summary>Modern UI</summary>
+          <button draggable="true" data-kind="icon">
+            <img class="icon-svg" src="icons/image.svg" alt="" />Icon</button
+          ><button draggable="true" data-kind="emptystate">
+            <img
+              class="icon-svg"
+              src="icons/folder-open.svg"
+              alt=""
+            />EmptyState</button
+          ><button draggable="true" data-kind="skeleton">
+            <img
+              class="icon-svg"
+              src="icons/rectangle-horizontal.svg"
+              alt=""
+            />Skeleton</button
+          ><button draggable="true" data-kind="badge">
+            <img class="icon-svg" src="icons/type.svg" alt="" />Badge</button
+          ><button draggable="true" data-kind="avatar">
+            <img class="icon-svg" src="icons/image.svg" alt="" />Avatar</button
+          ><button draggable="true" data-kind="divider">
+            <img
+              class="icon-svg"
+              src="icons/rectangle-horizontal.svg"
+              alt=""
+            />Divider</button
+          ><button draggable="true" data-kind="spinner">
+            <img class="icon-svg" src="icons/circle.svg" alt="" />Spinner
+          </button>
+        </details>
+        <p class="tool-note">Drag to add · double-click to insert</p>
       </aside>
       <section class="designer-area">
         <div class="breadcrumb">
-          <img class="icon-svg" src="icons/house.svg" alt="" /><span id="form-name">Form1</span><span>›</span
-          ><span id="mode-label">Design</span>
+          <img class="icon-svg" src="icons/house.svg" alt="" /><span
+            id="form-name"
+            >Form1</span
+          ><span>›</span><span id="mode-label">Design</span>
         </div>
         <div id="stage" class="stage">
           <div id="scaled-frame">
@@ -119,7 +451,13 @@
             </div>
           </div>
         </div>
-      <div id="component-tray" class="component-tray" aria-label="Nonvisual components" hidden></div></section>
+        <div
+          id="component-tray"
+          class="component-tray"
+          aria-label="Nonvisual components"
+          hidden
+        ></div>
+      </section>
       <aside id="properties" class="properties sidebar">
         <div class="panel-heading">
           Properties
@@ -139,7 +477,11 @@
             >Events</span
           >
         </div>
-        <div class="inspector-body"><select id="selection" aria-label="Selected control"></select><div id="property-editors"></div></div></aside>
+        <div class="inspector-body">
+          <select id="selection" aria-label="Selected control"></select>
+          <div id="property-editors"></div>
+        </div>
+      </aside>
     </main>
     <footer class="statusbar">
       <span
@@ -149,7 +491,12 @@
       ><span class="status-spacer"></span
       ><span id="coordinates">X: 0 &nbsp; Y: 0</span><span>Forma 0.1.0</span>
     </footer>
+    <script src="../Web/scripts/data-grid.js"></script>
     <script src="../Web/scripts/forma.js"></script>
+    <script src="../Web/scripts/tooltips.js"></script>
+    <script src="../Web/scripts/icons.js"></script>
+    <script src="../Web/scripts/modern-controls.js"></script>
     <script src="designer.js"></script>
+    <script src="component-customization.js"></script>
   </body>
 </html>

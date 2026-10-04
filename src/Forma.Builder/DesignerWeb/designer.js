@@ -1,5 +1,7 @@
 // The web workspace presents the design; C# owns controls and committed properties.
 const supportedKinds = new Set([
+  "icon", "emptystate", "skeleton",
+  "tooltip", "card", "badge", "avatar", "divider", "toast", "spinner", "loadingoverlay",
   "contextmenu",
   "contextmenustrip",
   "dialog",
@@ -52,6 +54,7 @@ const supportedKinds = new Set([
   "datagridview",
 ]);
 const containerKinds = new Set([
+  "card",
   "form",
   "panel",
   "groupbox",
@@ -61,7 +64,6 @@ const containerKinds = new Set([
   "tablelayoutpanel",
 ]);
 const managedKinds = new Set([
-  "splitcontainer",
   "flowlayoutpanel",
   "tablelayoutpanel",
 ]);
@@ -69,8 +71,26 @@ const byId = (id) => document.getElementById(id);
 const send = (event, id, payload = {}) =>
   window.forma.send({ type: "designer", id, event, payload });
 
-function containerHost(container) {
-  return container.querySelector?.(":scope > .layout-content") ?? container;
+function containerHost(container, x, y) {
+  const host = container.querySelector?.(":scope > .layout-content") ?? container;
+  if (["splitcontainer", "tablelayoutpanel"].includes(container.dataset.formaType)) {
+    const cells = Array.from(host.children).filter(child => child.dataset.layoutSlot);
+    return cells.find(cell => {
+      const rect = cell.getBoundingClientRect();
+      return x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom;
+    }) ?? cells[0] ?? host;
+  }
+  return host;
+}
+function flowInsertion(container, movingId, x, y) {
+  const vertical = container.dataset.orientation === "vertical";
+  const siblings = Array.from(containerHost(container).children).filter(child => child.dataset.formaType && child.id !== movingId);
+  const index = siblings.findIndex(child => {
+    const r = child.getBoundingClientRect();
+    return vertical ? x < r.right && (x < r.left || y < r.top + r.height / 2)
+      : y < r.bottom && (y < r.top || x < r.left + r.width / 2);
+  });
+  return { index: index < 0 ? siblings.length : index, element: index < 0 ? null : siblings[index] };
 }
 
 // Pointer capture keeps event.target on the dragged control. Hit-test underneath it.
@@ -88,7 +108,7 @@ function containerAtPoint(x, y, excluded = null, fallback = null) {
         candidate !== excluded &&
         !excluded?.contains?.(candidate)
       ) {
-        const host = containerHost(candidate),
+        const host = containerHost(candidate, x, y),
           rect = host.getBoundingClientRect();
         const right = rect.right ?? rect.left + host.clientWidth * d.zoom;
         const bottom = rect.bottom ?? rect.top + host.clientHeight * d.zoom;
@@ -296,7 +316,30 @@ window.formaDesigner = {
     if (device) device.textContent = `Desktop (${width} × ${height})`;
   },
   receive(message) {
+    if (message.action === "component-event") {
+      window.formaCustomization?.event(message.id, message.event);
+      return;
+    }
+    if (message.action === "runtime-preview") {
+      this.standalone = true;
+      this.preview = true;
+      this.rootId = message.id;
+      this.state = message;
+      document.body.classList.add("preview-mode");
+      for (const item of message.controls) {
+        this.applyAppearance(item);
+        if (item.component) byId(item.id).hidden = true;
+      }
+      window.formaCustomization?.apply(message, true);
+      return;
+    }
+    if (message.action === "return-to-design") {
+      this.preview = false;
+      this.updatePreview();
+      return;
+    }
     if (message.action === "initialize") {
+      window.formaCustomization?.clear();
       this.cancelDrag();
       this.rootId = message.id;
       this.preview = false;
@@ -327,6 +370,7 @@ window.formaDesigner = {
         if (byId(name)) byId(name).textContent = message.title;
       if (byId("status")) byId("status").textContent = message.status;
       for (const item of message.controls) this.applyAppearance(item);
+      window.formaCustomization?.apply(message);
       this.select(message.selectedId);
       this.inspector();
     }
@@ -349,11 +393,25 @@ window.formaDesigner = {
     byId(id)?.classList.add("forma-selected");
     this.outline();
   },
+  controlById(id) {
+    const controls = this.state?.controls;
+    if (!controls) return undefined;
+    if (this._indexedControls !== controls) {
+      this._indexedControls = controls;
+      this._controlsIndex = new Map(controls.map(item => [item.id, item]));
+    }
+    return this._controlsIndex.get(id);
+  },
   applyAppearance(item) {
     const el = byId(item.id);
     if (!el) return;
+    const parentState = this.controlById(item.parentId);
+    const signature = JSON.stringify([item, this.preview, parentState?.selectedTab, el.dataset.editing, el._formaRevision]);
+    if (el._appearanceSignature === signature) return;
+    el._appearanceSignature = signature;
     if (item.component) {
       el.dataset.disabled = String(!item.enabled);
+      if (item.kind === "tooltip" && !item.enabled) window.formaTooltip?.removing(el);
       const tray = byId("component-tray");
       if (tray) {
         tray.appendChild(el);
@@ -369,6 +427,7 @@ window.formaDesigner = {
         width: "",
         height: "",
       });
+      window.formaModern?.refresh(el, item);
       return;
     }
     if (el.style.removeProperty)
@@ -451,7 +510,8 @@ window.formaDesigner = {
         }[item.shadow ?? "None"],
         cursor: this.preview ? item.cursor : item.locked ? "default" : "move",
       });
-      el.title = item.toolTip ?? "";
+      if (window.formaTooltip) window.formaTooltip.setTitle(el, item.toolTip ?? "");
+      else el.title = item.toolTip ?? "";
       el.tabIndex =
         this.preview && item.focusable && item.enabled
           ? (item.tabIndex ?? 0)
@@ -475,7 +535,7 @@ window.formaDesigner = {
       }
       // Hidden and disabled controls stay selectable in design mode.
       el.classList.toggle("design-muted", !item.enabled || !item.visible);
-      const parent = this.state?.controls.find((c) => c.id === item.parentId);
+      const parent = this.controlById(item.parentId);
       el.hidden =
         (this.preview && !item.visible) ||
         (parent?.kind === "tabcontrol" &&
@@ -574,6 +634,11 @@ window.formaDesigner = {
               : "text";
         el.maxLength = item.maxLength;
       }
+      if (item.kind === "datagridview") {
+        el.dataset.disabled = String(!item.enabled);
+        window.formaDataGrid?.render(el, { readOnly: item.readOnly });
+      }
+      window.formaModern?.refresh(el, item);
     }
   },
   inspector() {
@@ -581,7 +646,10 @@ window.formaDesigner = {
     if (!selected) return;
     const selection = byId("selection");
     if (selection) {
-      selection.replaceChildren(
+      const optionsSignature = JSON.stringify(this.state.controls.map(c => [c.id, c.name]));
+      if (selection._optionsSignature !== optionsSignature) {
+        selection._optionsSignature = optionsSignature;
+        selection.replaceChildren(
         ...this.state.controls.map((c) => {
           const option = document.createElement("option");
           option.value = c.id;
@@ -589,6 +657,7 @@ window.formaDesigner = {
           return option;
         }),
       );
+      }
       selection.value = selected.id;
     }
     const schema = this.state.propertySchema ?? [];
@@ -732,15 +801,10 @@ window.formaDesigner = {
       group.appendChild(label);
     }
     const selected = this.state?.controls.find((c) => c.id === this.selectedId);
-    if (
-      selected &&
-      selected.id !== this.rootId &&
-      (!selected.component ||
-        ["dialog", "confirmationdialog"].includes(selected.kind))
-    ) {
+    if (selected) {
       const actions = document.createElement("div");
       actions.className = "property-actions";
-      const commands = ["image", "picturebox"].includes(selected.kind)
+      const commands = ["image", "picturebox", "avatar"].includes(selected.kind)
         ? [["choose-image", "Choose image…"]]
         : [];
       if (selected.kind === "richtextbox")
@@ -752,7 +816,9 @@ window.formaDesigner = {
         ]);
       if (["dialog", "confirmationdialog"].includes(selected.kind))
         commands.push(["show-dialog", "Show dialog (Preview)"]);
-      if (!selected.component)
+      if (selected.kind === "tabcontrol")
+        commands.push(["add-tab", "Add tab"]);
+      if (!selected.component && selected.id !== this.rootId)
         commands.push(
           ["bring-front", "Bring to front"],
           ["send-back", "Send to back"],
@@ -763,7 +829,25 @@ window.formaDesigner = {
         button.textContent = text;
         actions.appendChild(button);
       }
-      container.prepend(actions);
+      if (commands.length) container.prepend(actions);
+      let advanced = groups.get("Advanced");
+      if (!advanced) {
+        advanced = document.createElement("details");
+        advanced.className = "property-group";
+        advanced.dataset.category = "Advanced";
+        advanced.open = openCategories.get("Advanced") ?? false;
+        const summary = document.createElement("summary");
+        summary.textContent = "Advanced";
+        advanced.appendChild(summary);
+        container.appendChild(advanced);
+      }
+      const customActions = document.createElement("div");
+      customActions.className = "property-actions";
+      const customButton = document.createElement("button");
+      customButton.dataset.command = "edit-custom-properties";
+      customButton.textContent = "Custom Properties…";
+      customActions.appendChild(customButton);
+      advanced.appendChild(customActions);
     }
   },
   coordinates(x, y) {
@@ -825,9 +909,11 @@ window.formaDesigner = {
     const drag = this.drag;
     this.drag = null;
     drag.dropParent?.classList.remove("drop-target");
+    drag.insertionTarget?.classList.remove("layout-insertion");
+    if (drag.managed) drag.element.style.transform = drag.originalTransform ?? "";
     Object.assign(drag.element.style, {
-      left: `${drag.x}px`,
-      top: `${drag.y}px`,
+      left: drag.managed ? drag.originalLeft ?? "" : `${drag.x}px`,
+      top: drag.managed ? drag.originalTop ?? "" : `${drag.y}px`,
     });
     if (drag.mode === "resize")
       Object.assign(drag.element.style, {
@@ -912,11 +998,13 @@ document.addEventListener("drop", (event) => {
     null,
     event.target,
   );
-  const host = containerHost(parent);
+  const host = containerHost(parent, event.clientX, event.clientY);
   const rect = host.getBoundingClientRect();
   if (supportedKinds.has(kind))
     send("drop", parent.id, {
       control: kind,
+      ...(host.dataset.layoutSlot ? { layoutSlot: Number(host.dataset.layoutSlot) } : {}),
+      ...(parent.dataset.formaType === "flowlayoutpanel" ? { index: flowInsertion(parent, null, event.clientX, event.clientY).index } : {}),
       x: Math.max(
         0,
         Math.round(
@@ -950,7 +1038,7 @@ document.addEventListener(
       send("select", component.id);
       return;
     }
-    if (event.target.closest("[data-tab-index]")) return;
+    if (event.target.closest("[data-tab-index], [data-tab-add]")) return;
     const richEditor = event.target.closest('[data-forma-type="richtextbox"]');
     if (richEditor?.dataset.editing === "true") return;
     const handle = event.target.closest("[data-handle]");
@@ -996,19 +1084,18 @@ document.addEventListener(
     send("select", control.id);
     if (control === root) return;
     const item = d.state?.controls.find((c) => c.id === control.id);
-    if (
-      !item ||
-      item.locked ||
-      managedKinds.has(
-        d.state?.controls.find((c) => c.id === item.parentId)?.kind,
-      )
-    )
-      return;
+    if (!item || item.locked) return;
+    const managed = managedKinds.has(d.state?.controls.find(c => c.id === item.parentId)?.kind);
+    const originalHost = control.parentElement ?? root;
+    const origin = originalHost.getBoundingClientRect();
+    const rect = control.getBoundingClientRect?.();
     d.drag = {
       ...item,
       element: control,
-      originalHost: control.parentElement ?? root,
-      origin: (control.parentElement ?? root).getBoundingClientRect(),
+      originalHost, origin, managed,
+      originalLeft: control.style.left, originalTop: control.style.top, originalTransform: control.style.transform,
+      visualX: managed && rect ? (rect.left - origin.left) / d.zoom - (originalHost.clientLeft || 0) : item.x,
+      visualY: managed && rect ? (rect.top - origin.top) / d.zoom - (originalHost.clientTop || 0) : item.y,
       pointerId: event.pointerId,
       startX: event.clientX,
       startY: event.clientY,
@@ -1056,8 +1143,11 @@ document.addEventListener("pointermove", (event) => {
     d.coordinates(drag.bounds.x, drag.bounds.y);
     return;
   }
-  let proposedX = drag.x + dx,
-    proposedY = drag.y + dy;
+  let proposedX = (drag.visualX ?? drag.x) + dx,
+    proposedY = (drag.visualY ?? drag.y) + dy;
+  drag.insertionTarget?.classList.remove("layout-insertion");
+  drag.insertionTarget = null;
+  drag.destination = null;
   if (document.elementsFromPoint && drag.originalHost && drag.origin) {
     drag.dropParent?.classList.remove("drop-target");
     drag.dropParent = null;
@@ -1065,7 +1155,15 @@ document.addEventListener("pointermove", (event) => {
     const item = d.state?.controls.find((c) => c.id === target?.id);
     if (target && !item?.locked) {
       drag.dropParent = target;
-      parent = containerHost(target);
+      parent = containerHost(target, event.clientX, event.clientY);
+      drag.destination = { ...(target.id !== drag.parentId ? { parentId: target.id } : {}),
+        ...(parent.dataset.layoutSlot ? { layoutSlot: Number(parent.dataset.layoutSlot) } : {}) };
+      if (target.dataset.formaType === "flowlayoutpanel") {
+        const insertion = flowInsertion(target, drag.id, event.clientX, event.clientY);
+        drag.destination.index = insertion.index;
+        drag.insertionTarget = insertion.element;
+        drag.insertionTarget?.classList.add("layout-insertion");
+      }
       const rect = parent.getBoundingClientRect();
       proposedX +=
         (drag.origin.left - rect.left) / d.zoom +
@@ -1120,6 +1218,11 @@ document.addEventListener("pointermove", (event) => {
     drag.top = snapped.y;
     d.showGuides(snapped.guides, parent);
   } else d.clearGuides();
+  if (drag.managed) {
+    drag.element.style.transform = `translate(${dx}px, ${dy}px)`;
+    d.outline();
+    return;
+  }
   const destinationRect = parent.getBoundingClientRect();
   const originalRect =
     drag.originalHost?.getBoundingClientRect() ?? destinationRect;
@@ -1148,6 +1251,8 @@ document.addEventListener("pointerup", (event) => {
   if (!drag || drag.pointerId !== event.pointerId) return;
   d.drag = null;
   drag.dropParent?.classList.remove("drop-target");
+  drag.insertionTarget?.classList.remove("layout-insertion");
+  if (drag.managed) drag.element.style.transform = drag.originalTransform ?? "";
   d.clearGuides();
   const capture = drag.capture ?? drag.element;
   if (capture.hasPointerCapture(event.pointerId))
@@ -1161,10 +1266,7 @@ document.addEventListener("pointerup", (event) => {
         : {
             x: drag.left,
             y: drag.top,
-            ...(drag.dropParent &&
-            containerHost(drag.dropParent) !== drag.originalHost
-              ? { parentId: drag.dropParent.id }
-              : {}),
+            ...(drag.destination ?? {}),
           },
     );
 });
@@ -1188,7 +1290,7 @@ document.addEventListener(
     if (root?.contains(event.target)) {
       if (
         d.preview ||
-        event.target.closest("[data-tab-index]") ||
+        event.target.closest("[data-tab-index], [data-tab-add]") ||
         event.target.closest('[data-forma-type="richtextbox"]')?.dataset
           .editing === "true"
       )
@@ -1214,7 +1316,7 @@ document.addEventListener(
       return;
     }
     if (command && !command.disabled)
-      send("command", d.rootId, { command: command.dataset.command });
+      send("command", command.dataset.command === "add-tab" ? d.selectedId : d.rootId, { command: command.dataset.command });
     const toggle = event.target.closest("[data-toggle]");
     if (toggle) {
       const panel = byId(toggle.dataset.toggle);
@@ -1273,6 +1375,7 @@ document.addEventListener("input", (event) => {
 });
 document.addEventListener("keydown", (event) => {
   const d = window.formaDesigner;
+  if (d.standalone) return;
   if (event.key === "Escape") {
     d.cancelDrag();
     if (d.preview) {

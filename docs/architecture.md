@@ -43,19 +43,28 @@ Forma/
 │   │   ├── Program.cs                     Application entry point
 │   │   ├── Models/
 │   │   │   ├── Appearance.cs              Designer-specific Model data
+│   │   │   ├── ComponentCustomization.cs  Portable CSS, behavior and custom values
 │   │   │   └── DesignerEditResult.cs      Edit feedback for the View
 │   │   ├── ViewModels/
 │   │   │   └── BuilderViewModel.cs        Designer state and edit/history commands
 │   │   ├── Views/
-│   │   │   └── BuilderWindow.cs           Native View and bridge integration
+│   │   │   ├── BuilderWindow.cs           Native View and bridge integration
+│   │   │   ├── PreviewWindow.cs           Runtime window and native dialogs
+│   │   │   └── ComponentEditorWindow.cs   Built-in/external source editor View
 │   │   ├── Services/
+│   │   │   ├── CoalescedRefresh.cs       Merge same-turn view state requests
 │   │   │   ├── DesignerEditingService.cs  Add/delete/move/resize/property/layer rules
 │   │   │   ├── DesignHistory.cs           Undo/redo support service
 │   │   │   ├── ProjectFile.cs             Persistence service and file DTOs
+│   │   │   ├── ComponentEditorService.cs  Boilerplate and source file round trips
+│   │   │   ├── ComponentSaveSession.cs    Save commits and duplicate suppression
+│   │   │   ├── PreviewSession.cs          Isolated runtime tree and script setters
 │   │   │   └── InspectorCatalog.cs        Inspector property descriptors
 │   │   ├── DesignerWeb/                   Browser portion of the View
 │   │   │   ├── index.html
 │   │   │   ├── designer.js
+│   │   │   ├── component-customization.js Scoped styles and preview behavior adapter
+│   │   │   ├── preview.html               Runtime-only browser View
 │   │   │   ├── designer.css               Generated stylesheet
 │   │   │   └── icons/                     Local SVG assets
 │   │   └── Frontend/                      View asset build tooling
@@ -112,6 +121,17 @@ The Builder now uses these folders. Place future extractions alongside the exist
 
 `Program.cs` stays at the project root as the composition entry point. Public C# namespaces remain `Forma.Builder`; source links in the test project follow the folder paths. Dependencies matter more than folder names: view models and editing services must stay independent of Views, while Views may depend on view models.
 
+Preview uses `Services/PreviewSession.cs` to clone the form and appearance into
+an independent runtime tree. `Views/PreviewWindow.cs` hosts that tree with the
+same WebView2 renderer and shared appearance presentation used by the designer.
+`DesignerWeb/preview.html` contains only the running form, without editor chrome.
+Runtime edits and timers belong to the preview session; closing the native window
+disposes them. The Builder remains in Design mode. This is an in-process runtime
+preview; generated C# projects and distributable executables are future export work.
+The native Preview window supports resize, maximize and restore. Its form surface
+fills larger viewports; controls retain their designed coordinates. Smaller
+viewports scroll rather than shrink the designed canvas.
+
 ## Control source organization
 
 Each public control, shared base class, event argument type, and document record has its own named file in `src/Forma.Core/Controls`. Namespaces and public APIs remain unchanged. A tiny derived control can have a tiny file; this gives it a clear home when its behavior grows.
@@ -145,6 +165,33 @@ Use these extractions when expanding the roadmap rather than doing a wholesale f
 
 ## Persistence and verification
 
-Project files contain versioned data, not live renderer objects, native resources, or executable event handlers. `ProjectFile` validates and restores models; history uses document snapshots. Preserve existing `.forma` compatibility when reorganizing code.
+Project files contain versioned data, not live renderer objects, native resources,
+or .NET event-handler delegates. Optional component customization stores portable
+CSS/JavaScript source strings and custom JSON values in Appearance. Styles apply
+in Design and Preview; JavaScript is initialized only in the runtime window.
+`ComponentEditorService` creates editing files, while the native editor View opens
+installed editors. Save and Ctrl+S apply immediately; a debounced file watcher
+applies external saves while the editor is open. `ComponentSaveSession` suppresses
+duplicate notifications and retains the last successful commit after validation
+or application failures. `BuilderViewModel.ExecuteEdit("customize")` validates
+and commits each changed save as one undoable operation. The browser behavior
+adapter sends typed property changes to `PreviewSession`, which owns the runtime
+copy. Core control classes do not depend on the source editor or JavaScript.
+`ProjectFile` validates and restores models; history uses document snapshots.
+Preserve existing `.forma` compatibility when reorganizing code.
 
 Use Core tests for control invariants and events, renderer tests for message contracts, project/history tests for restoration and undo/redo, and DOM tests for browser behavior. A source-only split should leave existing tests and public declarations unchanged.
+
+
+### Modern controls and MVVM
+
+Each modern control has its own model file under `src/Forma.Core/Controls`.
+Card extends LayoutContainer for ownership; Avatar extends Image for image
+selection/persistence; Toast extends Component for its nonvisual lifecycle.
+DesignerEditingService and InspectorCatalog implement edit validation and property
+metadata. BuilderViewModel owns the design and history; PreviewSession owns an
+independent runtime copy. WebView2Renderer translates model changes/events to the
+browser. `Web/scripts/modern-controls.js` is View code for rendering, positioning,
+animation and notification/overlay cleanup. Preview scripts issue commands through
+the bridge; PreviewWindow dispatches Toast commands and PreviewSession changes
+Active on Spinner/LoadingOverlay. DOM elements never become the saved model.

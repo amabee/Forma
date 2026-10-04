@@ -78,6 +78,8 @@ public static class ProjectFile
         typeof(C.PropertyGrid),
         typeof(C.MenuStrip), typeof(C.Toolbar), typeof(C.ToolStrip), typeof(C.StatusBar),
         typeof(C.ContextMenu), typeof(C.ContextMenuStrip), typeof(C.Dialog), typeof(C.ConfirmationDialog),
+        typeof(C.Tooltip),
+        typeof(C.Icon), typeof(C.EmptyState), typeof(C.Skeleton), typeof(C.Card), typeof(C.Badge), typeof(C.Avatar), typeof(C.Divider), typeof(C.Toast), typeof(C.Spinner), typeof(C.LoadingOverlay),
     }.ToDictionary(t => t.Name.ToLowerInvariant());
     private static readonly HashSet<string> PropertyNames = new(StringComparer.Ordinal)
     {
@@ -119,7 +121,10 @@ public static class ProjectFile
         "Document",
         "SelectedPath", "DialogTitle", "Filter", "Entries",
         "RightText",
+        "RowCount",
         "TargetId", "Message", "Buttons", "CanCancel",
+        "InitialDelay", "ShowDuration", "Placement", "SortingEnabled", "FilteringEnabled", "FilterText", "SortColumn", "SortDirection", "SelectedRow",
+        "IconName", "StrokeWidth", "Lines", "Description", "HeaderVisible", "Variant", "Initials", "Shape", "Thickness", "LineStyle", "Duration", "Position", "Dismissible", "IsActive", "Speed",
         "Url",
         "Visited",
         "Mask",
@@ -253,6 +258,7 @@ public static class ProjectFile
                         "form"
                         or "panel"
                         or "groupbox"
+                        or "card"
                         or "splitcontainer"
                         or "tabcontrol"
                         or "flowlayoutpanel"
@@ -311,6 +317,7 @@ public static class ProjectFile
                             or "SelectedNode"
                             or "ExpandedNodes"
                             or "Page"
+                            or "SortColumn" or "SelectedRow"
                         ? 1
                         : 0
                 );

@@ -8,9 +8,9 @@ Undo/Redo where appropriate, and tests before it is called complete.
 | Stage | Scope | Status |
 | --- | --- | --- |
 | 1 | Basic controls, original six layout containers, practical inputs, image picker, Timer/BackgroundWorker, basic DataGridView | Implemented; advanced layout/grid behavior remains below |
-| 2 | ListView, TreeView, DataGrid enhancements, Pagination, PropertyGrid, FilePicker, menus, toolbar, status bar, dialog, tooltip/context menu | In progress: ListView, TreeView, Pagination, PropertyGrid, FilePicker, FolderPicker, MenuStrip, Toolbar/ToolStrip, StatusBar, ContextMenu/ContextMenuStrip and Dialog/ConfirmationDialog implemented; DataGrid enhancements and dedicated tooltip component pending |
+| 2 | ListView, TreeView, DataGrid enhancements, Pagination, PropertyGrid, FilePicker, menus, toolbar, status bar, dialog, tooltip/context menu | Initial batch implemented, including Tooltip and DataGrid sorting/filtering/row selection; advanced data features continue in stage 6 |
 | 3 | Additional layout primitives, responsive containers, Sidebar/AppShell, breadcrumbs, accordion, tabs and command palette | Pending |
-| 4 | Cards, badges, avatars, icons, dividers, empty states, toast/notifications, spinner/skeleton, richer selection/button controls | Pending |
+| 4 | Cards, badges, avatars, icons, dividers, empty states, toast/notifications, spinner/skeleton, richer selection/button controls | Card, Badge, Avatar, Divider, Toast, Spinner, LoadingOverlay, Icon, EmptyState and Skeleton implemented; remaining items pending |
 | 5 | Form fields, validation, application components, themes and accessibility | Pending |
 | 6 | Charts, dashboard widgets, advanced tables, sorting/filtering/grouping, data binding and virtualization | Pending |
 | 7 | Calendar/scheduler, task/kanban/timeline/Gantt, productivity and drag/drop components | Pending |
@@ -37,8 +37,8 @@ The editor uses the standard browser [Selection API](https://developer.mozilla.o
 to preserve selected text during formatting. Rich text is reconstructed from
 text and formatting flags; document strings are never injected as HTML.
 
-Existing gaps carried forward: splitter dragging, layout reordering,
-dragging children out of managed layouts, multi-select, copy/paste of controls, and C# generation.
+Existing gaps carried forward: splitter dragging,
+multi-select, copy/paste of controls, and C# generation.
 Dragging controls between free-position containers now updates their parent tree.
 Save/Open and session Undo/Redo are implemented. Windows file association is pending.
 
@@ -60,3 +60,17 @@ format. Dialogs are modal message/confirmation components with configurable
 title, message, buttons and Escape dismissal. Arbitrary dialog content trees,
 dialog windows, task dialogs and native system dialog components remain later
 roadmap items.
+
+Tooltip is a nonvisual component with a named Target, text, initial delay,
+duration, and top/bottom/left/right placement. It supports mouse hover and
+keyboard focus in Preview, maintains aria-describedby, and closes on Escape,
+scroll/resize, target removal, or timeout. The simpler per-control ToolTip property
+continues to use a native browser title.
+
+DataGridView supports stable numeric/text column sorting, case-insensitive
+filtering over displayed columns, row selection by click or keyboard, and
+editing when Read only is off. Selection and edit events use the original Rows
+index; sorting/filtering do not reorder the source data. Configuration persists
+through save/open and design undo/redo. Grouping, virtualization, binding,
+column resizing/reordering, multi-row selection and typed column editors remain
+future advanced data features.

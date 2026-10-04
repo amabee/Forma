@@ -5,6 +5,17 @@
 //   "value"   - written to the value property (form fields)
 //   "none"    - ignored, so containers never overwrite their own children
 const CONTROL_TYPES = {
+  card: { tag: "section", text: "none", init: initContainer },
+  icon: { tag: "span", text: "none" },
+  emptystate: { tag: "section", text: "none" },
+  skeleton: { tag: "div", text: "none" },
+  badge: { tag: "span", text: "none" },
+  avatar: { tag: "div", text: "none" },
+  divider: { tag: "div", text: "none" },
+  toast: { tag: "div", text: "component", init: el => { el.hidden = true; } },
+  spinner: { tag: "div", text: "none" },
+  loadingoverlay: { tag: "div", text: "component", init: el => { el.hidden = true; } },
+  tooltip: { tag: "div", text: "component", init: el => { el.hidden = true; } },
   contextmenu: { tag: "div", text: "component", init: el => { el.hidden = true; } },
   contextmenustrip: { tag: "div", text: "component", init: el => { el.hidden = true; } },
   dialog: { tag: "div", text: "component", init: el => { el.hidden = true; } },
@@ -123,6 +134,44 @@ function initPathPicker(el) {
   });
   el.append(input, button);
 }
+
+function layoutChildren(host) {
+  return Array.from(host.children).flatMap(child => child.dataset.formaType ? [child]
+    : child.dataset.layoutSlot ? Array.from(child.children).filter(node => node.dataset.formaType) : []);
+}
+function ensureLayoutCells(container, requiredSlot = 1) {
+  const host = container.querySelector(":scope > .layout-content");
+  const children = layoutChildren(host), split = container.dataset.formaType === "splitcontainer";
+  const columns = split ? (container.dataset.orientation === "vertical" ? 1 : 2) : Number(container.dataset.columns ?? 2);
+  const maxSlot = Math.max(requiredSlot, ...children.map(child => Number(child.dataset.slot ?? 1)));
+  const rows = split ? (columns === 1 ? 2 : 1) : Math.max(Number(container.dataset.rowCount ?? 2), Math.ceil(maxSlot / columns));
+  const count = split ? 2 : columns * rows;
+  const cells = Array.from(host.children).filter(child => child.dataset.layoutSlot);
+  if (cells.length !== count) {
+    const next = Array.from({ length: count }, (_, index) => {
+      const cell = document.createElement("div"); cell.dataset.layoutSlot = index + 1;
+      cell.className = split ? "layout-pane" : "layout-cell";
+      cell.setAttribute("aria-label", split ? `Pane ${index + 1}` : `Row ${Math.floor(index / columns) + 1}, column ${index % columns + 1}`);
+      return cell;
+    });
+    host.replaceChildren(...next);
+    children.forEach(child => next[Math.min(count - 1, Number(child.dataset.slot ?? 1) - 1)].appendChild(child));
+  }
+  host.style.display = "grid"; host.style.gridTemplateColumns = `repeat(${columns}, minmax(0, 1fr))`;
+  host.style.gridTemplateRows = `repeat(${rows}, minmax(${split ? 0 : 36}px, 1fr))`;
+  container.dataset.actualRows = rows;
+  Array.from(host.children).forEach((cell, index) => cell.setAttribute("aria-label", split ? `Pane ${index + 1}` : `Row ${Math.floor(index / columns) + 1}, column ${index % columns + 1}`));
+}
+function childHost(parent, slot = 1) {
+  const host = parent.querySelector?.(":scope > .layout-content") ?? parent;
+  if (["splitcontainer", "tablelayoutpanel"].includes(parent.dataset?.formaType)) {
+    ensureLayoutCells(parent, slot);
+    const cells = Array.from(host.children).filter(child => child.dataset.layoutSlot);
+    return cells[Math.max(0, Math.min(cells.length - 1, slot - 1))];
+  }
+  return host;
+}
+window.formaChildHost = childHost;
 
 function initContainer(el) {
   const header = document.createElement("div"); header.className = "layout-header";
@@ -302,6 +351,8 @@ window.forma = {
   },
 
   applyData(element, properties) {
+    if (["icon", "emptystate", "skeleton", "card", "badge", "avatar", "divider", "toast", "spinner", "loadingoverlay"].includes(element.dataset.formaType)) window.formaModern?.update(element, properties);
+    if (element.dataset.formaType === "tooltip") window.formaTooltip?.update(element, properties);
     const kind = element.dataset.formaType;
     if (kind === "treeview") {
       const expanded = new Set(properties.expandedNodes ?? []);
@@ -473,14 +524,10 @@ window.forma = {
     if ("layoutSlot" in properties) element.dataset.slot = properties.layoutSlot;
     const parent = element.parentElement?.closest("[data-forma-type]");
     if (parent?.dataset.formaType === "tabcontrol") element.hidden = Number(element.dataset.slot ?? 1) !== Number(parent.dataset.activeTab ?? 0) + 1;
-    if (parent?.dataset.formaType === "splitcontainer") {
-      element.style.gridColumn = parent.querySelector(".layout-content").style.gridTemplateColumns === "1fr" ? "1" : String(Math.min(2, properties.layoutSlot ?? 1));
-      element.style.gridRow = parent.querySelector(".layout-content").style.gridTemplateColumns === "1fr" ? String(Math.min(2, properties.layoutSlot ?? 1)) : "1";
-    }
-    if (parent?.dataset.formaType === "tablelayoutpanel") {
-      const columns = Number(parent.dataset.columns ?? 2), slot = Number(element.dataset.slot ?? 1) - 1;
-      element.style.gridColumn = String(slot % columns + 1);
-      element.style.gridRow = String(Math.floor(slot / columns) + 1);
+    if (["splitcontainer", "tablelayoutpanel"].includes(parent?.dataset.formaType)) {
+      const host = childHost(parent, Number(element.dataset.slot ?? 1));
+      if (host !== element.parentElement) host.appendChild(element);
+      element.style.gridColumn = ""; element.style.gridRow = "";
     }
     if (["checkbox", "radiobutton", "toggleswitch"].includes(kind)) {
       const input = element.querySelector("input"); input.checked = properties.checked ?? false;
@@ -498,53 +545,37 @@ window.forma = {
     }
     if (["splitcontainer", "flowlayoutpanel", "tablelayoutpanel", "tabcontrol", "groupbox"].includes(kind)) {
       const host = element.querySelector(".layout-content");
+      element.dataset.orientation = properties.orientation ?? "horizontal";
       host.style.gap = `${properties.gap ?? 8}px`;
       if (kind === "flowlayoutpanel") { host.style.display = "flex"; host.style.flexDirection = properties.orientation === "vertical" ? "column" : "row"; host.style.flexWrap = "wrap"; host.style.alignContent = "flex-start"; host.style.alignItems = "flex-start"; }
-      if (kind === "splitcontainer") {
-        host.style.display = "grid";
-        host.style.gridTemplateColumns = properties.orientation === "vertical" ? "1fr" : "1fr 1fr";
-        host.style.gridTemplateRows = properties.orientation === "vertical" ? "1fr 1fr" : "1fr";
-        for (const child of host.children) {
-          child.style.gridColumn = properties.orientation === "vertical" ? "1" : String(Math.min(2, Number(child.dataset.slot ?? 1)));
-          child.style.gridRow = properties.orientation === "vertical" ? String(Math.min(2, Number(child.dataset.slot ?? 1))) : "1";
-        }
-      }
-      if (kind === "tablelayoutpanel") {
-        const columns = properties.columns ?? 2; element.dataset.columns = columns;
-        host.style.display = "grid"; host.style.gridTemplateColumns = `repeat(${columns}, minmax(0, 1fr))`; host.style.gridAutoRows = "minmax(36px, auto)";
-        for (const child of host.children) {
-          const slot = Number(child.dataset.slot ?? 1) - 1;
-          child.style.gridColumn = String(slot % columns + 1); child.style.gridRow = String(Math.floor(slot / columns) + 1);
-        }
+      if (kind === "splitcontainer" || kind === "tablelayoutpanel") {
+        element.dataset.orientation = properties.orientation ?? "horizontal";
+        element.dataset.columns = properties.columns ?? 2;
+        element.dataset.rowCount = properties.rowCount ?? 2;
+        ensureLayoutCells(element);
       }
       if (kind === "tabcontrol") {
+        element.dataset.orientation = properties.orientation ?? "horizontal";
         const bar = element.querySelector(".layout-header");
+        bar.setAttribute("role", "tablist"); bar.setAttribute("aria-orientation", element.dataset.orientation);
         bar.replaceChildren(...(properties.tabs ?? ["Tab 1"]).map((text, index) => {
           const button = document.createElement("button"); button.textContent = text; button.dataset.tabIndex = index;
+          button.type = "button"; button.setAttribute("role", "tab");
+          button.setAttribute("aria-selected", String(index === (properties.selectedTab ?? 0)));
           button.className = index === (properties.selectedTab ?? 0) ? "tab-active" : "";
           button.addEventListener("click", () => window.forma.send({ type: "event", id: element.id, event: "tab", payload: { selectedTab: index } }));
           return button;
         }));
+        const addTab = document.createElement("button"); addTab.type = "button"; addTab.textContent = "+";
+        addTab.dataset.tabAdd = "true"; addTab.setAttribute("aria-label", "Add tab");
+        addTab.addEventListener("click", () => { if (window.formaDesigner?.preview === false) window.forma.send({ type: "designer", id: element.id, event: "command", payload: { command: "add-tab" } }); });
+        bar.appendChild(addTab);
         element.dataset.activeTab = properties.selectedTab ?? 0;
         for (const child of host.children) child.hidden = Number(child.dataset.slot ?? 1) !== Number(element.dataset.activeTab) + 1;
       }
     }
     if (kind === "datagridview") {
-      const table = document.createElement("table"), head = document.createElement("thead"), body = document.createElement("tbody");
-      const heading = document.createElement("tr");
-      for (const text of properties.columns ?? []) { const cell = document.createElement("th"); cell.textContent = text; heading.appendChild(cell); }
-      head.appendChild(heading);
-      (properties.rows ?? []).forEach((row, r) => {
-        const tr = document.createElement("tr");
-        (properties.columns ?? []).forEach((_, c) => {
-          const cell = document.createElement("td"); cell.textContent = row[c] ?? "";
-          cell.contentEditable = properties.readOnly ? "false" : "true";
-          cell.addEventListener("blur", () => window.forma.send({ type: "event", id: element.id,
-            event: "cell", payload: { row: r, column: c, value: cell.textContent } }));
-          tr.appendChild(cell);
-        }); body.appendChild(tr);
-      });
-      table.append(head, body); element.replaceChildren(table);
+      window.formaDataGrid?.render(element, properties);
     }
   },
 
@@ -555,8 +586,9 @@ window.forma = {
     element.style.left = Number.isFinite(properties.x) ? `${properties.x}px` : "";
     element.style.top = Number.isFinite(properties.y) ? `${properties.y}px` : "";
     const parent = element.parentElement?.closest("[data-forma-type]");
-    if (["flowlayoutpanel", "tablelayoutpanel", "splitcontainer"].includes(parent?.dataset.formaType))
+    if (["flowlayoutpanel", "tablelayoutpanel"].includes(parent?.dataset.formaType))
       Object.assign(element.style, { position: "relative", left: "", top: "" });
+    if (parent?.dataset.formaType === "flowlayoutpanel") element.style.flexShrink = "0";
   },
 
   create(message) {
@@ -593,12 +625,16 @@ window.forma = {
     spec.init?.(element);
 
     const properties = message.properties ?? {};
+    element._formaRevision = (element._formaRevision ?? 0) + 1;
 
     if ("text" in properties) {
       this.applyText(element, spec, properties.text);
     }
 
-    (parent.querySelector?.(":scope > .layout-content") ?? parent).appendChild(element);
+    const host = childHost(parent, properties.layoutSlot ?? 1);
+    const siblings = Array.from(host.children).filter(child => child.dataset?.formaType);
+    if (host.insertBefore) host.insertBefore(element, siblings[message.index] ?? null);
+    else host.appendChild(element);
     this.applyPosition(element, properties);
     this.applyData(element, properties);
 
@@ -657,6 +693,7 @@ window.forma = {
     if (!spec) return;
 
     const properties = message.properties ?? {};
+    element._formaRevision = (element._formaRevision ?? 0) + 1;
 
     if ("text" in properties) {
       this.applyText(element, spec, properties.text);
@@ -667,6 +704,8 @@ window.forma = {
 
   remove(message) {
     const element = document.getElementById(message.id);
+    window.formaTooltip?.removing(element);
+    window.formaModern?.removing(element);
     document.querySelectorAll("[data-dialog-source]").forEach(modal => {
       const source = document.getElementById(modal.dataset.dialogSource);
       if (source === element || element?.contains(source)) modal.remove();
@@ -683,6 +722,8 @@ window.forma = {
 };
 
 window.forma.closeTransientUi = () => {
+  window.formaModern?.clear();
+  window.formaTooltip?.close();
   closeContextPopup();
   document.querySelectorAll("[data-dialog-source]").forEach(modal => modal.remove());
 };

@@ -28,15 +28,30 @@ public sealed class DesignerEditingService(BuilderViewModel viewModel)
         }
         // Editing guards belong here as well as in the browser UI.
         if (_viewModel.PreviewMode) return new("Ready");
+        if (action == "customize" && control is not null && !_viewModel.Appearance[control.Id].Locked)
+        {
+            var customization = payload.Deserialize<ComponentCustomization>(new JsonSerializerOptions { PropertyNameCaseInsensitive = true })
+                ?? throw new ArgumentException("Missing custom properties.");
+            _viewModel.Appearance[control.Id].Customization = ComponentCustomization.Validate(customization);
+            return new("Custom properties applied");
+        }
         if (action == "drop" && control is not null
             && (control == form || control is Forma.Core.Controls.LayoutContainer or Forma.Core.Controls.Panel)
             && Number(payload, "x") is int x && Number(payload, "y") is int y)
         {
-            var added = AddControl(String(payload, "control"), x, y, control);
+            var added = AddControl(String(payload, "control"), x, y, control, Number(payload, "layoutSlot"), Number(payload, "index"));
             return new(added is null ? "Ready" : $"Added {added.Name}", added);
         }
         if (action == "command")
         {
+            if (String(payload, "command") == "add-tab" && control is Forma.Core.Controls.TabControl tabControl
+                && !_viewModel.Appearance[control.Id].Locked)
+            {
+                tabControl.Tabs = [..tabControl.Tabs, $"Tab {tabControl.Tabs.Length + 1}"];
+                tabControl.SelectedTab = tabControl.Tabs.Length - 1;
+                _viewModel.SelectedControl = tabControl;
+                return new("Tab added");
+            }
             var selected = _viewModel.SelectedControl;
             if (selected is null || selected == form || !_viewModel.Appearance.TryGetValue(selected.Id, out var appearance)
                 || appearance.Locked || !Walk(form).Contains(selected)) return new("Ready");
@@ -52,6 +67,10 @@ public sealed class DesignerEditingService(BuilderViewModel viewModel)
                     }
                     foreach (var menu in Walk(form).OfType<Forma.Core.Controls.ContextMenu>())
                         if (removed.Any(item => item.Id == menu.TargetId)) menu.TargetId = "";
+                    foreach (var tooltip in Walk(form).OfType<Forma.Core.Controls.Tooltip>())
+                        if (removed.Any(item => item.Id == tooltip.TargetId)) tooltip.TargetId = "";
+                    foreach (var overlay in Walk(form).OfType<Forma.Core.Controls.LoadingOverlay>())
+                        if (removed.Any(item => item.Id == overlay.TargetId)) overlay.TargetId = "";
                     _viewModel.SelectedControl = form;
                     return new("Control deleted");
                 case "bring-front":
@@ -88,6 +107,13 @@ public sealed class DesignerEditingService(BuilderViewModel viewModel)
                     ResizeControl(control, bounds.Width, bounds.Height);
                 }
                 Position(control, left, top);
+                if (Number(payload, "layoutSlot") is int slot && control.Parent is Forma.Core.Controls.SplitContainer or Forma.Core.Controls.TableLayoutPanel)
+                {
+                    control.LayoutSlot = control.Parent is Forma.Core.Controls.SplitContainer ? Math.Clamp(slot, 1, 2) : Math.Clamp(slot, 1, 1200);
+                    ResizeControl(control, bounds.Width, bounds.Height);
+                }
+                if (Number(payload, "index") is int insertionIndex && control.Parent is Forma.Core.Controls.FlowLayoutPanel flow)
+                    flow.MoveChild(control, insertionIndex);
                 _viewModel.SelectedControl = control;
                 return new("Control moved");
             case "resize" when !bounds.Locked && control is not Forma.Core.Controls.INonvisualControl
@@ -97,13 +123,21 @@ public sealed class DesignerEditingService(BuilderViewModel viewModel)
                     Position(control, rx, ry);
                 _viewModel.SelectedControl = control;
                 return new("Control resized");
+            case "image-source" when control == _viewModel.SelectedControl && !bounds.Locked
+                && control is Forma.Core.Controls.Image selectedImage && String(payload, "value") is string source:
+                selectedImage.Source = Path.IsPathFullyQualified(source) ? new Uri(source).AbsoluteUri : source;
+                return new("Image updated");
+            case "path-source" when control == _viewModel.SelectedControl && !bounds.Locked
+                && control is Forma.Core.Controls.PathPicker selectedPicker && String(payload, "value") is string path:
+                selectedPicker.SelectedPath = path;
+                return new("Path selected");
             case "property" when control == _viewModel.SelectedControl:
                 ApplyProperty(control, payload);
                 return new("Property updated");
         }
         return new("Ready");
     }
-    private FControl? AddControl(string? kind, int x, int y, FControl parent)
+    private FControl? AddControl(string? kind, int x, int y, FControl parent, int? layoutSlot = null, int? index = null)
     {
         if (
             _viewModel.Form is null
@@ -117,6 +151,17 @@ public sealed class DesignerEditingService(BuilderViewModel viewModel)
         FControl? control = kind switch
         {
             "contextmenu" => new Forma.Core.Controls.ContextMenu(),
+            "tooltip" => new Forma.Core.Controls.Tooltip(),
+            "icon" => new Forma.Core.Controls.Icon(),
+            "emptystate" => new Forma.Core.Controls.EmptyState(),
+            "skeleton" => new Forma.Core.Controls.Skeleton(),
+            "card" => new Forma.Core.Controls.Card(),
+            "badge" => new Forma.Core.Controls.Badge(),
+            "avatar" => new Forma.Core.Controls.Avatar(),
+            "divider" => new Forma.Core.Controls.Divider(),
+            "toast" => new Forma.Core.Controls.Toast(),
+            "spinner" => new Forma.Core.Controls.Spinner(),
+            "loadingoverlay" => new Forma.Core.Controls.LoadingOverlay(),
             "contextmenustrip" => new Forma.Core.Controls.ContextMenuStrip(),
             "dialog" => new Forma.Core.Controls.Dialog(),
             "confirmationdialog" => new Forma.Core.Controls.ConfirmationDialog(),
@@ -200,7 +245,7 @@ public sealed class DesignerEditingService(BuilderViewModel viewModel)
                 ForeColor = "#1f2937",
                 BackColor = "#f3f6fb",
             },
-            "groupbox"
+            "card" or "groupbox"
             or "splitcontainer"
             or "tabcontrol"
             or "flowlayoutpanel"
@@ -277,6 +322,23 @@ public sealed class DesignerEditingService(BuilderViewModel viewModel)
         if (control is Forma.Core.Controls.SearchBox) _viewModel.Appearance[control.Id].Placeholder = "Search...";
         if (control is Forma.Core.Controls.PasswordBox) _viewModel.Appearance[control.Id].Placeholder = "Password";
         if (control is Forma.Core.Controls.PasswordBox) _viewModel.Appearance[control.Id].Password = true;
+        if (control is Forma.Core.Controls.Icon or Forma.Core.Controls.EmptyState or Forma.Core.Controls.Skeleton)
+        {
+            var visual = _viewModel.Appearance[control.Id]; visual.BackColor = "transparent"; visual.ForeColor = "#64748b"; visual.BorderWidth = 0;
+            visual.PaddingTop = visual.PaddingBottom = visual.PaddingLeft = visual.PaddingRight = 0;
+            visual.Width = control is Forma.Core.Controls.Icon ? 32 : 280;
+            visual.Height = control is Forma.Core.Controls.Icon ? 32 : control is Forma.Core.Controls.Skeleton ? 90 : 180;
+        }
+        if (control is Forma.Core.Controls.Card) { _viewModel.Appearance[control.Id].BorderRadius = 10; _viewModel.Appearance[control.Id].Shadow = "Small"; }
+        if (control is Forma.Core.Controls.Badge or Forma.Core.Controls.Avatar or Forma.Core.Controls.Divider or Forma.Core.Controls.Spinner or Forma.Core.Controls.LoadingOverlay)
+        {
+            var modern = _viewModel.Appearance[control.Id]; modern.BackColor = "#ffffff"; modern.ForeColor = "#475569"; modern.BorderWidth = 0;
+            modern.PaddingTop = modern.PaddingBottom = modern.PaddingLeft = modern.PaddingRight = 0;
+            if (control is Forma.Core.Controls.Badge) { modern.Width = 100; modern.Height = 28; }
+            if (control is Forma.Core.Controls.Avatar) { modern.Width = modern.Height = 64; modern.FontSize = 22; }
+            if (control is Forma.Core.Controls.Divider) { modern.Width = 240; modern.Height = 24; }
+            if (control is Forma.Core.Controls.Spinner) { modern.Width = 150; modern.Height = 36; }
+        }
         if (control is Forma.Core.Controls.INonvisualControl)
             parent = _viewModel.Form;
         control.X = x;
@@ -287,7 +349,11 @@ public sealed class DesignerEditingService(BuilderViewModel viewModel)
             control.LayoutSlot = Math.Min(2, parent.Children.Count + 1);
         else if (parent is Forma.Core.Controls.TableLayoutPanel)
             control.LayoutSlot = parent.Children.Count + 1;
-        parent.Add(control);
+        if (layoutSlot is int slot && parent is Forma.Core.Controls.SplitContainer or Forma.Core.Controls.TableLayoutPanel)
+            control.LayoutSlot = parent is Forma.Core.Controls.SplitContainer ? Math.Clamp(slot, 1, 2) : Math.Clamp(slot, 1, 1200);
+        if (parent is Forma.Core.Controls.FlowLayoutPanel && index is int insertionIndex)
+            parent.Insert(Math.Clamp(insertionIndex, 0, parent.Children.Count), control);
+        else parent.Add(control);
         if (control is not Forma.Core.Controls.INonvisualControl)
             ResizeControl(control, _viewModel.Appearance[control.Id].Width, _viewModel.Appearance[control.Id].Height);
         _viewModel.SelectedControl = control;
@@ -300,13 +366,25 @@ public sealed class DesignerEditingService(BuilderViewModel viewModel)
         if (parent == _viewModel.Form)
             return (a.Width, a.Height);
         var header =
-            parent is Forma.Core.Controls.GroupBox ? 28
-            : parent is Forma.Core.Controls.TabControl ? 36
+            parent is Forma.Core.Controls.Card card && card.HeaderVisible ? 56
+            : parent is Forma.Core.Controls.GroupBox ? 28
+            : parent is Forma.Core.Controls.TabControl tabs && tabs.Orientation != "vertical" ? 36
             : 0;
-        return (
-            Math.Max(24, a.Width - a.PaddingLeft - a.PaddingRight - 2 * a.BorderWidth),
-            Math.Max(20, a.Height - a.PaddingTop - a.PaddingBottom - 2 * a.BorderWidth - header)
-        );
+        var width = a.Width - a.PaddingLeft - a.PaddingRight - 2 * a.BorderWidth;
+        var height = a.Height - a.PaddingTop - a.PaddingBottom - 2 * a.BorderWidth - header;
+        if (parent is Forma.Core.Controls.TabControl verticalTabs && verticalTabs.Orientation == "vertical") width -= 120;
+        if (parent is Forma.Core.Controls.SplitContainer split)
+        {
+            if (split.Orientation == "vertical") height = (height - split.Gap) / 2;
+            else width = (width - split.Gap) / 2;
+        }
+        if (parent is Forma.Core.Controls.TableLayoutPanel table)
+        {
+            width = (width - (table.Columns - 1) * table.Gap) / table.Columns;
+            var rows = Math.Max(table.RowCount, (table.Children.Select(child => child.LayoutSlot).DefaultIfEmpty(1).Max() + table.Columns - 1) / table.Columns);
+            height = (height - (rows - 1) * table.Gap) / rows;
+        }
+        return (Math.Max(24, width), Math.Max(20, height));
     }
 
     private void Position(FControl control, int x, int y)
@@ -357,6 +435,82 @@ public sealed class DesignerEditingService(BuilderViewModel viewModel)
             if (text != "" && !Walk(_viewModel.Form!).Any(item => item.Id == text && item is not Forma.Core.Controls.INonvisualControl))
                 throw new ArgumentException("Choose a control in the current form.");
             menu.TargetId = text;
+        }
+        if (control is Forma.Core.Controls.Tooltip tooltip)
+        {
+            if (property == "targetId" && text is not null)
+            {
+                if (text != "" && !Walk(_viewModel.Form!).Any(item => item.Id == text && item is not Forma.Core.Controls.INonvisualControl))
+                    throw new ArgumentException("Choose a control in the current form.");
+                tooltip.TargetId = text;
+            }
+            if (property == "initialDelay" && number is int delay) tooltip.InitialDelay = delay;
+            if (property == "showDuration" && number is int duration) tooltip.ShowDuration = duration;
+            if (property == "placement" && text is not null) tooltip.Placement = text;
+        }
+        if (control is Forma.Core.Controls.Icon icon)
+        {
+            if (property == "iconName" && text is not null) icon.IconName = text;
+            if (property == "strokeWidth" && number is int stroke) icon.StrokeWidth = stroke;
+        }
+        if (control is Forma.Core.Controls.EmptyState empty)
+        {
+            if (property == "description" && text is not null) empty.Description = text;
+            if (property == "iconName" && text is not null) empty.IconName = text;
+        }
+        if (control is Forma.Core.Controls.Skeleton skeleton)
+        {
+            if (property == "shape" && text is not null) skeleton.Shape = text;
+            if (property == "lines" && number is int lines) skeleton.Lines = lines;
+            if (property == "isActive") skeleton.IsActive = Boolean(payload, "value", skeleton.IsActive);
+        }
+        if (control is Forma.Core.Controls.Card card)
+        {
+            if (property == "description" && text is not null) card.Description = text;
+            if (property == "headerVisible") card.HeaderVisible = Boolean(payload, "value", card.HeaderVisible);
+        }
+        if (control is Forma.Core.Controls.Badge badge && property == "variant" && text is not null) badge.Variant = text;
+        if (control is Forma.Core.Controls.Avatar avatar)
+        {
+            if (property == "initials" && text is not null) avatar.Initials = text;
+            if (property == "shape" && text is not null) avatar.Shape = text;
+        }
+        if (control is Forma.Core.Controls.Divider divider)
+        {
+            if (property == "orientation" && text is not null) divider.Orientation = text;
+            if (property == "thickness" && number is int thickness) divider.Thickness = thickness;
+            if (property == "lineStyle" && text is not null) divider.LineStyle = text;
+        }
+        if (control is Forma.Core.Controls.Spinner spinner)
+        {
+            if (property == "isActive") spinner.IsActive = Boolean(payload, "value", spinner.IsActive);
+            if (property == "speed" && number is int speed) spinner.Speed = speed;
+        }
+        if (control is Forma.Core.Controls.LoadingOverlay overlay)
+        {
+            if (property == "isActive") overlay.IsActive = Boolean(payload, "value", overlay.IsActive);
+            if (property == "targetId" && text is not null)
+            {
+                if (text != "" && !Walk(_viewModel.Form!).Any(item => item.Id == text && item != control && item is not Forma.Core.Controls.INonvisualControl))
+                    throw new ArgumentException("Choose another visual control as the overlay target.");
+                overlay.TargetId = text;
+            }
+        }
+        if (control is Forma.Core.Controls.Toast toast)
+        {
+            if (property == "variant" && text is not null) toast.Variant = text;
+            if (property == "position" && text is not null) toast.Position = text;
+            if (property == "duration" && number is int duration) toast.Duration = duration;
+            if (property == "dismissible") toast.Dismissible = Boolean(payload, "value", toast.Dismissible);
+        }
+        if (control is Forma.Core.Controls.DataGridView dataGrid)
+        {
+            if (property == "sortingEnabled") dataGrid.SortingEnabled = Boolean(payload, "value", dataGrid.SortingEnabled);
+            if (property == "filteringEnabled") dataGrid.FilteringEnabled = Boolean(payload, "value", dataGrid.FilteringEnabled);
+            if (property == "filterText" && text is not null) dataGrid.FilterText = text;
+            if (property == "sortColumn" && number is int column) dataGrid.SortColumn = column;
+            if (property == "sortDirection" && text is not null) dataGrid.SortDirection = text;
+            if (property == "selectedRow" && number is int row) dataGrid.SelectedRow = row;
         }
         if (control is Forma.Core.Controls.Dialog dialog)
         {
@@ -519,6 +673,9 @@ public sealed class DesignerEditingService(BuilderViewModel viewModel)
             case "columns"
                 when control is Forma.Core.Controls.TableLayoutPanel grid && number is int cols:
                 grid.Columns = cols;
+                break;
+            case "rowCount" when control is Forma.Core.Controls.TableLayoutPanel table && number is int rows:
+                table.RowCount = rows;
                 break;
             case "tabs" when control is Forma.Core.Controls.TabControl tabs && text is not null:
                 tabs.Tabs = Lines(text);

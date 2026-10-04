@@ -6,6 +6,52 @@ namespace Forma.Tests;
 
 public class DesignerEditingTests
 {
+    [Fact]
+    public void ManagedLayoutsSupportReorderingAndCellPlacementWithUndo()
+    {
+        var model = NewDesign();
+        var flow = Add(model, "flowlayoutpanel");
+        var first = Add(model, "button", flow);
+        var second = Add(model, "label", flow);
+        model.ExecuteEdit("move", first.Id, Payload(new { x = 0, y = 0, index = 1 }));
+        Assert.Equal(new[] { second.Id, first.Id }, flow.Children.Select(c => c.Id));
+        Restore(model, model.Undo()!);
+        var restoredFlow = model.Form!.Children.Single();
+        Assert.Equal(new[] { first.Id, second.Id }, restoredFlow.Children.Select(c => c.Id));
+
+        var table = Add(model, "tablelayoutpanel");
+        Property(model, table, "rowCount", 3);
+        var child = model.ExecuteEdit("drop", table.Id, Payload(new { control = "button", x = 0, y = 0, layoutSlot = 6 })).AddedControl!;
+        Assert.Equal(6, child.LayoutSlot);
+        model.ExecuteEdit("move", child.Id, Payload(new { x = 0, y = 0, layoutSlot = 2 }));
+        Assert.Equal(2, child.LayoutSlot);
+        Assert.Equal(3, Assert.IsType<TableLayoutPanel>(table).RowCount);
+        Restore(model, model.Undo()!);
+        Assert.Equal(6, model.Form!.Children.Last().Children.Single().LayoutSlot);
+        Assert.Equal(3, Assert.IsType<TableLayoutPanel>(model.Form.Children.Last()).RowCount);
+    }
+
+    [Fact]
+    public void SplitPanePlacementAndVerticalTabAdditionAreUndoable()
+    {
+        var model = NewDesign();
+        var split = Add(model, "splitcontainer");
+        var child = model.ExecuteEdit("drop", split.Id, Payload(new { control = "button", x = 0, y = 0, layoutSlot = 2 })).AddedControl!;
+        Assert.Equal(2, child.LayoutSlot);
+        model.ExecuteEdit("move", child.Id, Payload(new { x = 0, y = 0, layoutSlot = 1 }));
+        Assert.Equal(1, child.LayoutSlot);
+        var tabs = Assert.IsType<TabControl>(Add(model, "tabcontrol"));
+        Property(model, tabs, "orientation", "vertical");
+        var count = tabs.Tabs.Length;
+        model.ExecuteEdit("command", tabs.Id, Payload(new { command = "add-tab" }));
+        Assert.Equal(count + 1, tabs.Tabs.Length);
+        Assert.Equal(count, tabs.SelectedTab);
+        Restore(model, model.Undo()!);
+        var restored = Assert.IsType<TabControl>(model.Form!.Children.Last());
+        Assert.Equal(count, restored.Tabs.Length);
+        Assert.Equal("vertical", restored.Orientation);
+    }
+
     private static JsonElement Payload(object value) => JsonSerializer.SerializeToElement(value);
     private static BuilderViewModel NewDesign()
     {
@@ -207,4 +253,34 @@ public class DesignerEditingTests
         button.Text = "Still observed";
         Assert.Single(bridge.Sent, message => message.Str("id") == button.Id);
     }
+    [Theory]
+    [InlineData("avatar")]
+    [InlineData("image")]
+    [InlineData("picturebox")]
+    public async Task ImagePickerSelectionUpdatesRendererAndSupportsHistoryAndPersistence(string kind)
+    {
+        var model = NewDesign(); var image = Assert.IsAssignableFrom<Image>(Add(model, kind));
+        var bridge = new FakeBridge(); var renderer = new Forma.WebView2.WebView2Renderer(bridge);
+        await renderer.RenderAsync(model.Form!); bridge.Clear(); model.ClearHistory();
+        var source = new Uri(Path.Combine(Path.GetTempPath(), "portrait with spaces.png")).AbsoluteUri;
+        // The source field stays read-only; the picker uses an explicit design action.
+        Property(model, image, "source", source); Assert.Equal("", image.Source); Assert.False(model.CanUndo);
+        model.ExecuteEdit("image-source", image.Id, Payload(new { value = source }));
+        Assert.Equal(source, image.Source); Assert.True(model.CanUndo);
+        Assert.Contains(bridge.Sent, message => message.Str("id") == image.Id
+            && message.Obj("properties").Str("source") == source);
+        using (var preview = new PreviewSession(model))
+            Assert.Equal(source, Assert.IsAssignableFrom<Image>(preview.Controls.Single(c => c.Id == image.Id)).Source);
+        var copy = ProjectFile.Restore(ProjectFile.Capture(model.Form!, c => Payload(model.Appearance[c.Id])));
+        Assert.Equal(source, Assert.IsAssignableFrom<Image>(copy.Form.Children.Single()).Source);
+        Restore(model, model.Undo()!); Assert.Equal("", Assert.IsAssignableFrom<Image>(model.SelectedControl).Source);
+        Restore(model, model.Redo()!); Assert.Equal(source, Assert.IsAssignableFrom<Image>(model.SelectedControl).Source);
+        model.ClearHistory(); model.Appearance[image.Id].Locked = true;
+        model.ExecuteEdit("image-source", image.Id, Payload(new { value = "other.png" }));
+        Assert.Equal(source, Assert.IsAssignableFrom<Image>(model.SelectedControl).Source); Assert.False(model.CanUndo);
+        model.Appearance[image.Id].Locked = false; model.PreviewMode = true;
+        model.ExecuteEdit("image-source", image.Id, Payload(new { value = "other.png" }));
+        Assert.Equal(source, Assert.IsAssignableFrom<Image>(model.SelectedControl).Source); Assert.False(model.CanUndo);
+    }
+
 }

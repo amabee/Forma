@@ -66,11 +66,11 @@ public sealed class BuilderViewModel : INotifyPropertyChanged
     public DesignerEditResult ExecuteEdit(string action, string? id, JsonElement payload)
     {
         var mutates = !PreviewMode && Form is not null
-            && (action is "drop" or "move" or "resize" or "property"
+            && (action is "drop" or "move" or "resize" or "property" or "customize" or "image-source" or "path-source"
                 || action == "command" && payload.ValueKind == JsonValueKind.Object
                     && payload.TryGetProperty("command", out var command)
                     && command.ValueKind == JsonValueKind.String
-                    && command.GetString() is "delete" or "bring-front" or "send-back");
+                    && command.GetString() is "delete" or "bring-front" or "send-back" or "add-tab");
         var before = mutates ? CaptureHistory() : null;
         try { return _editing.Execute(action, id, payload); }
         finally
@@ -83,7 +83,7 @@ public sealed class BuilderViewModel : INotifyPropertyChanged
                 var group = property is "text" or "document" ? $"text:{id}" : null;
                 RecordEdit(before, CaptureHistory(), group);
             }
-            else RefreshDocumentState();
+            else if (action != "select") RefreshDocumentState();
         }
     }
 

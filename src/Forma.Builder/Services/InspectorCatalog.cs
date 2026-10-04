@@ -23,6 +23,64 @@ public static class InspectorCatalog
         new("text", "Text / Title", "General"),
         new("tag", "Tag", "General"),
         new("locked", "Locked", "General", "checkbox"),
+        new("description", "Description", "General", "textarea", Kind: "card,emptystate"),
+        new(
+            "iconName",
+            "Icon",
+            "Appearance",
+            "select",
+            Options: Forma.Core.Controls.Icon.Names.ToArray(),
+            Kind: "icon,emptystate"
+        ),
+        new("strokeWidth", "Stroke width", "Appearance", "number", 1, 4, Kind: "icon"),
+        new(
+            "shape",
+            "Shape",
+            "Appearance",
+            "select",
+            Options: ["text", "rectangle", "circle"],
+            Kind: "skeleton"
+        ),
+        new("lines", "Lines", "Appearance", "number", 1, 10, Kind: "skeleton"),
+        new("headerVisible", "Show header", "Appearance", "checkbox", Kind: "card"),
+        new(
+            "variant",
+            "Variant",
+            "Appearance",
+            "select",
+            Options: ["neutral", "info", "success", "warning", "danger"],
+            Kind: "badge,toast"
+        ),
+        new("initials", "Initials (blank=automatic)", "General", Kind: "avatar"),
+        new(
+            "shape",
+            "Shape",
+            "Appearance",
+            "select",
+            Options: ["circle", "rounded", "square"],
+            Kind: "avatar"
+        ),
+        new("thickness", "Line thickness", "Appearance", "number", 1, 12, Kind: "divider"),
+        new(
+            "lineStyle",
+            "Line style",
+            "Appearance",
+            "select",
+            Options: ["solid", "dashed", "dotted"],
+            Kind: "divider"
+        ),
+        new(
+            "position",
+            "Position",
+            "Behavior",
+            "select",
+            Options: ["top-right", "top-left", "bottom-right", "bottom-left"],
+            Kind: "toast"
+        ),
+        new("duration", "Duration (ms)", "Behavior", "number", 500, 60000, Kind: "toast"),
+        new("dismissible", "Allow dismissal", "Behavior", "checkbox", Kind: "toast"),
+        new("isActive", "Active", "Behavior", "checkbox", Kind: "spinner,loadingoverlay,skeleton"),
+        new("speed", "Animation speed (ms)", "Behavior", "number", 100, 5000, Kind: "spinner"),
         new(
             "style",
             "Style",
@@ -114,32 +172,108 @@ public static class InspectorCatalog
         new("focusable", "Focusable", "Behavior", "checkbox", ChildOnly: true),
         new("tabIndex", "Tab index", "Behavior", "number", 0, 32767, ChildOnly: true),
         new("toolTip", "Tooltip", "Behavior", ChildOnly: true),
-        new("placeholder", "Placeholder", "Behavior", Kind: "textbox,maskedtextbox,searchbox,passwordbox,textarea"),
-        new("readOnly", "Read only", "Behavior", "checkbox", Kind: "textbox,maskedtextbox,searchbox,passwordbox,textarea"),
-        new("password", "Password", "Behavior", "checkbox", Kind: "textbox,maskedtextbox,searchbox,passwordbox,textarea"),
-        new("maxLength", "Max length", "Behavior", "number", 1, 32767, Kind: "textbox,maskedtextbox,searchbox,passwordbox,textarea"),
+        new(
+            "placeholder",
+            "Placeholder",
+            "Behavior",
+            Kind: "textbox,maskedtextbox,searchbox,passwordbox,textarea"
+        ),
+        new(
+            "readOnly",
+            "Read only",
+            "Behavior",
+            "checkbox",
+            Kind: "textbox,maskedtextbox,searchbox,passwordbox,textarea"
+        ),
+        new(
+            "password",
+            "Password",
+            "Behavior",
+            "checkbox",
+            Kind: "textbox,maskedtextbox,searchbox,passwordbox,textarea"
+        ),
+        new(
+            "maxLength",
+            "Max length",
+            "Behavior",
+            "number",
+            1,
+            32767,
+            Kind: "textbox,maskedtextbox,searchbox,passwordbox,textarea"
+        ),
         new("cssClass", "CSS class", "Advanced"),
         new("id", "CSS ID", "Advanced", ReadOnly: true),
-        new("customCss", "Custom CSS", "Advanced", "textarea", ChildOnly: true),
-        new("zIndex", "Z-index", "Advanced", "number", 0, 1000, ChildOnly: true),
-        new("minimum", "Minimum", "Behavior", "number", Kind: "numericupdown,slider,progressbar,circularprogress"),
-        new("maximum", "Maximum", "Behavior", "number", Kind: "numericupdown,slider,progressbar,circularprogress"),
+        new(
+            "minimum",
+            "Minimum",
+            "Behavior",
+            "number",
+            Kind: "numericupdown,slider,progressbar,circularprogress"
+        ),
+        new(
+            "maximum",
+            "Maximum",
+            "Behavior",
+            "number",
+            Kind: "numericupdown,slider,progressbar,circularprogress"
+        ),
         new("increment", "Step", "Behavior", "number", .001, 1000000, Kind: "numericupdown,slider"),
-        new("number", "Value", "Behavior", "number", Kind: "numericupdown,slider,progressbar,circularprogress"),
+        new(
+            "number",
+            "Value",
+            "Behavior",
+            "number",
+            Kind: "numericupdown,slider,progressbar,circularprogress"
+        ),
         new("dateValue", "Value", "Behavior", "date", Kind: "datepicker"),
         new("dateValue", "Value", "Behavior", "time", Kind: "timepicker"),
         new("dateValue", "Value", "Behavior", "datetime-local", Kind: "datetimepicker"),
         new("color", "Selected color", "Behavior", "color", Kind: "colorpicker"),
         new("nodes", "Nodes (JSON)", "General", "textarea", Kind: "treeview"),
-        new("commandItems", "Commands (JSON)", "General", "textarea", Kind: "menustrip,toolbar,toolstrip,contextmenu,contextmenustrip"),
-        new("targetId", "Target", "Behavior", "target", Kind: "contextmenu,contextmenustrip"),
+        new(
+            "commandItems",
+            "Commands (JSON)",
+            "General",
+            "textarea",
+            Kind: "menustrip,toolbar,toolstrip,contextmenu,contextmenustrip"
+        ),
+        new(
+            "targetId",
+            "Target",
+            "Behavior",
+            "target",
+            Kind: "contextmenu,contextmenustrip,tooltip,loadingoverlay"
+        ),
+        new("initialDelay", "Initial delay (ms)", "Behavior", "number", 0, 10000, Kind: "tooltip"),
+        new("showDuration", "Duration (ms)", "Behavior", "number", 500, 60000, Kind: "tooltip"),
+        new(
+            "placement",
+            "Placement",
+            "Behavior",
+            "select",
+            Options: ["top", "bottom", "left", "right"],
+            Kind: "tooltip"
+        ),
         new("dialogTitle", "Dialog title", "General", Kind: "dialog,confirmationdialog"),
         new("message", "Message", "General", "textarea", Kind: "dialog,confirmationdialog"),
-        new("buttons", "Buttons", "Behavior", "select", Options: ["OK", "OKCancel", "YesNo", "YesNoCancel"], Kind: "dialog,confirmationdialog"),
+        new(
+            "buttons",
+            "Buttons",
+            "Behavior",
+            "select",
+            Options: ["OK", "OKCancel", "YesNo", "YesNoCancel"],
+            Kind: "dialog,confirmationdialog"
+        ),
         new("canCancel", "Allow Escape", "Behavior", "checkbox", Kind: "dialog,confirmationdialog"),
         new("result", "Last result", "Behavior", Kind: "dialog,confirmationdialog", ReadOnly: true),
         new("rightText", "Right text", "General", Kind: "statusbar"),
-        new("selectedPath", "Selected path", "General", Kind: "filepicker,folderpicker"),
+        new(
+            "selectedPath",
+            "Selected path",
+            "General",
+            Kind: "filepicker,folderpicker",
+            ReadOnly: true
+        ),
         new("dialogTitle", "Dialog title", "Behavior", Kind: "filepicker,folderpicker"),
         new("filter", "File filter", "Behavior", Kind: "filepicker"),
         new("entries", "Properties (JSON)", "General", "textarea", Kind: "propertygrid"),
@@ -153,10 +287,29 @@ public static class InspectorCatalog
         new("readOnly", "Read only", "Behavior", "checkbox", Kind: "richtextbox"),
         new("url", "URL", "Behavior", Kind: "linklabel"),
         new("mask", "Mask", "Behavior", Kind: "maskedtextbox"),
-        new("maskCompleted", "Complete", "Behavior", "checkbox", Kind: "maskedtextbox", ReadOnly: true),
+        new(
+            "maskCompleted",
+            "Complete",
+            "Behavior",
+            "checkbox",
+            Kind: "maskedtextbox",
+            ReadOnly: true
+        ),
         new("checkedIndices", "Checked indices", "Behavior", Kind: "checkedlistbox"),
-        new("checked", "Checked", "Behavior", "checkbox", Kind: "checkbox,radiobutton,toggleswitch,togglebutton"),
-        new("items", "Items (one per line)", "General", "textarea", Kind: "combobox,listbox,listview,checkedlistbox"),
+        new(
+            "checked",
+            "Checked",
+            "Behavior",
+            "checkbox",
+            Kind: "checkbox,radiobutton,toggleswitch,togglebutton"
+        ),
+        new(
+            "items",
+            "Items (one per line)",
+            "General",
+            "textarea",
+            Kind: "combobox,listbox,listview,checkedlistbox"
+        ),
         new(
             "selectedIndex",
             "Selected index",
@@ -166,14 +319,14 @@ public static class InspectorCatalog
             10000,
             Kind: "combobox,listbox,listview"
         ),
-        new("source", "Image source", "General", Kind: "image,picturebox", ReadOnly: true),
+        new("source", "Image source", "General", Kind: "image,picturebox,avatar", ReadOnly: true),
         new(
             "sizeMode",
             "Size mode",
             "Appearance",
             "select",
             Options: ["contain", "cover", "fill"],
-            Kind: "image,picturebox"
+            Kind: "image,picturebox,avatar"
         ),
         new(
             "orientation",
@@ -181,7 +334,7 @@ public static class InspectorCatalog
             "Layout",
             "select",
             Options: ["horizontal", "vertical"],
-            Kind: "splitcontainer,flowlayoutpanel,toolbar,toolstrip"
+            Kind: "splitcontainer,flowlayoutpanel,tabcontrol,toolbar,toolstrip,divider"
         ),
         new(
             "gap",
@@ -193,12 +346,42 @@ public static class InspectorCatalog
             Kind: "splitcontainer,flowlayoutpanel,tablelayoutpanel"
         ),
         new("columns", "Columns", "Layout", "number", 1, 12, Kind: "tablelayoutpanel"),
+        new("rowCount", "Rows", "Layout", "number", 1, 100, Kind: "tablelayoutpanel"),
         new("tabs", "Tabs (one per line)", "General", "textarea", Kind: "tabcontrol"),
         new("selectedTab", "Selected tab", "Behavior", "number", 0, 99, Kind: "tabcontrol"),
         new("layoutSlot", "Pane / tab / cell", "Layout", "number", 1, 100, ChildOnly: true),
         new("gridColumns", "Columns (one per line)", "General", "textarea", Kind: "datagridview"),
         new("gridRows", "Rows (JSON)", "General", "textarea", Kind: "datagridview"),
         new("readOnly", "Read only", "Behavior", "checkbox", Kind: "datagridview"),
+        new("sortingEnabled", "Allow sorting", "Behavior", "checkbox", Kind: "datagridview"),
+        new("filteringEnabled", "Allow filtering", "Behavior", "checkbox", Kind: "datagridview"),
+        new("filterText", "Filter text", "Behavior", Kind: "datagridview"),
+        new(
+            "sortColumn",
+            "Sort column (-1=none)",
+            "Behavior",
+            "number",
+            -1,
+            99,
+            Kind: "datagridview"
+        ),
+        new(
+            "sortDirection",
+            "Sort direction",
+            "Behavior",
+            "select",
+            Options: ["ascending", "descending"],
+            Kind: "datagridview"
+        ),
+        new(
+            "selectedRow",
+            "Selected row (-1=none)",
+            "Behavior",
+            "number",
+            -1,
+            100000,
+            Kind: "datagridview"
+        ),
         new("interval", "Interval (ms)", "Behavior", "number", 10, 3600000, Kind: "timer"),
         new(
             "workerReportsProgress",
@@ -222,7 +405,18 @@ public static class InspectorCatalog
             (!p.ChildOnly || kind != "form")
             && (p.Kind is null || p.Kind.Split(',').Contains(kind))
             && (
-                !(kind is "timer" or "backgroundworker" or "contextmenu" or "contextmenustrip" or "dialog" or "confirmationdialog")
+                !(
+                    kind
+                    is "timer"
+                        or "backgroundworker"
+                        or "contextmenu"
+                        or "contextmenustrip"
+                        or "dialog"
+                        or "confirmationdialog"
+                        or "tooltip"
+                        or "toast"
+                        or "loadingoverlay"
+                )
                 || p.Category == "General"
                 || p.Id
                     is "enabled"
@@ -230,7 +424,18 @@ public static class InspectorCatalog
                         or "workerReportsProgress"
                         or "workerSupportsCancellation"
                         or "isBusy"
-                        or "targetId" or "buttons" or "canCancel" or "result"
+                        or "isActive"
+                        or "targetId"
+                        or "buttons"
+                        or "canCancel"
+                        or "result"
+                        or "initialDelay"
+                        or "showDuration"
+                        or "placement"
+                        or "variant"
+                        or "position"
+                        or "duration"
+                        or "dismissible"
             )
         );
 }

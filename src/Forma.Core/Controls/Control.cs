@@ -147,9 +147,13 @@ public abstract class Control : INotifyPropertyChanged
     /// <exception cref="InvalidOperationException">
     /// The child already belongs to a parent, or the add would create a cycle.
     /// </exception>
-    public void Add(Control child)
+    public void Add(Control child) => Insert(_children.Count, child);
+
+    /// <summary>Inserts an unparented child at the specified position.</summary>
+    public void Insert(int index, Control child)
     {
         ArgumentNullException.ThrowIfNull(child);
+        if (index < 0 || index > _children.Count) throw new ArgumentOutOfRangeException(nameof(index));
 
         if (ReferenceEquals(child, this))
         {
@@ -176,11 +180,22 @@ public abstract class Control : INotifyPropertyChanged
             }
         }
 
-        _children.Add(child);
+        _children.Insert(index, child);
 
         child.Parent = this;
 
         ChildAdded?.Invoke(this, new ControlEventArgs(child));
+    }
+
+    /// <summary>Reorders a child while retaining its identity and subtree.</summary>
+    public void MoveChild(Control child, int index)
+    {
+        var oldIndex = _children.IndexOf(child);
+        if (oldIndex < 0) throw new InvalidOperationException("The control is not a child of this container.");
+        index = Math.Clamp(index, 0, _children.Count - 1);
+        if (index == oldIndex) return;
+        Remove(child);
+        Insert(index, child);
     }
 
     /// <summary>Removes <paramref name="child"/> from this control.</summary>
