@@ -18,6 +18,8 @@
 
 **Forma** is an experimental, Windows-first desktop UI framework for **C#/.NET**.
 
+See [the architecture guide](docs/architecture.md) for current layer boundaries, control organization, and planned refactors.
+
 It aims to combine the developer experience that made WinForms so productive with the rendering, styling, animation, and component ideas of modern web UI.
 
 ```text

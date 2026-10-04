@@ -32,7 +32,9 @@ disabled where present. Preview is a visual mode, not a compiled application.
 
 ## Architecture
 
-`BuilderWindow.cs` owns the control tree and committed positions in C#.
+`ViewModels/BuilderViewModel.cs` owns the control tree in C#, and
+`Services/DesignerEditingService.cs` validates committed edits and positions.
+`Views/BuilderWindow.cs` hosts the native window and dispatches browser messages.
 Appearance and dimensions are currently Builder-owned metadata keyed by control
 ID; they are not yet a shared framework styling API. Property updates, drops,
 selection, and movement use dedicated designer messages through the bridge.

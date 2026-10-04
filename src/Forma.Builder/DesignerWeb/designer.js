@@ -1,8 +1,24 @@
 // The web workspace presents the design; C# owns controls and committed properties.
 const supportedKinds = new Set([
- "listview", "treeview", "pagination",
-  "richtextbox", "picturebox",
-  "linklabel", "maskedtextbox", "checkedlistbox",
+  "contextmenu",
+  "contextmenustrip",
+  "dialog",
+  "confirmationdialog",
+  "menustrip",
+  "toolbar",
+  "toolstrip",
+  "statusbar",
+  "filepicker",
+  "folderpicker",
+  "propertygrid",
+  "listview",
+  "treeview",
+  "pagination",
+  "richtextbox",
+  "picturebox",
+  "linklabel",
+  "maskedtextbox",
+  "checkedlistbox",
   "numericupdown",
   "slider",
   "progressbar",
@@ -52,6 +68,38 @@ const managedKinds = new Set([
 const byId = (id) => document.getElementById(id);
 const send = (event, id, payload = {}) =>
   window.forma.send({ type: "designer", id, event, payload });
+
+function containerHost(container) {
+  return container.querySelector?.(":scope > .layout-content") ?? container;
+}
+
+// Pointer capture keeps event.target on the dragged control. Hit-test underneath it.
+function containerAtPoint(x, y, excluded = null, fallback = null) {
+  const d = window.formaDesigner,
+    root = d.root();
+  const hits = document.elementsFromPoint?.(x, y) ?? [fallback];
+  for (const hit of hits) {
+    if (!hit || (excluded && (hit === excluded || excluded.contains?.(hit))))
+      continue;
+    let candidate = hit.closest?.("[data-forma-type]");
+    while (candidate && candidate !== root) {
+      if (
+        containerKinds.has(candidate.dataset.formaType) &&
+        candidate !== excluded &&
+        !excluded?.contains?.(candidate)
+      ) {
+        const host = containerHost(candidate),
+          rect = host.getBoundingClientRect();
+        const right = rect.right ?? rect.left + host.clientWidth * d.zoom;
+        const bottom = rect.bottom ?? rect.top + host.clientHeight * d.zoom;
+        if (x >= rect.left && x <= right && y >= rect.top && y <= bottom)
+          return candidate;
+      }
+      candidate = candidate.parentElement?.closest?.("[data-forma-type]");
+    }
+  }
+  return root;
+}
 
 // Work in unscaled parent coordinates; the threshold stays six screen pixels.
 function snapPosition(item, x, y, width, height, siblings, threshold = 6) {
@@ -268,8 +316,12 @@ window.formaDesigner = {
     if (message.action === "select") this.select(message.id);
     if (message.action === "state") {
       this.state = message;
-      document.querySelectorAll('[data-command="undo"]').forEach(button => { button.disabled = !message.canUndo; });
-      document.querySelectorAll('[data-command="redo"]').forEach(button => { button.disabled = !message.canRedo; });
+      document.querySelectorAll('[data-command="undo"]').forEach((button) => {
+        button.disabled = !message.canUndo;
+      });
+      document.querySelectorAll('[data-command="redo"]').forEach((button) => {
+        button.disabled = !message.canRedo;
+      });
       this.root()?.setAttribute("aria-label", message.title);
       for (const name of ["canvas-title", "form-name"])
         if (byId(name)) byId(name).textContent = message.title;
@@ -285,7 +337,9 @@ window.formaDesigner = {
       if (previous?.dataset.formaType === "richtextbox") {
         previous.dataset.editing = "false";
         previous.querySelector(".rich-content").contentEditable = "false";
-        previous.querySelectorAll("[data-rich-format]").forEach(button => { button.disabled = true; });
+        previous.querySelectorAll("[data-rich-format]").forEach((button) => {
+          button.disabled = true;
+        });
       }
     }
     this.selectedId = id;
@@ -299,6 +353,7 @@ window.formaDesigner = {
     const el = byId(item.id);
     if (!el) return;
     if (item.component) {
+      el.dataset.disabled = String(!item.enabled);
       const tray = byId("component-tray");
       if (tray) {
         tray.appendChild(el);
@@ -425,30 +480,98 @@ window.formaDesigner = {
         (this.preview && !item.visible) ||
         (parent?.kind === "tabcontrol" &&
           item.layoutSlot !== parent.selectedTab + 1);
-      if (["treeview", "pagination"].includes(item.kind)) el.querySelectorAll("button").forEach(button => { button.disabled = (this.preview && !item.enabled) || button.dataset.boundary === "true"; });
+      if (["treeview", "pagination"].includes(item.kind))
+        el.querySelectorAll("button").forEach((button) => {
+          button.disabled =
+            (this.preview && !item.enabled) ||
+            button.dataset.boundary === "true";
+        });
+      if (["filepicker", "folderpicker"].includes(item.kind))
+        el.querySelectorAll("button").forEach((button) => {
+          button.disabled = this.preview && !item.enabled;
+        });
+      if (["menustrip", "toolbar", "toolstrip"].includes(item.kind)) {
+        el.dataset.disabled = String(this.preview && !item.enabled);
+        el.querySelectorAll("button").forEach((button) => {
+          button.disabled =
+            el.dataset.disabled === "true" ||
+            button.dataset.itemDisabled === "true";
+        });
+        if (el.dataset.disabled === "true" || !this.preview)
+          el.querySelectorAll("details").forEach((menu) => {
+            menu.open = false;
+          });
+      }
+      if (item.kind === "propertygrid")
+        el.querySelectorAll("input").forEach((input) => {
+          input.readOnly =
+            !this.preview ||
+            item.readOnly ||
+            input.dataset.entryReadOnly === "true";
+        });
       if (item.kind === "richtextbox") {
         const editing = this.preview || el.dataset.editing === "true";
-        const allowed = editing && !item.readOnly && (this.preview ? item.enabled : !item.locked);
-        el.querySelector(".rich-content").contentEditable = allowed ? "true" : "false";
-        el.querySelectorAll("[data-rich-format]").forEach(button => { button.disabled = !allowed; });
+        const allowed =
+          editing &&
+          !item.readOnly &&
+          (this.preview ? item.enabled : !item.locked);
+        el.querySelector(".rich-content").contentEditable = allowed
+          ? "true"
+          : "false";
+        el.querySelectorAll("[data-rich-format]").forEach((button) => {
+          button.disabled = !allowed;
+        });
       }
-      if (item.kind === "linklabel") el.setAttribute("aria-disabled", String(this.preview && !item.enabled));
+      if (item.kind === "linklabel")
+        el.setAttribute("aria-disabled", String(this.preview && !item.enabled));
       for (const field of el.querySelectorAll?.(
         "input,select,[contenteditable]",
       ) ?? []) {
         field.disabled = this.preview && !item.enabled;
-        if (item.kind !== "richtextbox" && field.hasAttribute?.("contenteditable"))
+        if (
+          item.kind !== "richtextbox" &&
+          field.hasAttribute?.("contenteditable")
+        )
           field.contentEditable =
             this.preview && item.enabled && !item.readOnly ? "true" : "false";
       }
       if (["combobox", "listbox", "listview"].includes(item.kind))
         el.disabled = this.preview && !item.enabled;
-      if (["button", "textbox", "maskedtextbox", "searchbox", "passwordbox", "textarea", "numericupdown", "slider", "datepicker", "timepicker", "datetimepicker", "colorpicker", "togglebutton"].includes(item.kind))
+      if (
+        [
+          "button",
+          "textbox",
+          "maskedtextbox",
+          "searchbox",
+          "passwordbox",
+          "textarea",
+          "numericupdown",
+          "slider",
+          "datepicker",
+          "timepicker",
+          "datetimepicker",
+          "colorpicker",
+          "togglebutton",
+        ].includes(item.kind)
+      )
         el.disabled = this.preview && !item.enabled;
-      if (["textbox", "maskedtextbox", "searchbox", "passwordbox", "textarea"].includes(item.kind)) {
+      if (
+        [
+          "textbox",
+          "maskedtextbox",
+          "searchbox",
+          "passwordbox",
+          "textarea",
+        ].includes(item.kind)
+      ) {
         el.placeholder = item.placeholder;
         el.readOnly = item.readOnly;
-        if (item.kind !== "textarea") el.type = item.password ? "password" : item.kind === "searchbox" ? "search" : "text";
+        if (item.kind !== "textarea")
+          el.type = item.password
+            ? "password"
+            : item.kind === "searchbox"
+              ? "search"
+              : "text";
         el.maxLength = item.maxLength;
       }
     }
@@ -473,7 +596,10 @@ window.formaDesigner = {
     byId("property-editors")
       ?.querySelectorAll(".property-actions button")
       .forEach((button) => {
-        button.disabled = this.preview || selected.locked;
+        button.disabled =
+          button.dataset.command === "show-dialog"
+            ? !this.preview || !selected.enabled
+            : this.preview || selected.locked;
       });
     for (const descriptor of schema) {
       const property = descriptor.id;
@@ -510,13 +636,21 @@ window.formaDesigner = {
     }
     if (byId("selection-status"))
       byId("selection-status").textContent =
-        selected.id === this.rootId ? "Form selected" : "1 control selected";
+        selected.id === this.rootId ? "Form selected" : `Selected ${selected.name}`;
     this.coordinates(selected.x, selected.y);
   },
   buildEditors(schema) {
     const container = byId("property-editors");
     if (!container) return;
-    const signature = JSON.stringify(schema);
+    const signature =
+      JSON.stringify(schema) +
+      (schema.some((property) => property.editor === "target")
+        ? JSON.stringify(
+            this.state?.controls
+              .filter((item) => !item.component)
+              .map((item) => [item.id, item.name]),
+          )
+        : "");
     if (container.dataset.schema === signature) return;
     const openCategories = new Map(
       Array.from(container.querySelectorAll("details")).map((group) => [
@@ -545,7 +679,7 @@ window.formaDesigner = {
       const label = document.createElement("label");
       label.appendChild(document.createTextNode(property.label));
       const input = document.createElement(
-        property.editor === "select"
+        ["select", "target"].includes(property.editor)
           ? "select"
           : property.editor === "textarea"
             ? "textarea"
@@ -557,7 +691,18 @@ window.formaDesigner = {
           ? "prop-cssId"
           : `prop-${property.id}`;
       input.dataset.property = property.id;
-      if (property.editor === "select")
+      if (property.editor === "target") {
+        const choices = [
+          { id: "", name: "Form (default)" },
+          ...(this.state?.controls.filter((item) => !item.component) ?? []),
+        ];
+        for (const choice of choices) {
+          const option = document.createElement("option");
+          option.value = choice.id;
+          option.textContent = choice.name;
+          input.appendChild(option);
+        }
+      } else if (property.editor === "select")
         for (const choice of property.options) {
           const option = document.createElement("option");
           option.value = choice;
@@ -587,16 +732,31 @@ window.formaDesigner = {
       group.appendChild(label);
     }
     const selected = this.state?.controls.find((c) => c.id === this.selectedId);
-    if (selected && selected.id !== this.rootId && !selected.component) {
+    if (
+      selected &&
+      selected.id !== this.rootId &&
+      (!selected.component ||
+        ["dialog", "confirmationdialog"].includes(selected.kind))
+    ) {
       const actions = document.createElement("div");
       actions.className = "property-actions";
-      const commands =
-        ["image", "picturebox"].includes(selected.kind) ? [["choose-image", "Choose image…"]] : [];
-      if (selected.kind === "richtextbox") commands.push(["edit-rich", "Edit content / Finish"]);
-      commands.push(
-        ["bring-front", "Bring to front"],
-        ["send-back", "Send to back"],
-      );
+      const commands = ["image", "picturebox"].includes(selected.kind)
+        ? [["choose-image", "Choose image…"]]
+        : [];
+      if (selected.kind === "richtextbox")
+        commands.push(["edit-rich", "Edit content / Finish"]);
+      if (["filepicker", "folderpicker"].includes(selected.kind))
+        commands.push([
+          "choose-path",
+          selected.kind === "filepicker" ? "Choose file…" : "Choose folder…",
+        ]);
+      if (["dialog", "confirmationdialog"].includes(selected.kind))
+        commands.push(["show-dialog", "Show dialog (Preview)"]);
+      if (!selected.component)
+        commands.push(
+          ["bring-front", "Bring to front"],
+          ["send-back", "Send to back"],
+        );
       for (const [command, text] of commands) {
         const button = document.createElement("button");
         button.dataset.command = command;
@@ -664,6 +824,7 @@ window.formaDesigner = {
     if (!this.drag) return;
     const drag = this.drag;
     this.drag = null;
+    drag.dropParent?.classList.remove("drop-target");
     Object.assign(drag.element.style, {
       left: `${drag.x}px`,
       top: `${drag.y}px`,
@@ -687,6 +848,7 @@ window.formaDesigner = {
     this.inspector();
   },
   updatePreview() {
+    if (!this.preview) window.forma.closeTransientUi?.();
     document.body.classList.toggle("preview-mode", this.preview);
     if (byId("mode-label"))
       byId("mode-label").textContent = this.preview ? "Preview" : "Design";
@@ -744,11 +906,13 @@ document.addEventListener("drop", (event) => {
   const text = event.dataTransfer.getData("text/plain");
   if (!text.startsWith("forma:")) return;
   const kind = text.slice(6);
-  let parent = event.target.closest("[data-forma-type]");
-  while (parent && !containerKinds.has(parent.dataset.formaType))
-    parent = parent.parentElement?.closest("[data-forma-type]");
-  parent ??= root;
-  const host = parent.querySelector?.(":scope > .layout-content") ?? parent;
+  const parent = containerAtPoint(
+    event.clientX,
+    event.clientY,
+    null,
+    event.target,
+  );
+  const host = containerHost(parent);
   const rect = host.getBoundingClientRect();
   if (supportedKinds.has(kind))
     send("drop", parent.id, {
@@ -771,6 +935,9 @@ document.addEventListener(
   (event) => {
     const d = window.formaDesigner,
       root = d.root();
+    document.querySelectorAll(".command-menu[open]").forEach((menu) => {
+      if (!menu.contains(event.target)) menu.open = false;
+    });
     if (d.preview && root?.contains(event.target)) {
       const control = event.target.closest("[data-forma-type]");
       const item = d.state?.controls.find((c) => c.id === control?.id);
@@ -785,8 +952,8 @@ document.addEventListener(
     }
     if (event.target.closest("[data-tab-index]")) return;
     const richEditor = event.target.closest('[data-forma-type="richtextbox"]');
-  if (richEditor?.dataset.editing === "true") return;
-  const handle = event.target.closest("[data-handle]");
+    if (richEditor?.dataset.editing === "true") return;
+    const handle = event.target.closest("[data-handle]");
     if (handle && !d.preview && event.button === 0) {
       const item = d.state?.controls.find((c) => c.id === d.selectedId);
       if (!item || item.locked) return;
@@ -840,6 +1007,8 @@ document.addEventListener(
     d.drag = {
       ...item,
       element: control,
+      originalHost: control.parentElement ?? root,
+      origin: (control.parentElement ?? root).getBoundingClientRect(),
       pointerId: event.pointerId,
       startX: event.clientX,
       startY: event.clientY,
@@ -859,7 +1028,7 @@ document.addEventListener("pointermove", (event) => {
   const d = window.formaDesigner,
     drag = d.drag;
   if (!drag || drag.pointerId !== event.pointerId) return;
-  const parent = drag.element.parentElement ?? d.root();
+  let parent = drag.element.parentElement ?? d.root();
   const dx = (event.clientX - drag.startX) / d.zoom,
     dy = (event.clientY - drag.startY) / d.zoom;
   if (!drag.moved && Math.abs(dx) < 3 && Math.abs(dy) < 3) return;
@@ -887,6 +1056,28 @@ document.addEventListener("pointermove", (event) => {
     d.coordinates(drag.bounds.x, drag.bounds.y);
     return;
   }
+  let proposedX = drag.x + dx,
+    proposedY = drag.y + dy;
+  if (document.elementsFromPoint && drag.originalHost && drag.origin) {
+    drag.dropParent?.classList.remove("drop-target");
+    drag.dropParent = null;
+    const target = containerAtPoint(event.clientX, event.clientY, drag.element);
+    const item = d.state?.controls.find((c) => c.id === target?.id);
+    if (target && !item?.locked) {
+      drag.dropParent = target;
+      parent = containerHost(target);
+      const rect = parent.getBoundingClientRect();
+      proposedX +=
+        (drag.origin.left - rect.left) / d.zoom +
+        (drag.originalHost.clientLeft || 0) -
+        (parent.clientLeft || 0);
+      proposedY +=
+        (drag.origin.top - rect.top) / d.zoom +
+        (drag.originalHost.clientTop || 0) -
+        (parent.clientTop || 0);
+      if (parent !== drag.originalHost) target.classList.add("drop-target");
+    }
+  }
   drag.left = Math.max(
     0,
     Math.min(
@@ -894,7 +1085,7 @@ document.addEventListener("pointermove", (event) => {
         drag.width -
         (drag.marginLeft ?? 0) -
         (drag.marginRight ?? 0),
-      Math.round(drag.x + dx),
+      Math.round(proposedX),
     ),
   );
   drag.top = Math.max(
@@ -904,14 +1095,14 @@ document.addEventListener("pointermove", (event) => {
         drag.height -
         (drag.marginTop ?? 0) -
         (drag.marginBottom ?? 0),
-      Math.round(drag.y + dy),
+      Math.round(proposedY),
     ),
   );
   if (!event.altKey) {
     const siblings = (d.state?.controls ?? []).filter(
       (c) =>
         c.id !== drag.id &&
-        c.parentId === drag.parentId &&
+        c.parentId === (drag.dropParent?.id ?? drag.parentId) &&
         !c.component &&
         c.visible !== false &&
         !byId(c.id)?.hidden,
@@ -929,9 +1120,22 @@ document.addEventListener("pointermove", (event) => {
     drag.top = snapped.y;
     d.showGuides(snapped.guides, parent);
   } else d.clearGuides();
+  const destinationRect = parent.getBoundingClientRect();
+  const originalRect =
+    drag.originalHost?.getBoundingClientRect() ?? destinationRect;
   Object.assign(drag.element.style, {
-    left: `${drag.left}px`,
-    top: `${drag.top}px`,
+    left: `${
+      drag.left +
+      (destinationRect.left - originalRect.left) / d.zoom +
+      (parent.clientLeft || 0) -
+      (drag.originalHost?.clientLeft ?? parent.clientLeft ?? 0)
+    }px`,
+    top: `${
+      drag.top +
+      (destinationRect.top - originalRect.top) / d.zoom +
+      (parent.clientTop || 0) -
+      (drag.originalHost?.clientTop ?? parent.clientTop ?? 0)
+    }px`,
   });
   d.coordinates(drag.left, drag.top);
   d.outline();
@@ -943,6 +1147,7 @@ document.addEventListener("pointerup", (event) => {
     drag = d.drag;
   if (!drag || drag.pointerId !== event.pointerId) return;
   d.drag = null;
+  drag.dropParent?.classList.remove("drop-target");
   d.clearGuides();
   const capture = drag.capture ?? drag.element;
   if (capture.hasPointerCapture(event.pointerId))
@@ -951,7 +1156,16 @@ document.addEventListener("pointerup", (event) => {
     send(
       drag.mode === "resize" ? "resize" : "move",
       drag.element.id,
-      drag.mode === "resize" ? drag.bounds : { x: drag.left, y: drag.top },
+      drag.mode === "resize"
+        ? drag.bounds
+        : {
+            x: drag.left,
+            y: drag.top,
+            ...(drag.dropParent &&
+            containerHost(drag.dropParent) !== drag.originalHost
+              ? { parentId: drag.dropParent.id }
+              : {}),
+          },
     );
 });
 document.addEventListener("pointercancel", () =>
@@ -972,7 +1186,13 @@ document.addEventListener(
       return;
     }
     if (root?.contains(event.target)) {
-      if (d.preview || event.target.closest("[data-tab-index]") || event.target.closest('[data-forma-type="richtextbox"]')?.dataset.editing === "true") return;
+      if (
+        d.preview ||
+        event.target.closest("[data-tab-index]") ||
+        event.target.closest('[data-forma-type="richtextbox"]')?.dataset
+          .editing === "true"
+      )
+        return;
       const control = event.target.closest("[data-forma-type]");
       if (control) {
         event.preventDefault();
@@ -983,11 +1203,13 @@ document.addEventListener(
     }
     const command = event.target.closest("[data-command]");
     if (command?.dataset.command === "edit-rich" && !command.disabled) {
-      const el = byId(d.selectedId), item = d.state?.controls.find(c => c.id === d.selectedId);
+      const el = byId(d.selectedId),
+        item = d.state?.controls.find((c) => c.id === d.selectedId);
       if (el && item) {
         el.dataset.editing = el.dataset.editing === "true" ? "false" : "true";
         d.applyAppearance(item);
-        if (el.dataset.editing === "true") el.querySelector(".rich-content").focus();
+        if (el.dataset.editing === "true")
+          el.querySelector(".rich-content").focus();
       }
       return;
     }
@@ -1063,14 +1285,27 @@ document.addEventListener("keydown", (event) => {
   if (event.ctrlKey && ["s", "o"].includes(event.key.toLowerCase())) {
     event.preventDefault();
     d.cancelDrag();
-    send("command", d.rootId, { command: event.key.toLowerCase() === "o" ? "open" : event.shiftKey ? "save-as" : "save" });
+    send("command", d.rootId, {
+      command:
+        event.key.toLowerCase() === "o"
+          ? "open"
+          : event.shiftKey
+            ? "save-as"
+            : "save",
+    });
     return;
   }
-  if (event.target.closest("input,select,textarea,[contenteditable=true]")) return;
+  if (event.target.closest("input,select,textarea,[contenteditable=true]"))
+    return;
   if (event.ctrlKey && ["z", "y"].includes(event.key.toLowerCase())) {
     if (d.preview) return;
-    event.preventDefault(); d.cancelDrag();
-    send("command", d.rootId, { command: event.key.toLowerCase() === "y" || event.shiftKey ? "redo" : "undo" }); return;
+    event.preventDefault();
+    d.cancelDrag();
+    send("command", d.rootId, {
+      command:
+        event.key.toLowerCase() === "y" || event.shiftKey ? "redo" : "undo",
+    });
+    return;
   }
   if (event.ctrlKey && event.key.toLowerCase() === "n") {
     event.preventDefault();

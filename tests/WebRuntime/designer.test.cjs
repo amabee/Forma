@@ -82,6 +82,55 @@ test('existing control drag commits position once and respects zoom', () => {
   assert.equal(button.capture, null);
 });
 
+function panelFixture() {
+  const f = fixture();
+  const panel = f.document.createElement('div');
+  panel.id = 'panel'; panel.dataset.formaType = 'panel'; panel.parentElement = f.root;
+  panel.clientWidth = 220; panel.clientHeight = 140;
+  panel.getBoundingClientRect = () => ({ left: 320, top: 280, right: 760, bottom: 560 });
+  f.nodes.push(panel); f.button.parentElement = f.root;
+  f.window.formaDesigner.zoom = 2;
+  f.window.formaDesigner.state = { controls: [
+    { id: 'form', kind: 'form' },
+    { id: 'panel', kind: 'panel', parentId: 'form', x: 100, y: 100, width: 220, height: 140 },
+    { id: 'button', kind: 'button', parentId: 'form', x: 40, y: 60, width: 120, height: 36 },
+  ] };
+  f.document.elementsFromPoint = () => [f.button, panel, f.root];
+  return { ...f, panel };
+}
+
+test('toolbox drops over an overlapping control find the panel underneath at zoom', () => {
+  const { listeners, root, messages } = panelFixture();
+  listeners.drop({ target: root, clientX: 420, clientY: 400, preventDefault() {},
+    dataTransfer: { getData: () => 'forma:button' } });
+  assert.equal(messages.at(-1).id, 'panel');
+  assert.deepEqual(JSON.parse(JSON.stringify(messages.at(-1).payload)), { control: 'button', x: 49, y: 59 });
+});
+
+test('existing control drop changes parent and uses panel coordinates at zoom', () => {
+  const { button, listeners, messages, panel } = panelFixture();
+  listeners.pointerdown({ target: button, button: 0, pointerId: 4, clientX: 200, clientY: 200,
+    preventDefault() {}, stopImmediatePropagation() {} });
+  listeners.pointermove({ pointerId: 4, clientX: 420, clientY: 400, altKey: true });
+  assert.equal(panel.classList.contains('drop-target'), true);
+  listeners.pointerup({ pointerId: 4 });
+  assert.deepEqual(JSON.parse(JSON.stringify(messages.at(-1).payload)), { x: 50, y: 60, parentId: 'panel' });
+  assert.equal(panel.classList.contains('drop-target'), false);
+});
+
+test('cancelling a prospective panel drop leaves the original parent and position intact', () => {
+  const { button, root, listeners, messages, panel } = panelFixture();
+  listeners.pointerdown({ target: button, button: 0, pointerId: 4, clientX: 200, clientY: 200,
+    preventDefault() {}, stopImmediatePropagation() {} });
+  listeners.pointermove({ pointerId: 4, clientX: 420, clientY: 400, altKey: true });
+  listeners.pointercancel();
+  assert.equal(button.parentElement, root);
+  assert.equal(button.style.left, '40px');
+  assert.equal(button.style.top, '60px');
+  assert.equal(panel.classList.contains('drop-target'), false);
+  assert.equal(messages.filter(m => m.event === 'move').length, 0);
+});
+
 test('existing control stays within the form and cancelled movement restores position', () => {
   const { window, button, listeners, messages } = fixture();
   window.formaDesigner.state = { controls: [{ id: button.id, x: 40, y: 60, width: 120, height: 36 }] };

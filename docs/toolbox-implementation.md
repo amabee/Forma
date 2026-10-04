@@ -116,3 +116,115 @@ Pagination exposes Total items, Page size, and a one-based Page. Previous/Next
 buttons honor page boundaries. Application code uses PageChanged to update its
 own data display; Pagination does not automatically filter another control.
 These widgets retain configuration in Save/Open and design Undo/Redo.
+
+## File and folder pickers, PropertyGrid
+
+The More controls group now includes FilePicker, FolderPicker, and PropertyGrid.
+They support drag insertion into containers, sizing, contextual properties,
+Save/Open, and design Undo/Redo.
+
+FilePicker and FolderPicker display Selected path with a Browse button. In
+Preview, Browse opens the Builder's native file or folder dialog. In Design,
+use the inspector's Choose file / Choose folder action, or edit Selected path.
+Cancellation leaves the selection unchanged. FilePicker selects one existing
+file and supports label/pattern filter pairs, for example
+`Images|*.png;*.jpg|All files|*.*`. Both expose Dialog title and use Text for the
+Browse button caption. Disabled pickers do not open dialogs in Preview.
+
+Application hosts subscribe to `BrowseRequested`, open their preferred dialog,
+and assign `SelectedPath`; `SelectedPathChanged` reports changes. Core does not
+depend on native dialogs. Project files store the path and picker configuration;
+they do not copy selected file contents or directory contents into the project.
+Multiple file selection and file upload are future additions.
+
+PropertyGrid displays categorized name/value rows. Configure Properties (JSON),
+for example:
+
+```json
+[
+  { "Name": "Title", "Value": "My application", "Category": "General", "ReadOnly": false },
+  { "Name": "Version", "Value": "1.0", "Category": "General", "ReadOnly": true }
+]
+```
+
+Preview edits commit on change and raise `PropertyValueChanged` with Index,
+Name, and Value. The whole-grid Read only property and individual entry flags
+prevent editing. In Design, change the JSON property in the inspector. Entries
+are copied and validated, with a maximum of 200 rows and 32,767 characters per
+value. Values are strings; automatic object reflection, typed value editors,
+and binding to another control are future enhancements.
+
+For your next manual check: choose and cancel a file/folder in Preview, then
+use the inspector Choose action in Design and undo it. Edit a PropertyGrid
+value in Preview and try its per-row ReadOnly flag.
+
+## Menus, toolbars, and status bars
+
+More controls includes MenuStrip, Toolbar, ToolStrip, and StatusBar. ToolStrip
+shares Toolbar behavior under the familiar desktop name. These are controls
+inside the designed form, separate from the Builder's own menus and toolbar.
+They support normal placement, resizing, styling, Save/Open and design Undo/Redo.
+Automatic edge docking is not implemented yet.
+
+MenuStrip and toolbars use Commands (JSON). Items require a unique ID throughout
+the tree and support Text, Enabled, Checked, CheckOnClick, Separator, and nested
+Items. For example:
+
+```json
+[
+  { "Id": "file", "Text": "File", "Items": [
+    { "Id": "open", "Text": "Open" },
+    { "Id": "separator", "Text": "", "Separator": true },
+    { "Id": "show-grid", "Text": "Show grid", "CheckOnClick": true }
+  ] }
+]
+```
+
+Disabled parent items also disable their descendants. Clicking a checkable leaf
+toggles Checked and raises ItemClicked; application code can call InvokeItem.
+The command tree is copied and validated (up to 300 items and eight levels).
+In Preview, menus open submenus, Escape closes them, and clicking a leaf closes
+the menus. Browser buttons/summaries support native keyboard focus. A visual
+item editor, application keyboard shortcuts, item icons and overflow menus are
+future enhancements.
+
+## Context menus and dialogs
+
+More controls includes ContextMenu, ContextMenuStrip, Dialog, and
+ConfirmationDialog. They appear in the component tray. Nonvisual behavior is
+identified by `INonvisualControl`; context menus share `CommandControl` behavior
+without requiring inheritance from `Component`.
+
+ContextMenu and ContextMenuStrip use the same Commands (JSON) format as
+MenuStrip. Select their Target from the named controls in the inspector, or
+leave it as Form (default). Right-click that target in Preview to open its menu.
+An explicitly assigned menu on a child takes precedence over its parent's menu.
+Escape, outside clicks, and command selection close the popup. Disabled menus
+do not open. Deleting a target resets its menu to the form; Undo restores the
+assignment. Save/Open preserves targets through stable control IDs.
+
+Dialogs expose Dialog title, Message, Buttons (`OK`, `OKCancel`, `YesNo`, or
+`YesNoCancel`), and Allow Escape. Select a dialog in the component tray, enter
+Preview, and use Show dialog (Preview) in its inspector. ConfirmationDialog
+defaults to Yes/No. Last result and the Builder status line show the selected
+button. Returning to Design closes active dialogs.
+
+In application code, call `Dialog.Show()` and subscribe to `Closed` for its
+Result. Open state and results are transient and are not written to `.forma`
+files; dialog configuration is persisted and design edits are undoable. Core
+does not depend on browser DOM: the WebView2 adapter renders native HTML modal
+dialogs, which provide browser focus handling. Allow Escape controls user
+dismissal; application code can always cancel a dialog with `Close("Cancel")`.
+
+This batch implements message/confirmation dialogs. Arbitrary content trees,
+dialog windows, task dialogs, and the system dialog catalog remain future work.
+
+The Builder displays clicked item text/ID in its status line during Preview.
+It does not bind a designed form's Open/Save commands to Builder operations.
+Application code subscribes to ItemClicked to implement those actions. Toolbar
+and ToolStrip also expose horizontal/vertical Orientation.
+
+StatusBar uses Text for its left message and Right text for its right message.
+Application code can update both properties at runtime; the browser announces
+updates as status text. Multiple status panels and automatic docking remain
+future enhancements.

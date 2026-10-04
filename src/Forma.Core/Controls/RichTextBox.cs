@@ -1,8 +1,5 @@
 namespace Forma.Core.Controls;
 
-public sealed record RichRun(string Text = "", bool Bold = false, bool Italic = false, bool Underline = false);
-public sealed record RichBlock(string Kind = "paragraph", RichRun[]? Runs = null);
-
 /// <summary>Rich text stored as paragraphs and styled runs, rather than arbitrary HTML.</summary>
 public sealed class RichTextBox : Control
 {
@@ -28,4 +25,3 @@ public sealed class RichTextBox : Control
     public event EventHandler? TextChanged;
     public void SetPlainText(string text) => Document = text.Split('\n').Select(line => new RichBlock("paragraph", [new(line.TrimEnd('\r'))])).ToArray();
 }
-public sealed class PictureBox : Image { }

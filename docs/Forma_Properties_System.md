@@ -1,7 +1,7 @@
 # Forma Properties System
 
 Implementation status: Builder now generates its contextual inspector from
-`src/Forma.Builder/InspectorCatalog.cs`. General, Appearance, Typography, Layout,
+`src/Forma.Builder/Services/InspectorCatalog.cs`. General, Appearance, Typography, Layout,
 Behavior, and collapsed Advanced categories are implemented for the current
 Form, Button, Label, TextBox, and Panel controls. See
 [properties-implementation.md](properties-implementation.md) for supported

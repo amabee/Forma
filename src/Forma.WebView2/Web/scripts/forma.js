@@ -5,6 +5,17 @@
 //   "value"   - written to the value property (form fields)
 //   "none"    - ignored, so containers never overwrite their own children
 const CONTROL_TYPES = {
+  contextmenu: { tag: "div", text: "component", init: el => { el.hidden = true; } },
+  contextmenustrip: { tag: "div", text: "component", init: el => { el.hidden = true; } },
+  dialog: { tag: "div", text: "component", init: el => { el.hidden = true; } },
+  confirmationdialog: { tag: "div", text: "component", init: el => { el.hidden = true; } },
+  menustrip: { tag: "nav", text: "none" },
+  toolbar: { tag: "div", text: "none" },
+  toolstrip: { tag: "div", text: "none" },
+  statusbar: { tag: "div", text: "none" },
+  filepicker: { tag: "div", text: "none", init: initPathPicker },
+  folderpicker: { tag: "div", text: "none", init: initPathPicker },
+  propertygrid: { tag: "div", text: "none" },
   listview: { tag: "select", text: "none", init: el => { el.size = 6; } },
   treeview: { tag: "div", text: "none" },
   pagination: { tag: "div", text: "none" },
@@ -55,6 +66,63 @@ const CONTROL_TYPES = {
     init: (element) => element.classList.add("forma-form"),
   },
 };
+
+let contextPopup = null;
+function closeContextPopup() {
+  contextPopup?.remove();
+  contextPopup = null;
+}
+
+function applyDialog(source, properties) {
+  const id = `dialog-popup-${source.id}`;
+  let modal = document.getElementById(id);
+  if (!properties.isOpen || window.formaDesigner?.preview === false) { modal?.remove(); return; }
+  if (!modal) {
+    modal = document.createElement("dialog"); modal.id = id; modal.dataset.dialogSource = source.id;
+    modal.className = "forma-dialog-popup";
+    modal.setAttribute("aria-labelledby", `${id}-title`);
+    modal.setAttribute("aria-describedby", `${id}-message`);
+    const title = document.createElement("h2"), message = document.createElement("p"), footer = document.createElement("div");
+    title.id = `${id}-title`; message.id = `${id}-message`; footer.className = "dialog-buttons";
+    modal.append(title, message, footer); document.body.appendChild(modal);
+    modal.addEventListener("cancel", event => {
+      event.preventDefault();
+      if (modal.dataset.canCancel === "true") {
+        window.forma.send({ type: "event", id: source.id, event: "dialog-result", payload: { result: "Cancel" } });
+        if (modal.close) modal.close(); else modal.removeAttribute("open");
+      }
+    });
+  }
+  modal.querySelector("h2").textContent = properties.dialogTitle ?? "Message";
+  modal.querySelector("p").textContent = properties.message ?? "";
+  modal.dataset.canCancel = String(properties.canCancel !== false);
+  if (modal.dataset.buttons !== properties.buttons) {
+    const labels = { OK: ["OK"], OKCancel: ["OK", "Cancel"], YesNo: ["Yes", "No"], YesNoCancel: ["Yes", "No", "Cancel"] }[properties.buttons] ?? ["OK"];
+    modal.querySelector(".dialog-buttons").replaceChildren(...labels.map(label => {
+      const button = document.createElement("button"); button.type = "button"; button.textContent = label;
+      button.addEventListener("click", () => {
+        window.forma.send({ type: "event", id: source.id, event: "dialog-result", payload: { result: label } });
+        if (modal.close) modal.close(); else modal.removeAttribute("open");
+      }); return button;
+    }));
+    modal.dataset.buttons = properties.buttons;
+  }
+  if (!modal.open) {
+    if (typeof modal.showModal === "function") modal.showModal();
+    else modal.setAttribute("open", "");
+  }
+}
+
+function initPathPicker(el) {
+  const input = document.createElement("input"), button = document.createElement("button");
+  input.type = "text"; input.readOnly = true; input.placeholder = "No path selected";
+  input.setAttribute("aria-label", "Selected path");
+  button.type = "button"; button.textContent = "Browse…";
+  button.addEventListener("click", () => {
+    if (!button.disabled) window.forma.send({ type: "event", id: el.id, event: "browse", payload: {} });
+  });
+  el.append(input, button);
+}
 
 function initContainer(el) {
   const header = document.createElement("div"); header.className = "layout-header";
@@ -304,6 +372,102 @@ window.forma = {
     }
     if (["datepicker", "timepicker", "datetimepicker"].includes(kind)) element.value = properties.dateValue ?? "";
     if (kind === "colorpicker") element.value = properties.color ?? "#2878ff";
+    if (["dialog", "confirmationdialog"].includes(kind)) applyDialog(element, properties);
+    if (["contextmenu", "contextmenustrip"].includes(kind)) element.dataset.targetId = properties.targetId ?? "";
+    if (["menustrip", "toolbar", "toolstrip", "contextmenu", "contextmenustrip"].includes(kind)) {
+      const items = properties.commandItems ?? [];
+      element.setAttribute("aria-label", kind === "menustrip" ? "Menu" : "Toolbar");
+      if (kind !== "menustrip") element.setAttribute("role", "toolbar");
+      element.dataset.orientation = properties.orientation ?? "horizontal";
+      const signature = JSON.stringify(items);
+      if (element.dataset.commands !== signature) {
+        const activeId = document.activeElement?.dataset.commandItem;
+        const get = (item, key) => item[key] ?? item[key[0].toUpperCase() + key.slice(1)];
+        const render = (entries, parentEnabled = true) => entries.map(item => {
+          if (get(item, "separator")) { const separator = document.createElement("hr"); separator.setAttribute("role", "separator"); return separator; }
+          const children = get(item, "items") ?? [], enabled = parentEnabled && get(item, "enabled") !== false;
+          if (children.length) {
+            const details = document.createElement("details"), summary = document.createElement("summary"), popup = document.createElement("div");
+            summary.textContent = get(item, "text"); summary.setAttribute("aria-disabled", String(!enabled));
+            details.className = "command-menu"; popup.className = "command-popup";
+            details.addEventListener("toggle", () => {
+              if (element.querySelector("details[open]")) {
+                element.dataset.menuZIndex ??= element.style.zIndex;
+                element.style.zIndex = "10000";
+              } else if (element.dataset.menuZIndex != null) {
+                element.style.zIndex = element.dataset.menuZIndex;
+                delete element.dataset.menuZIndex;
+              }
+            });
+            summary.addEventListener("click", event => { if (!enabled || element.dataset.disabled === "true") event.preventDefault(); });
+            details.addEventListener("keydown", event => { if (event.key === "Escape") { details.open = false; summary.focus(); event.stopPropagation(); } });
+            popup.append(...render(children, enabled)); details.append(summary, popup); return details;
+          }
+          const button = document.createElement("button"); button.type = "button";
+          button.dataset.commandItem = get(item, "id"); button.dataset.itemDisabled = String(!enabled);
+          button.disabled = !enabled || element.dataset.disabled === "true";
+          button.textContent = `${get(item, "checked") ? "✓ " : ""}${get(item, "text")}`;
+          if (get(item, "checkOnClick")) button.setAttribute("aria-pressed", String(get(item, "checked") ?? false));
+          button.addEventListener("click", () => {
+            if (button.disabled || (window.formaDesigner && !window.formaDesigner.preview)) return;
+            element.querySelectorAll("details").forEach(menu => { menu.open = false; });
+            closeContextPopup();
+            window.forma.send({ type: "event", id: element.dataset.commandSource ?? element.id, event: "command-item", payload: { itemId: button.dataset.commandItem } });
+          });
+          return button;
+        });
+        element.replaceChildren(...render(items)); element.dataset.commands = signature;
+        if (activeId) Array.from(element.querySelectorAll("button")).find(button => button.dataset.commandItem === activeId)?.focus();
+      }
+    }
+    if (kind === "statusbar") {
+      if (!element.querySelector("span")) {
+        const left = document.createElement("span"), right = document.createElement("span");
+        left.className = "status-primary"; right.className = "status-secondary"; element.append(left, right);
+        element.setAttribute("role", "status"); element.setAttribute("aria-live", "polite");
+      }
+      element.querySelector(".status-primary").textContent = properties.text ?? "";
+      element.querySelector(".status-secondary").textContent = properties.rightText ?? "";
+    }
+    if (["filepicker", "folderpicker"].includes(kind)) {
+      const input = element.querySelector("input"), button = element.querySelector("button");
+      input.value = properties.selectedPath ?? "";
+      input.title = input.value;
+      input.setAttribute("aria-label", properties.dialogTitle || "Selected path");
+      button.textContent = properties.text || "Browse…";
+    }
+    if (kind === "propertygrid") {
+      const entries = properties.entries ?? [];
+      const field = (entry, key) => entry[key] ?? entry[key[0].toUpperCase() + key.slice(1)];
+      const schema = JSON.stringify(entries.map(entry => [field(entry, "name"), field(entry, "category"), field(entry, "readOnly")]));
+      if (element.dataset.entrySchema !== schema) {
+        const table = document.createElement("table"), body = document.createElement("tbody");
+        table.setAttribute("aria-label", "Properties");
+        let category;
+        entries.forEach((entry, index) => {
+          const nextCategory = field(entry, "category") || "General";
+          if (category !== nextCategory) {
+            const row = document.createElement("tr"), heading = document.createElement("th");
+            heading.colSpan = 2; heading.textContent = nextCategory; heading.className = "property-category";
+            row.appendChild(heading); body.appendChild(row); category = nextCategory;
+          }
+          const row = document.createElement("tr"), name = document.createElement("th"), value = document.createElement("td"), input = document.createElement("input");
+          name.scope = "row"; name.textContent = field(entry, "name");
+          input.type = "text"; input.maxLength = 32767; input.dataset.entryIndex = index;
+          input.setAttribute("aria-label", name.textContent);
+          input.addEventListener("change", () => {
+            if (!input.disabled && !input.readOnly) window.forma.send({ type: "event", id: element.id, event: "property-value", payload: { index, value: input.value } });
+          });
+          value.appendChild(input); row.append(name, value); body.appendChild(row);
+        });
+        table.appendChild(body); element.replaceChildren(table); element.dataset.entrySchema = schema;
+      }
+      element.querySelectorAll("input").forEach((input, index) => {
+        input.value = field(entries[index], "value") ?? "";
+        input.dataset.entryReadOnly = String(field(entries[index], "readOnly") ?? false);
+        input.readOnly = properties.readOnly || input.dataset.entryReadOnly === "true";
+      });
+    }
     if (kind === "togglebutton") { element.setAttribute("aria-pressed", String(properties.checked ?? false)); element.classList.toggle("toggle-active", properties.checked ?? false); }
     if (["textbox", "maskedtextbox", "searchbox", "passwordbox", "textarea"].includes(kind) && "placeholder" in properties) element.placeholder = properties.placeholder ?? "";
     if ("layoutSlot" in properties) element.dataset.slot = properties.layoutSlot;
@@ -503,12 +667,49 @@ window.forma = {
 
   remove(message) {
     const element = document.getElementById(message.id);
+    document.querySelectorAll("[data-dialog-source]").forEach(modal => {
+      const source = document.getElementById(modal.dataset.dialogSource);
+      if (source === element || element?.contains(source)) modal.remove();
+    });
+    if (contextPopup) {
+      const source = document.getElementById(contextPopup.dataset.commandSource);
+      if (source === element || element?.contains(source)) closeContextPopup();
+    }
 
     // Detaching an element takes its descendants with it, which is why the
     // host only sends one remove per subtree.
     element?.remove();
   },
 };
+
+window.forma.closeTransientUi = () => {
+  closeContextPopup();
+  document.querySelectorAll("[data-dialog-source]").forEach(modal => modal.remove());
+};
+document.addEventListener("contextmenu", event => {
+  if (window.formaDesigner?.preview === false) return;
+  let target = event.target.closest?.("[data-forma-type]");
+  const menus = Array.from(document.querySelectorAll('[data-forma-type="contextmenu"], [data-forma-type="contextmenustrip"]'));
+  let menu;
+  while (target && !menu) {
+    menu = menus.find(source => source.dataset.targetId === target.id && source.dataset.disabled !== "true");
+    target = target.parentElement?.closest?.("[data-forma-type]");
+  }
+  if (!menu) return;
+  event.preventDefault(); closeContextPopup();
+  contextPopup = document.createElement("div"); contextPopup.id = `context-popup-${menu.id}`;
+  contextPopup.dataset.formaType = "contextmenu"; contextPopup.dataset.commandSource = menu.id;
+  contextPopup.className = "forma-context-popup"; document.body.appendChild(contextPopup);
+  window.forma.applyData(contextPopup, { commandItems: JSON.parse(menu.dataset.commands ?? "[]") });
+  const rect = contextPopup.getBoundingClientRect();
+  contextPopup.style.left = `${Math.max(0, Math.min(event.clientX, window.innerWidth - rect.width))}px`;
+  contextPopup.style.top = `${Math.max(0, Math.min(event.clientY, window.innerHeight - rect.height))}px`;
+  contextPopup.querySelector("button,summary")?.focus();
+});
+document.addEventListener("pointerdown", event => {
+  if (contextPopup && !contextPopup.contains(event.target)) closeContextPopup();
+});
+document.addEventListener("keydown", event => { if (event.key === "Escape") closeContextPopup(); });
 
 // The host delivers commands through PostWebMessageAsJson, which surfaces here
 // as a message event carrying the already-parsed object.

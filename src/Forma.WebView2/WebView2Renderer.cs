@@ -102,6 +102,13 @@ public sealed class WebView2Renderer : IRenderer
         if (control is CheckedListBox checkedList) { properties["items"] = checkedList.Items; properties["checkedIndices"] = checkedList.CheckedIndices; }
         if (control is TreeView tree) { properties["nodes"] = tree.Nodes; properties["selectedNode"] = tree.SelectedNode; properties["expandedNodes"] = tree.ExpandedNodes; }
         if (control is Pagination pages) { properties["page"] = pages.Page; properties["pageCount"] = pages.PageCount; }
+        if (control is PathPicker picker) { properties["selectedPath"] = picker.SelectedPath; properties["dialogTitle"] = picker.DialogTitle; }
+        if (control is PropertyGrid propertyGrid) { properties["entries"] = propertyGrid.Entries; properties["readOnly"] = propertyGrid.ReadOnly; }
+        if (control is CommandControl commands) properties["commandItems"] = commands.Items;
+        if (control is Toolbar toolbar) properties["orientation"] = toolbar.Orientation;
+        if (control is StatusBar status) properties["rightText"] = status.RightText;
+        if (control is ContextMenu context) properties["targetId"] = context.TargetId == "" ? control.Parent?.Id : context.TargetId;
+        if (control is Dialog dialog) { properties["dialogTitle"] = dialog.DialogTitle; properties["message"] = dialog.Message; properties["buttons"] = dialog.Buttons; properties["canCancel"] = dialog.CanCancel; properties["isOpen"] = dialog.IsOpen; }
         if (control is RichTextBox rich) {
             properties["document"] = rich.Document.Select(b => new { kind = b.Kind, runs = b.Runs!.Select(r => new { text = r.Text, bold = r.Bold, italic = r.Italic, underline = r.Underline }).ToArray() }).ToArray();
             properties["readOnly"] = rich.ReadOnly;
@@ -221,12 +228,26 @@ public sealed class WebView2Renderer : IRenderer
             else textBox.SetText(text.GetString());
         }
         if (registration.Control is LinkLabel link && message.Event == "link") link.OnLinkClicked();
+        if (registration.Control is PathPicker picker && message.Event == "browse") picker.RequestBrowse();
         if (message.Payload is not JsonElement data || data.ValueKind != JsonValueKind.Object) return;
+        if (registration.Control is CommandControl commands && message.Event == "command-item"
+            && data.TryGetProperty("itemId", out var itemId) && itemId.ValueKind == JsonValueKind.String)
+            commands.InvokeItem(itemId.GetString()!);
+        if (registration.Control is Dialog dialog && message.Event == "dialog-result"
+            && data.TryGetProperty("result", out var result) && result.ValueKind == JsonValueKind.String)
+        {
+            var selectedResult = result.GetString()!;
+            if (selectedResult != "Cancel" || dialog.CanCancel || dialog.Buttons.Contains("Cancel")) dialog.Close(selectedResult);
+        }
         if (registration.Control is TreeView tree) {
             if (message.Event == "tree-select" && data.TryGetProperty("node", out var node) && node.ValueKind == JsonValueKind.String) tree.SelectedNode = node.GetString()!;
             if (message.Event == "tree-expand" && data.TryGetProperty("node", out var branch) && branch.ValueKind == JsonValueKind.String && data.TryGetProperty("expanded", out var expanded) && expanded.ValueKind is JsonValueKind.True or JsonValueKind.False) tree.SetExpanded(branch.GetString()!, expanded.GetBoolean());
         }
         if (registration.Control is Pagination pages && message.Event == "page" && data.TryGetProperty("page", out var page) && page.ValueKind == JsonValueKind.Number && page.TryGetInt32(out var numberPage)) pages.Page = numberPage;
+        if (registration.Control is PropertyGrid propertyGrid && message.Event == "property-value"
+            && data.TryGetProperty("index", out var entryIndex) && entryIndex.ValueKind == JsonValueKind.Number && entryIndex.TryGetInt32(out var entry)
+            && data.TryGetProperty("value", out var entryValue) && entryValue.ValueKind == JsonValueKind.String)
+            propertyGrid.SetEntryValue(entry, entryValue.GetString()!);
         if (registration.Control is RichTextBox rich && !rich.ReadOnly && message.Event == "rich-input" && data.TryGetProperty("document", out var document)) {
             try { rich.Document = document.Deserialize<RichBlock[]>(new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? []; }
             catch (Exception error) when (error is JsonException or ArgumentException) { /* Reject malformed editor messages. */ }

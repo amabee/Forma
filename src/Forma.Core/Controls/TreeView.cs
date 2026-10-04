@@ -1,7 +1,5 @@
 namespace Forma.Core.Controls;
 
-public sealed class ListView : ChoiceControl { }
-public sealed record TreeNode(string Id, string Text, TreeNode[]? Children = null);
 public sealed class TreeView : Control
 {
     private TreeNode[] _nodes = [new("root", "Root", [new("child", "Child")])];
@@ -18,13 +16,4 @@ public sealed class TreeView : Control
     public string[] ExpandedNodes { get => (string[])_expandedNodes.Clone(); set { ArgumentNullException.ThrowIfNull(value); var ids = Walk(_nodes).Select(n => n.Id).ToHashSet(); var next = value.Where(ids.Contains).Distinct().ToArray(); if (!_expandedNodes.SequenceEqual(next)) SetProperty(ref _expandedNodes, next); } }
     public event EventHandler? SelectedNodeChanged;
     public void SetExpanded(string id, bool expanded) => ExpandedNodes = expanded ? [.._expandedNodes, id] : _expandedNodes.Where(n => n != id).ToArray();
-}
-public sealed class Pagination : Control
-{
-    private int _totalItems = 100, _pageSize = 10, _page = 1;
-    public int TotalItems { get => _totalItems; set { SetProperty(ref _totalItems, Math.Max(0, value)); Page = _page; } }
-    public int PageSize { get => _pageSize; set { SetProperty(ref _pageSize, Math.Clamp(value, 1, 10000)); Page = _page; } }
-    public int PageCount => Math.Max(1, (int)Math.Ceiling((double)_totalItems / _pageSize));
-    public int Page { get => _page; set { var next = Math.Clamp(value, 1, PageCount); if (next == _page) return; SetProperty(ref _page, next); PageChanged?.Invoke(this, EventArgs.Empty); } }
-    public event EventHandler? PageChanged;
 }

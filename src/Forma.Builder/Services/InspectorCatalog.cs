@@ -131,6 +131,19 @@ public static class InspectorCatalog
         new("dateValue", "Value", "Behavior", "datetime-local", Kind: "datetimepicker"),
         new("color", "Selected color", "Behavior", "color", Kind: "colorpicker"),
         new("nodes", "Nodes (JSON)", "General", "textarea", Kind: "treeview"),
+        new("commandItems", "Commands (JSON)", "General", "textarea", Kind: "menustrip,toolbar,toolstrip,contextmenu,contextmenustrip"),
+        new("targetId", "Target", "Behavior", "target", Kind: "contextmenu,contextmenustrip"),
+        new("dialogTitle", "Dialog title", "General", Kind: "dialog,confirmationdialog"),
+        new("message", "Message", "General", "textarea", Kind: "dialog,confirmationdialog"),
+        new("buttons", "Buttons", "Behavior", "select", Options: ["OK", "OKCancel", "YesNo", "YesNoCancel"], Kind: "dialog,confirmationdialog"),
+        new("canCancel", "Allow Escape", "Behavior", "checkbox", Kind: "dialog,confirmationdialog"),
+        new("result", "Last result", "Behavior", Kind: "dialog,confirmationdialog", ReadOnly: true),
+        new("rightText", "Right text", "General", Kind: "statusbar"),
+        new("selectedPath", "Selected path", "General", Kind: "filepicker,folderpicker"),
+        new("dialogTitle", "Dialog title", "Behavior", Kind: "filepicker,folderpicker"),
+        new("filter", "File filter", "Behavior", Kind: "filepicker"),
+        new("entries", "Properties (JSON)", "General", "textarea", Kind: "propertygrid"),
+        new("readOnly", "Read only", "Behavior", "checkbox", Kind: "propertygrid"),
         new("selectedNode", "Selected node ID", "Behavior", Kind: "treeview"),
         new("expandedNodes", "Expanded node IDs", "Behavior", Kind: "treeview"),
         new("totalItems", "Total items", "Behavior", "number", 0, 2147483647, Kind: "pagination"),
@@ -168,7 +181,7 @@ public static class InspectorCatalog
             "Layout",
             "select",
             Options: ["horizontal", "vertical"],
-            Kind: "splitcontainer,flowlayoutpanel"
+            Kind: "splitcontainer,flowlayoutpanel,toolbar,toolstrip"
         ),
         new(
             "gap",
@@ -209,7 +222,7 @@ public static class InspectorCatalog
             (!p.ChildOnly || kind != "form")
             && (p.Kind is null || p.Kind.Split(',').Contains(kind))
             && (
-                !(kind is "timer" or "backgroundworker")
+                !(kind is "timer" or "backgroundworker" or "contextmenu" or "contextmenustrip" or "dialog" or "confirmationdialog")
                 || p.Category == "General"
                 || p.Id
                     is "enabled"
@@ -217,6 +230,7 @@ public static class InspectorCatalog
                         or "workerReportsProgress"
                         or "workerSupportsCancellation"
                         or "isBusy"
+                        or "targetId" or "buttons" or "canCancel" or "result"
             )
         );
 }

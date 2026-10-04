@@ -4,6 +4,139 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { JSDOM } = require('../../src/Forma.Builder/Frontend/node_modules/jsdom');
 const base = path.join(__dirname, '../..');
+
+test('context menus target controls, survive component tray rendering and send command events', () => {
+  const { window, document, messages, create } = fixture(); window.formaDesigner.preview = true;
+  create('target', 'button', 'root');
+  create('context', 'contextmenu', 'root', { targetId: 'target', commandItems: [{ Id: 'action', Text: 'Action' }] });
+  window.formaDesigner.applyAppearance({ id: 'context', kind: 'contextmenu', component: true, name: 'contextMenu1', enabled: true });
+  const target = document.getElementById('target');
+  target.dispatchEvent(new window.MouseEvent('contextmenu', { bubbles: true, cancelable: true, clientX: 200, clientY: 150 }));
+  let popup = document.querySelector('.forma-context-popup'); assert.ok(popup);
+  popup.querySelector('button').click();
+  assert.equal(messages.at(-1).id, 'context'); assert.equal(messages.at(-1).payload.itemId, 'action');
+  assert.equal(document.querySelector('.forma-context-popup'), null);
+  target.dispatchEvent(new window.MouseEvent('contextmenu', { bubbles: true, cancelable: true }));
+  window.document.dispatchEvent(new window.KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+  assert.equal(document.querySelector('.forma-context-popup'), null);
+  window.formaDesigner.applyAppearance({ id: 'context', kind: 'contextmenu', component: true, name: 'contextMenu1', enabled: false });
+  target.dispatchEvent(new window.MouseEvent('contextmenu', { bubbles: true, cancelable: true }));
+  assert.equal(document.querySelector('.forma-context-popup'), null);
+});
+
+test('dialogs show safe modal content, report results and enforce Escape dismissal settings', () => {
+  const { window, document, messages, create } = fixture(); window.formaDesigner.preview = true;
+  create('dialog', 'confirmationdialog', 'root', { dialogTitle: 'Confirm', message: '<script>Message</script>', buttons: 'YesNo', isOpen: true, canCancel: false });
+  const modal = document.querySelector('.forma-dialog-popup'); assert.ok(modal); assert.equal(modal.open, true);
+  assert.equal(modal.querySelector('script'), null); assert.equal(modal.querySelector('p').textContent, '<script>Message</script>');
+  const count = messages.length;
+  modal.dispatchEvent(new window.Event('cancel', { cancelable: true }));
+  assert.equal(messages.length, count); assert.equal(modal.open, true);
+  modal.querySelector('button').click();
+  assert.equal(messages.at(-1).event, 'dialog-result'); assert.equal(messages.at(-1).payload.result, 'Yes');
+  window.forma.receive({ type: 'update', id: 'dialog', properties: { isOpen: false } });
+  assert.equal(document.querySelector('.forma-dialog-popup'), null);
+});
+
+test('context target selector lists named controls and dialog preview action has the right guard', () => {
+  const { window, document, create } = fixture(); create('context', 'contextmenu', 'root'); create('dialog', 'dialog', 'root');
+  const d = window.formaDesigner;
+  d.state = { controls: [{ id: 'root', name: 'Form1', kind: 'form' }, { id: 'context', name: 'Menu1', kind: 'contextmenu', component: true }],
+    propertySchema: [{ id: 'targetId', label: 'Target', category: 'Behavior', editor: 'target' }] };
+  d.selectedId = 'context'; d.inspector();
+  const selector = document.getElementById('prop-targetId');
+  assert.equal(selector.tagName, 'SELECT'); assert.equal(selector.options[1].textContent, 'Form1');
+  assert.equal(selector.options.length, 2);
+  d.state = { controls: [{ id: 'dialog', kind: 'dialog', component: true, enabled: true }], propertySchema: [] };
+  d.selectedId = 'dialog'; d.inspector();
+  assert.equal(document.querySelector('[data-command="show-dialog"]').disabled, true);
+  d.preview = true; d.inspector();
+  assert.equal(document.querySelector('[data-command="show-dialog"]').disabled, false);
+});
+
+test('nested menus send leaf commands, toggle checked labels and block disabled branches', () => {
+  const { window, document, messages, create } = fixture(); window.formaDesigner.preview = true;
+  const commandItems = [
+    { Id: 'file', Text: 'File', Items: [{ Id: 'open', Text: 'Open', Enabled: true }] },
+    { Id: 'blocked', Text: 'Blocked', Enabled: false, Items: [{ Id: 'child', Text: 'Child' }] },
+    { Id: 'separator', Text: '', Separator: true },
+    { Id: 'grid', Text: 'Grid', Checked: true, CheckOnClick: true }
+  ];
+  create('menu', 'menustrip', 'root', { commandItems });
+  const menu = document.getElementById('menu'), dropdown = menu.querySelector('details');
+  dropdown.open = true; menu.querySelector('[data-command-item="open"]').click();
+  assert.equal(messages.at(-1).event, 'command-item'); assert.equal(messages.at(-1).payload.itemId, 'open');
+  assert.equal(dropdown.open, false);
+  assert.equal(menu.querySelector('[data-command-item="child"]').disabled, true);
+  assert.equal(menu.querySelector('[data-command-item="grid"]').getAttribute('aria-pressed'), 'true');
+  const count = messages.length;
+  menu.querySelector('[data-command-item="child"]').click(); assert.equal(messages.length, count);
+  window.formaDesigner.applyAppearance({ id: 'menu', kind: 'menustrip', width: 500, height: 36, enabled: false, visible: true });
+  menu.querySelector('[data-command-item="open"]').click(); assert.equal(messages.length, count);
+});
+
+test('toolbars expose orientation and status bars render text safely', () => {
+  const { window, document, messages, create } = fixture(); window.formaDesigner.preview = true;
+  for (const kind of ['toolbar', 'toolstrip']) {
+    create(kind, kind, 'root', { commandItems: [{ id: 'save', text: 'Save' }], orientation: 'vertical' });
+    const toolbar = document.getElementById(kind);
+    assert.equal(toolbar.dataset.orientation, 'vertical'); assert.equal(toolbar.getAttribute('role'), 'toolbar');
+    toolbar.querySelector('button').click(); assert.equal(messages.at(-1).payload.itemId, 'save');
+  }
+  create('status', 'statusbar', 'root', { text: '<script>Ready</script>', rightText: 'Ln 1' });
+  const status = document.getElementById('status');
+  assert.equal(status.querySelector('script'), null); assert.equal(status.querySelector('.status-primary').textContent, '<script>Ready</script>');
+  assert.equal(status.querySelector('.status-secondary').textContent, 'Ln 1'); assert.equal(status.getAttribute('role'), 'status');
+});
+
+test('path pickers display selections, request host dialogs and respect disabled preview state', () => {
+  const { window, document, messages, create } = fixture();
+  window.formaDesigner.preview = true;
+  for (const kind of ['filepicker', 'folderpicker']) {
+    create(kind, kind, 'root', { selectedPath: 'C:\\Example', dialogTitle: 'Choose example', text: 'Choose…' });
+    const picker = document.getElementById(kind);
+    assert.equal(picker.querySelector('input').value, 'C:\\Example');
+    assert.equal(picker.querySelector('input').readOnly, true);
+    assert.equal(picker.querySelector('button').textContent, 'Choose…');
+    picker.querySelector('button').click();
+    assert.equal(messages.at(-1).event, 'browse'); assert.equal(messages.at(-1).id, kind);
+    window.formaDesigner.applyAppearance({ id: kind, kind, enabled: false, visible: true, width: 320, height: 40 });
+    const count = messages.length;
+    picker.querySelector('button').click(); assert.equal(messages.length, count);
+  }
+});
+
+test('property grid renders safe categorized rows, preserves editors and enforces read-only values', () => {
+  const { window, document, messages, create } = fixture();
+  window.formaDesigner.preview = true;
+  const entries = [{ Name: 'Title', Value: '<script>text</script>', Category: 'General', ReadOnly: false },
+    { Name: 'ID', Value: '123', Category: 'Advanced', ReadOnly: true }];
+  create('grid', 'propertygrid', 'root', { entries, readOnly: false });
+  const grid = document.getElementById('grid'), inputs = grid.querySelectorAll('input');
+  assert.equal(grid.querySelector('script'), null);
+  assert.equal(grid.querySelectorAll('.property-category').length, 2);
+  assert.equal(inputs[0].value, '<script>text</script>'); assert.equal(inputs[1].readOnly, true);
+  inputs[0].value = 'Edited'; inputs[0].dispatchEvent(new window.Event('change'));
+  assert.equal(messages.at(-1).event, 'property-value'); assert.equal(messages.at(-1).payload.index, 0);
+  entries[0].Value = 'Edited';
+  window.forma.receive({ type: 'update', id: 'grid', properties: { entries, readOnly: true } });
+  assert.equal(grid.querySelector('input'), inputs[0]); assert.equal(inputs[0].readOnly, true);
+  const count = messages.length;
+  inputs[0].dispatchEvent(new window.Event('change')); assert.equal(messages.length, count);
+  window.formaDesigner.preview = false;
+  window.formaDesigner.applyAppearance({ id: 'grid', kind: 'propertygrid', enabled: true, visible: true, width: 300, height: 200, readOnly: false });
+  assert.equal(inputs[0].readOnly, true);
+});
+
+test('picker inspector actions send choose-path commands and honor locks', () => {
+  const { window, document, messages, create } = fixture(); create('picker', 'filepicker', 'root');
+  const d = window.formaDesigner; d.selectedId = 'picker';
+  d.state = { controls: [{ id: 'picker', kind: 'filepicker', locked: false }], propertySchema: [] };
+  d.inspector(); document.querySelector('[data-command="choose-path"]').click();
+  assert.equal(messages.at(-1).event, 'command'); assert.equal(messages.at(-1).payload.command, 'choose-path');
+  d.state.controls[0].locked = true; d.inspector();
+  assert.equal(document.querySelector('[data-command="choose-path"]').disabled, true);
+});
 test('data widgets emit selection, expansion and page events with boundary buttons', () => {
   const { window, document, messages, create } = fixture(); window.formaDesigner.preview = true;
   create('tree', 'treeview', 'root', { nodes: [{ Id: 'a', Text: 'Parent', Children: [{ Id: 'b', Text: 'Child' }] }], expandedNodes: ['a'] });

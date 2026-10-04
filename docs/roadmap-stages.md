@@ -8,7 +8,7 @@ Undo/Redo where appropriate, and tests before it is called complete.
 | Stage | Scope | Status |
 | --- | --- | --- |
 | 1 | Basic controls, original six layout containers, practical inputs, image picker, Timer/BackgroundWorker, basic DataGridView | Implemented; advanced layout/grid behavior remains below |
-| 2 | ListView, TreeView, DataGrid enhancements, Pagination, PropertyGrid, FilePicker, menus, toolbar, status bar, dialog, tooltip/context menu | In progress: ListView, TreeView and Pagination implemented; remaining items pending |
+| 2 | ListView, TreeView, DataGrid enhancements, Pagination, PropertyGrid, FilePicker, menus, toolbar, status bar, dialog, tooltip/context menu | In progress: ListView, TreeView, Pagination, PropertyGrid, FilePicker, FolderPicker, MenuStrip, Toolbar/ToolStrip, StatusBar, ContextMenu/ContextMenuStrip and Dialog/ConfirmationDialog implemented; DataGrid enhancements and dedicated tooltip component pending |
 | 3 | Additional layout primitives, responsive containers, Sidebar/AppShell, breadcrumbs, accordion, tabs and command palette | Pending |
 | 4 | Cards, badges, avatars, icons, dividers, empty states, toast/notifications, spinner/skeleton, richer selection/button controls | Pending |
 | 5 | Form fields, validation, application components, themes and accessibility | Pending |
@@ -38,5 +38,25 @@ to preserve selected text during formatting. Rich text is reconstructed from
 text and formatting flags; document strings are never injected as HTML.
 
 Existing gaps carried forward: splitter dragging, layout reordering,
-cross-container drag, multi-select, copy/paste of controls, and C# generation.
+dragging children out of managed layouts, multi-select, copy/paste of controls, and C# generation.
+Dragging controls between free-position containers now updates their parent tree.
 Save/Open and session Undo/Redo are implemented. Windows file association is pending.
+
+FilePicker and FolderPicker select a single existing file or directory through
+native dialogs in Builder Preview. Their inspector Choose actions are undoable
+design edits. PropertyGrid supports categorized string values, per-entry and
+whole-grid read-only settings, and edit events. Selected-object reflection,
+typed editors and automatic data binding remain future PropertyGrid enhancements.
+
+MenuStrip and Toolbar/ToolStrip share validated command trees with nested items,
+disabled states, separators and checkable commands. ItemClicked reports the
+chosen leaf command; application code supplies its action. StatusBar displays
+left and right text. Automatic docking, shortcut bindings, item icons and a
+visual command editor remain enhancements; current command configuration uses
+the contextual JSON property.
+
+Context menus attach to a named target and share the existing command item
+format. Dialogs are modal message/confirmation components with configurable
+title, message, buttons and Escape dismissal. Arbitrary dialog content trees,
+dialog windows, task dialogs and native system dialog components remain later
+roadmap items.
