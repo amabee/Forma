@@ -1,7 +1,16 @@
 // The web workspace presents the design; C# owns controls and committed properties.
 const supportedKinds = new Set([
-  "icon", "emptystate", "skeleton",
-  "tooltip", "card", "badge", "avatar", "divider", "toast", "spinner", "loadingoverlay",
+  "icon",
+  "emptystate",
+  "skeleton",
+  "tooltip",
+  "card",
+  "badge",
+  "avatar",
+  "divider",
+  "toast",
+  "spinner",
+  "loadingoverlay",
   "contextmenu",
   "contextmenustrip",
   "dialog",
@@ -63,61 +72,101 @@ const containerKinds = new Set([
   "flowlayoutpanel",
   "tablelayoutpanel",
 ]);
-const managedKinds = new Set([
-  "flowlayoutpanel",
-  "tablelayoutpanel",
-]);
+const linearKinds = new Set(["flowlayoutpanel", "stackpanel", "hstack", "vstack", "wrappanel", "centerpanel", "sidebar", "appshell", "responsivepanel"]);
+const managedKinds = new Set([...linearKinds, "tablelayoutpanel"]);
+for (const kind of [...linearKinds, "scrollablepanel", "accordion"]) containerKinds.add(kind);
+document.querySelectorAll("[data-kind]").forEach(tool => supportedKinds.add(tool.dataset.kind));
 const byId = (id) => document.getElementById(id);
 const send = (event, id, payload = {}) =>
   window.forma.send({ type: "designer", id, event, payload });
 const gridDrafts = new Map();
 const gridFields = new Set(["gridColumns", "gridRows"]);
 function gridValue(property, value) {
-  if (property === "gridColumns") return value.split("\n").map(line => line.replace(/\r$/, "")).filter(Boolean).join("\n");
+  if (property === "gridColumns")
+    return value
+      .split("\n")
+      .map((line) => line.replace(/\r$/, ""))
+      .filter(Boolean)
+      .join("\n");
   const rows = JSON.parse(value);
-  if (!Array.isArray(rows) || rows.some(row => !Array.isArray(row) || row.some(cell => typeof cell !== "string")))
-    throw new Error('Use an array of string rows, for example [["Alice", "Engineering"]].');
+  if (
+    !Array.isArray(rows) ||
+    rows.some(
+      (row) =>
+        !Array.isArray(row) || row.some((cell) => typeof cell !== "string"),
+    )
+  )
+    throw new Error(
+      'Use an array of string rows, for example [["Alice", "Engineering"]].',
+    );
   return JSON.stringify(rows);
 }
 function gridError(input, message) {
-  input.setCustomValidity(message); input.setAttribute("aria-invalid", String(!!message));
+  input.setCustomValidity(message);
+  input.setAttribute("aria-invalid", String(!!message));
   let hint = byId(`${input.id}-error`);
   if (!hint) {
-    hint = document.createElement("small"); hint.id = `${input.id}-error`; hint.className = "property-error";
-    input.parentElement.appendChild(hint); input.setAttribute("aria-describedby", hint.id);
+    hint = document.createElement("small");
+    hint.id = `${input.id}-error`;
+    hint.className = "property-error";
+    input.parentElement.appendChild(hint);
+    input.setAttribute("aria-describedby", hint.id);
   }
-  hint.textContent = message; hint.hidden = !message;
+  hint.textContent = message;
+  hint.hidden = !message;
 }
 function canSaveGridDrafts() {
-  const invalid = [...gridDrafts.values()].find(draft => draft.error);
+  const invalid = [...gridDrafts.values()].find((draft) => draft.error);
   if (!invalid) return true;
   const d = window.formaDesigner;
-  d.select(invalid.id); send("select", invalid.id); d.inspector();
+  d.select(invalid.id);
+  send("select", invalid.id);
+  d.inspector();
   byId(`prop-${invalid.property}`)?.focus();
-  if (byId("status")) byId("status").textContent = "Fix the grid Rows JSON before saving. Your draft has been kept.";
+  if (byId("status"))
+    byId("status").textContent =
+      "Fix the grid Rows JSON before saving. Your draft has been kept.";
   return false;
 }
 
 function containerHost(container, x, y) {
-  const host = container.querySelector?.(":scope > .layout-content") ?? container;
-  if (["splitcontainer", "tablelayoutpanel"].includes(container.dataset.formaType)) {
-    const cells = Array.from(host.children).filter(child => child.dataset.layoutSlot);
-    return cells.find(cell => {
-      const rect = cell.getBoundingClientRect();
-      return x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom;
-    }) ?? cells[0] ?? host;
+  const host =
+    container.querySelector?.(container.dataset.formaType === "accordion"
+      ? ":scope > .layout-header > .layout-content" : ":scope > .layout-content") ?? container;
+  if (
+    ["splitcontainer", "tablelayoutpanel"].includes(container.dataset.formaType)
+  ) {
+    const cells = Array.from(host.children).filter(
+      (child) => child.dataset.layoutSlot,
+    );
+    return (
+      cells.find((cell) => {
+        const rect = cell.getBoundingClientRect();
+        return (
+          x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom
+        );
+      }) ??
+      cells[0] ??
+      host
+    );
   }
   return host;
 }
 function flowInsertion(container, movingId, x, y) {
   const vertical = container.dataset.orientation === "vertical";
-  const siblings = Array.from(containerHost(container).children).filter(child => child.dataset.formaType && child.id !== movingId);
-  const index = siblings.findIndex(child => {
+  const siblings = Array.from(containerHost(container).children).filter(
+    (child) => child.dataset.formaType && child.id !== movingId,
+  );
+  const index = siblings.findIndex((child) => {
     const r = child.getBoundingClientRect();
-    return vertical ? x < r.right && (x < r.left || y < r.top + r.height / 2)
+    return vertical
+      ? x < r.right && (x < r.left || y < r.top + r.height / 2)
       : y < r.bottom && (y < r.top || x < r.left + r.width / 2);
   });
-  return { index: index < 0 ? siblings.length : index, element: index < 0 ? null : siblings[index] };
+  return {
+    index: index < 0 ? siblings.length : index,
+    element: index < 0 ? null : siblings[index],
+  };
 }
 
 // Pointer capture keeps event.target on the dragged control. Hit-test underneath it.
@@ -189,6 +238,25 @@ function snapPosition(item, x, y, width, height, siblings, threshold = 6) {
     y: axis(y, item.height, height, "y", "height", "y"),
     guides,
   };
+}
+
+function managedResizeBounds(item, direction, dx, dy, parentWidth, parentHeight) {
+  const clamp = (value, min, max) => Math.max(min, Math.min(max, Math.round(value)));
+  const minW = Math.max(24, item.minimumWidth || 24), minH = Math.max(20, item.minimumHeight || 20);
+  return { x: item.x, y: item.y,
+    width: item.lockWidth ? item.width : clamp(item.width + (direction.includes("e") ? dx : direction.includes("w") ? -dx : 0), minW, Math.max(minW, Math.min(parentWidth, item.maximumWidth || parentWidth))),
+    height: item.lockHeight ? item.height : clamp(item.height + (direction.includes("s") ? dy : direction.includes("n") ? -dy : 0), minH, Math.max(minH, Math.min(parentHeight, item.maximumHeight || parentHeight))) };
+}
+
+function controlledAxes(item) {
+  const d = window.formaDesigner, parent = d?.controlById(item?.parentId);
+  if (parent?.kind === "appshell") {
+    const narrow = byId(parent.id)?.dataset.narrow === "true", main = d.state.controls.filter(c => c.parentId === parent.id)[0]?.id !== item.id;
+    return { width: narrow || main, height: main || !narrow && parent.orientation !== "vertical", position: true };
+  }
+  if (parent?.kind === "responsivepanel" && byId(parent.id)?.dataset.narrow === "true") return { width: true, height: false, position: true };
+  const dock = managedKinds.has(parent?.kind) ? "none" : item?.dock ?? "none";
+  return { width: ["top", "bottom", "fill"].includes(dock), height: ["left", "right", "fill"].includes(dock), position: dock !== "none" || managedKinds.has(parent?.kind) };
 }
 
 function resizeBounds(
@@ -266,6 +334,7 @@ window.formaDesigner = {
     return byId(this.rootId);
   },
   resizeBounds,
+  managedResizeBounds,
   snapPosition,
   clearGuides() {
     document.querySelectorAll(".snap-guide").forEach((el) => el.remove());
@@ -344,7 +413,7 @@ window.formaDesigner = {
   },
   receive(message) {
     if (message.action === "component-event") {
-      window.formaCustomization?.event(message.id, message.event);
+      window.formaCustomization?.event(message.id, message.event, message.detail);
       return;
     }
     if (message.action === "runtime-preview") {
@@ -358,6 +427,7 @@ window.formaDesigner = {
         if (item.component) byId(item.id).hidden = true;
       }
       window.formaCustomization?.apply(message, true);
+      window.formaLayout?.refresh(message);
       return;
     }
     if (message.action === "return-to-design") {
@@ -367,6 +437,7 @@ window.formaDesigner = {
     }
     if (message.action === "initialize") {
       gridDrafts.clear();
+      window.formaLayout?.clear();
       window.formaCustomization?.clear();
       this.cancelDrag();
       this.rootId = message.id;
@@ -388,9 +459,21 @@ window.formaDesigner = {
     if (message.action === "state") {
       this.state = message;
       for (const [key, draft] of gridDrafts) {
-        const item = message.controls.find(control => control.id === draft.id);
-        if (!item) { gridDrafts.delete(key); continue; }
-        try { if (!draft.error && gridValue(draft.property, item[draft.property]) === gridValue(draft.property, draft.value)) gridDrafts.delete(key); } catch {}
+        const item = message.controls.find(
+          (control) => control.id === draft.id,
+        );
+        if (!item) {
+          gridDrafts.delete(key);
+          continue;
+        }
+        try {
+          if (
+            !draft.error &&
+            gridValue(draft.property, item[draft.property]) ===
+              gridValue(draft.property, draft.value)
+          )
+            gridDrafts.delete(key);
+        } catch {}
       }
       document.querySelectorAll('[data-command="undo"]').forEach((button) => {
         button.disabled = !message.canUndo;
@@ -403,6 +486,7 @@ window.formaDesigner = {
         if (byId(name)) byId(name).textContent = message.title;
       if (byId("status")) byId("status").textContent = message.status;
       for (const item of message.controls) this.applyAppearance(item);
+      window.formaLayout?.refresh(message);
       window.formaCustomization?.apply(message);
       this.select(message.selectedId);
       this.inspector();
@@ -431,7 +515,7 @@ window.formaDesigner = {
     if (!controls) return undefined;
     if (this._indexedControls !== controls) {
       this._indexedControls = controls;
-      this._controlsIndex = new Map(controls.map(item => [item.id, item]));
+      this._controlsIndex = new Map(controls.map((item) => [item.id, item]));
     }
     return this._controlsIndex.get(id);
   },
@@ -439,12 +523,19 @@ window.formaDesigner = {
     const el = byId(item.id);
     if (!el) return;
     const parentState = this.controlById(item.parentId);
-    const signature = JSON.stringify([item, this.preview, parentState?.selectedTab, el.dataset.editing, el._formaRevision]);
+    const signature = JSON.stringify([
+      item,
+      this.preview,
+      parentState?.selectedTab,
+      el.dataset.editing,
+      el._formaRevision,
+    ]);
     if (el._appearanceSignature === signature) return;
     el._appearanceSignature = signature;
     if (item.component) {
       el.dataset.disabled = String(!item.enabled);
-      if (item.kind === "tooltip" && !item.enabled) window.formaTooltip?.removing(el);
+      if (item.kind === "tooltip" && !item.enabled)
+        window.formaTooltip?.removing(el);
       const tray = byId("component-tray");
       if (tray) {
         tray.appendChild(el);
@@ -543,7 +634,8 @@ window.formaDesigner = {
         }[item.shadow ?? "None"],
         cursor: this.preview ? item.cursor : item.locked ? "default" : "move",
       });
-      if (window.formaTooltip) window.formaTooltip.setTitle(el, item.toolTip ?? "");
+      if (window.formaTooltip)
+        window.formaTooltip.setTitle(el, item.toolTip ?? "");
       else el.title = item.toolTip ?? "";
       el.tabIndex =
         this.preview && item.focusable && item.enabled
@@ -567,12 +659,28 @@ window.formaDesigner = {
         el.dataset.customProperties = applied.join(",");
       }
       // Hidden and disabled controls stay selectable in design mode.
+      if (item.kind === "accordion") {
+        el.dataset.disabled = String(this.preview && !item.enabled);
+        el.querySelectorAll(".layout-header > button").forEach(button => {
+          button.disabled = this.preview && !item.enabled;
+        });
+      }
+      if (
+        ["radiogroup", "checkboxgroup", "segmentedcontrol", "rating", "chipgroup", "buttongroup", "breadcrumb", "sidenavigation"].includes(
+          item.kind,
+        )
+      ) {
+        el.dataset.disabled = String(this.preview && !item.enabled);
+        if (item.kind === "rating")
+          el._selectionProperties.readOnly = item.readOnly;
+        window.formaSelections?.refresh(el);
+      }
       el.classList.toggle("design-muted", !item.enabled || !item.visible);
       const parent = this.controlById(item.parentId);
       el.hidden =
-        (this.preview && !item.visible) ||
-        (parent?.kind === "tabcontrol" &&
-          item.layoutSlot !== parent.selectedTab + 1);
+        (this.preview && (!item.visible || item.kind === "chip" && item.isRemoved)) ||
+        (["tabcontrol", "accordion"].includes(parent?.kind) &&
+          (item.layoutSlot !== parent.selectedTab + 1 || parent.kind === "accordion" && parent.expanded === false));
       if (["treeview", "pagination"].includes(item.kind))
         el.querySelectorAll("button").forEach((button) => {
           button.disabled =
@@ -583,8 +691,9 @@ window.formaDesigner = {
         el.querySelectorAll("button").forEach((button) => {
           button.disabled = this.preview && !item.enabled;
         });
-      if (["menustrip", "toolbar", "toolstrip"].includes(item.kind)) {
+      if (["menustrip", "toolbar", "toolstrip", "dropdownbutton", "splitbutton"].includes(item.kind)) {
         el.dataset.disabled = String(this.preview && !item.enabled);
+        el.querySelectorAll("summary").forEach(summary => summary.setAttribute("aria-disabled", String(el.dataset.disabled === "true" || summary.dataset.itemDisabled === "true")));
         el.querySelectorAll("button").forEach((button) => {
           button.disabled =
             el.dataset.disabled === "true" ||
@@ -633,6 +742,9 @@ window.formaDesigner = {
       if (
         [
           "button",
+          "iconbutton",
+          "floatingactionbutton",
+          "commandbutton",
           "textbox",
           "maskedtextbox",
           "searchbox",
@@ -676,20 +788,24 @@ window.formaDesigner = {
   },
   inspector() {
     const selected = this.state?.controls.find((c) => c.id === this.selectedId);
+    const customButton = byId("custom-properties-action")?.querySelector('button');
+    if (customButton) customButton.disabled = !selected || this.preview || selected.locked;
     if (!selected) return;
     const selection = byId("selection");
     if (selection) {
-      const optionsSignature = JSON.stringify(this.state.controls.map(c => [c.id, c.name]));
+      const optionsSignature = JSON.stringify(
+        this.state.controls.map((c) => [c.id, c.name]),
+      );
       if (selection._optionsSignature !== optionsSignature) {
         selection._optionsSignature = optionsSignature;
         selection.replaceChildren(
-        ...this.state.controls.map((c) => {
-          const option = document.createElement("option");
-          option.value = c.id;
-          option.textContent = c.name;
-          return option;
-        }),
-      );
+          ...this.state.controls.map((c) => {
+            const option = document.createElement("option");
+            option.value = c.id;
+            option.textContent = c.name;
+            return option;
+          }),
+        );
       }
       selection.value = selected.id;
     }
@@ -715,11 +831,12 @@ window.formaDesigner = {
       input.dataset.controlId = selected.id;
       if (gridFields.has(property)) {
         const draft = gridDrafts.get(`${selected.id}:${property}`);
-        if (draft) { if (input.value !== draft.value) input.value = draft.value; }
-        else if (!(sameOwner && document.activeElement === input)) input.value = selected[property];
+        if (draft) {
+          if (input.value !== draft.value) input.value = draft.value;
+        } else if (!(sameOwner && document.activeElement === input))
+          input.value = selected[property];
         gridError(input, draft?.error ?? "");
-      }
-      else if (input.type === "checkbox") input.checked = selected[property];
+      } else if (input.type === "checkbox") input.checked = selected[property];
       else if (input.value !== String(selected[property]))
         input.value = selected[property];
       input.disabled =
@@ -732,11 +849,16 @@ window.formaDesigner = {
       }
       if (
         ["x", "y"].includes(property) &&
-        managedKinds.has(
-          this.state.controls.find((c) => c.id === selected.parentId)?.kind,
-        )
+        controlledAxes(selected).position
       )
         input.disabled = true;
+      const controlled = controlledAxes(selected);
+      if (property === "width" && controlled.width || property === "height" && controlled.height) {
+        input.disabled = true; input.title = "This dimension is controlled by the parent layout or Dock.";
+      }
+      if (["dock", "anchor"].includes(property) && managedKinds.has(this.controlById(selected.parentId)?.kind)) {
+        input.disabled = true; input.title = "This parent arranges its children. Use a Panel for free positioning, Dock and Anchor.";
+      }
       if (["x", "width"].includes(property))
         input.max =
           selected.id === this.rootId ? 1600 : this.root().clientWidth;
@@ -746,7 +868,9 @@ window.formaDesigner = {
     }
     if (byId("selection-status"))
       byId("selection-status").textContent =
-        selected.id === this.rootId ? "Form selected" : `Selected ${selected.name}`;
+        selected.id === this.rootId
+          ? "Form selected"
+          : `Selected ${selected.name}`;
     this.coordinates(selected.x, selected.y);
   },
   buildEditors(schema) {
@@ -824,7 +948,8 @@ window.formaDesigner = {
       if (property.max != null) input.max = property.max;
       if (property.editor === "number") input.step = "any";
       if (property.editor === "checkbox") input.setAttribute("role", "switch");
-      if (property.id === "gridRows") input.placeholder = '[["Alice", "Engineering"], ["Bob", "Sales"]]';
+      if (property.id === "gridRows")
+        input.placeholder = '[["Alice", "Engineering"], ["Bob", "Sales"]]';
       if (property.id === "customCss") {
         input.placeholder = "letter-spacing: 0.5px;";
         input.title =
@@ -858,8 +983,7 @@ window.formaDesigner = {
         ]);
       if (["dialog", "confirmationdialog"].includes(selected.kind))
         commands.push(["show-dialog", "Show dialog (Preview)"]);
-      if (selected.kind === "tabcontrol")
-        commands.push(["add-tab", "Add tab"]);
+      if (["tabcontrol", "accordion"].includes(selected.kind)) commands.push(["add-tab", selected.kind === "accordion" ? "Add section" : "Add tab"]);
       if (!selected.component && selected.id !== this.rootId)
         commands.push(
           ["bring-front", "Bring to front"],
@@ -872,24 +996,6 @@ window.formaDesigner = {
         actions.appendChild(button);
       }
       if (commands.length) container.prepend(actions);
-      let advanced = groups.get("Advanced");
-      if (!advanced) {
-        advanced = document.createElement("details");
-        advanced.className = "property-group";
-        advanced.dataset.category = "Advanced";
-        advanced.open = openCategories.get("Advanced") ?? false;
-        const summary = document.createElement("summary");
-        summary.textContent = "Advanced";
-        advanced.appendChild(summary);
-        container.appendChild(advanced);
-      }
-      const customActions = document.createElement("div");
-      customActions.className = "property-actions";
-      const customButton = document.createElement("button");
-      customButton.dataset.command = "edit-custom-properties";
-      customButton.textContent = "Custom Properties…";
-      customActions.appendChild(customButton);
-      advanced.appendChild(customActions);
     }
   },
   coordinates(x, y) {
@@ -940,8 +1046,11 @@ window.formaDesigner = {
       });
     }
     outline.querySelectorAll?.("[data-handle]").forEach((h) => {
+      const controlled = controlledAxes(item);
       h.hidden =
         item?.locked ||
+        controlled.width && /[we]/.test(h.dataset.handle) ||
+        controlled.height && /[ns]/.test(h.dataset.handle) ||
         (isRoot && !["e", "s", "se"].includes(h.dataset.handle));
     });
   },
@@ -952,10 +1061,11 @@ window.formaDesigner = {
     this.drag = null;
     drag.dropParent?.classList.remove("drop-target");
     drag.insertionTarget?.classList.remove("layout-insertion");
-    if (drag.managed) drag.element.style.transform = drag.originalTransform ?? "";
+    if (drag.managed)
+      drag.element.style.transform = drag.originalTransform ?? "";
     Object.assign(drag.element.style, {
-      left: drag.managed ? drag.originalLeft ?? "" : `${drag.x}px`,
-      top: drag.managed ? drag.originalTop ?? "" : `${drag.y}px`,
+      left: drag.managed || drag.fixedPosition ? (drag.originalLeft ?? "") : `${drag.x}px`,
+      top: drag.managed || drag.fixedPosition ? (drag.originalTop ?? "") : `${drag.y}px`,
     });
     if (drag.mode === "resize")
       Object.assign(drag.element.style, {
@@ -1045,8 +1155,15 @@ document.addEventListener("drop", (event) => {
   if (supportedKinds.has(kind))
     send("drop", parent.id, {
       control: kind,
-      ...(host.dataset.layoutSlot ? { layoutSlot: Number(host.dataset.layoutSlot) } : {}),
-      ...(parent.dataset.formaType === "flowlayoutpanel" ? { index: flowInsertion(parent, null, event.clientX, event.clientY).index } : {}),
+      ...(host.dataset.layoutSlot
+        ? { layoutSlot: Number(host.dataset.layoutSlot) }
+        : {}),
+      ...(linearKinds.has(parent.dataset.formaType)
+        ? {
+            index: flowInsertion(parent, null, event.clientX, event.clientY)
+              .index,
+          }
+        : {}),
       x: Math.max(
         0,
         Math.round(
@@ -1094,6 +1211,12 @@ document.addEventListener(
         element: byId(item.id),
         capture: handle,
         mode: "resize",
+        managed: managedKinds.has(d.controlById(item.parentId)?.kind),
+        fixedPosition: controlledAxes(item).position,
+        lockWidth: controlledAxes(item).width,
+        lockHeight: controlledAxes(item).height,
+        originalLeft: byId(item.id).style.left,
+        originalTop: byId(item.id).style.top,
         direction: handle.dataset.handle,
         pointerId: event.pointerId,
         startX: event.clientX,
@@ -1127,17 +1250,30 @@ document.addEventListener(
     if (control === root) return;
     const item = d.state?.controls.find((c) => c.id === control.id);
     if (!item || item.locked) return;
-    const managed = managedKinds.has(d.state?.controls.find(c => c.id === item.parentId)?.kind);
+    if (item.dock && item.dock !== "none" && !managedKinds.has(d.controlById(item.parentId)?.kind)) return;
+    const managed = managedKinds.has(
+      d.state?.controls.find((c) => c.id === item.parentId)?.kind,
+    );
     const originalHost = control.parentElement ?? root;
     const origin = originalHost.getBoundingClientRect();
     const rect = control.getBoundingClientRect?.();
     d.drag = {
       ...item,
       element: control,
-      originalHost, origin, managed,
-      originalLeft: control.style.left, originalTop: control.style.top, originalTransform: control.style.transform,
-      visualX: managed && rect ? (rect.left - origin.left) / d.zoom - (originalHost.clientLeft || 0) : item.x,
-      visualY: managed && rect ? (rect.top - origin.top) / d.zoom - (originalHost.clientTop || 0) : item.y,
+      originalHost,
+      origin,
+      managed,
+      originalLeft: control.style.left,
+      originalTop: control.style.top,
+      originalTransform: control.style.transform,
+      visualX:
+        managed && rect
+          ? (rect.left - origin.left) / d.zoom - (originalHost.clientLeft || 0)
+          : item.x,
+      visualY:
+        managed && rect
+          ? (rect.top - origin.top) / d.zoom - (originalHost.clientTop || 0)
+          : item.y,
       pointerId: event.pointerId,
       startX: event.clientX,
       startY: event.clientY,
@@ -1163,7 +1299,7 @@ document.addEventListener("pointermove", (event) => {
   if (!drag.moved && Math.abs(dx) < 3 && Math.abs(dy) < 3) return;
   drag.moved = true;
   if (drag.mode === "resize") {
-    drag.bounds = resizeBounds(
+    drag.bounds = drag.fixedPosition ? managedResizeBounds(drag, drag.direction, dx, dy, parent.clientWidth, parent.clientHeight) : resizeBounds(
       drag,
       drag.direction,
       dx,
@@ -1173,8 +1309,8 @@ document.addEventListener("pointermove", (event) => {
       drag.element === d.root(),
     );
     Object.assign(drag.element.style, {
-      left: `${drag.bounds.x}px`,
-      top: `${drag.bounds.y}px`,
+      left: drag.fixedPosition ? (drag.originalLeft ?? "") : `${drag.bounds.x}px`,
+      top: drag.fixedPosition ? (drag.originalTop ?? "") : `${drag.bounds.y}px`,
       width: `${drag.bounds.width}px`,
       height: `${drag.bounds.height}px`,
     });
@@ -1198,10 +1334,19 @@ document.addEventListener("pointermove", (event) => {
     if (target && !item?.locked) {
       drag.dropParent = target;
       parent = containerHost(target, event.clientX, event.clientY);
-      drag.destination = { ...(target.id !== drag.parentId ? { parentId: target.id } : {}),
-        ...(parent.dataset.layoutSlot ? { layoutSlot: Number(parent.dataset.layoutSlot) } : {}) };
-      if (target.dataset.formaType === "flowlayoutpanel") {
-        const insertion = flowInsertion(target, drag.id, event.clientX, event.clientY);
+      drag.destination = {
+        ...(target.id !== drag.parentId ? { parentId: target.id } : {}),
+        ...(parent.dataset.layoutSlot
+          ? { layoutSlot: Number(parent.dataset.layoutSlot) }
+          : {}),
+      };
+      if (linearKinds.has(target.dataset.formaType)) {
+        const insertion = flowInsertion(
+          target,
+          drag.id,
+          event.clientX,
+          event.clientY,
+        );
         drag.destination.index = insertion.index;
         drag.insertionTarget = insertion.element;
         drag.insertionTarget?.classList.add("layout-insertion");
@@ -1357,9 +1502,18 @@ document.addEventListener(
       }
       return;
     }
-    if (command && ["save", "save-as"].includes(command.dataset.command) && !canSaveGridDrafts()) return;
+    if (
+      command &&
+      ["save", "save-as", "new", "new-project"].includes(command.dataset.command) &&
+      !canSaveGridDrafts()
+    )
+      return;
     if (command && !command.disabled)
-      send("command", command.dataset.command === "add-tab" ? d.selectedId : d.rootId, { command: command.dataset.command });
+      send(
+        "command",
+        command.dataset.command === "add-tab" ? d.selectedId : d.rootId,
+        { command: command.dataset.command },
+      );
     const toggle = event.target.closest("[data-toggle]");
     if (toggle) {
       const panel = byId(toggle.dataset.toggle);
@@ -1406,10 +1560,20 @@ document.addEventListener("input", (event) => {
   const d = window.formaDesigner;
   const input = event.target;
   if (gridFields.has(input.dataset.property) && !d.preview && !input.disabled) {
-    const id = input.dataset.controlId ?? d.selectedId, property = input.dataset.property;
+    const id = input.dataset.controlId ?? d.selectedId,
+      property = input.dataset.property;
     let error = "";
-    try { gridValue(property, input.value); } catch (issue) { error = issue.message; }
-    gridDrafts.set(`${id}:${property}`, { id, property, value: input.value, error });
+    try {
+      gridValue(property, input.value);
+    } catch (issue) {
+      error = issue.message;
+    }
+    gridDrafts.set(`${id}:${property}`, {
+      id,
+      property,
+      value: input.value,
+      error,
+    });
     gridError(input, error);
     if (!error) send("property", id, { property, value: input.value });
     return;
@@ -1467,7 +1631,8 @@ document.addEventListener("keydown", (event) => {
   }
   if (event.ctrlKey && event.key.toLowerCase() === "n") {
     event.preventDefault();
-    send("command", d.rootId, { command: "new" });
+    if (!canSaveGridDrafts()) return;
+    send("command", d.rootId, { command: event.shiftKey ? "new-project" : "new" });
   }
   if (d.preview) return;
   if (event.key === "Delete") {

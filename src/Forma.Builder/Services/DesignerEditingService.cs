@@ -28,6 +28,12 @@ public sealed class DesignerEditingService(BuilderViewModel viewModel)
         }
         // Editing guards belong here as well as in the browser UI.
         if (_viewModel.PreviewMode) return new("Ready");
+        if (action == "global-script" && payload.ValueKind == JsonValueKind.Object && payload.TryGetProperty("script", out var global))
+        {
+            if (global.ValueKind != JsonValueKind.String || global.GetString()!.Length > 200_000) throw new ArgumentException("Global script must be under 200,000 characters.");
+            _viewModel.GlobalScript = global.GetString()!;
+            return new("Global script saved");
+        }
         if (action == "customize" && control is not null && !_viewModel.Appearance[control.Id].Locked)
         {
             var customization = payload.Deserialize<ComponentCustomization>(new JsonSerializerOptions { PropertyNameCaseInsensitive = true })
@@ -47,10 +53,11 @@ public sealed class DesignerEditingService(BuilderViewModel viewModel)
             if (String(payload, "command") == "add-tab" && control is Forma.Core.Controls.TabControl tabControl
                 && !_viewModel.Appearance[control.Id].Locked)
             {
-                tabControl.Tabs = [..tabControl.Tabs, $"Tab {tabControl.Tabs.Length + 1}"];
+                var label = tabControl is Forma.Core.Controls.Accordion ? "Section" : "Tab";
+                tabControl.Tabs = [..tabControl.Tabs, $"{label} {tabControl.Tabs.Length + 1}"];
                 tabControl.SelectedTab = tabControl.Tabs.Length - 1;
                 _viewModel.SelectedControl = tabControl;
-                return new("Tab added");
+                return new($"{label} added");
             }
             var selected = _viewModel.SelectedControl;
             if (selected is null || selected == form || !_viewModel.Appearance.TryGetValue(selected.Id, out var appearance)
@@ -112,14 +119,15 @@ public sealed class DesignerEditingService(BuilderViewModel viewModel)
                     control.LayoutSlot = control.Parent is Forma.Core.Controls.SplitContainer ? Math.Clamp(slot, 1, 2) : Math.Clamp(slot, 1, 1200);
                     ResizeControl(control, bounds.Width, bounds.Height);
                 }
-                if (Number(payload, "index") is int insertionIndex && control.Parent is Forma.Core.Controls.FlowLayoutPanel flow)
+                if (Number(payload, "index") is int insertionIndex && control.Parent is Forma.Core.Controls.LinearLayout flow)
                     flow.MoveChild(control, insertionIndex);
                 _viewModel.SelectedControl = control;
                 return new("Control moved");
             case "resize" when !bounds.Locked && control is not Forma.Core.Controls.INonvisualControl
                 && Number(payload, "width") is int width && Number(payload, "height") is int height:
                 ResizeControl(control, width, height);
-                if (control != form && Number(payload, "x") is int rx && Number(payload, "y") is int ry)
+                if (control != form && control.Parent is not Forma.Core.Controls.LinearLayout and not Forma.Core.Controls.TableLayoutPanel
+                    && bounds.Dock == "none" && Number(payload, "x") is int rx && Number(payload, "y") is int ry)
                     Position(control, rx, ry);
                 _viewModel.SelectedControl = control;
                 return new("Control resized");
@@ -193,6 +201,18 @@ public sealed class DesignerEditingService(BuilderViewModel viewModel)
             "treeview" => new Forma.Core.Controls.TreeView(),
             "pagination" => new Forma.Core.Controls.Pagination(),
             "checkedlistbox" => new Forma.Core.Controls.CheckedListBox(),
+            "radiogroup" => new Forma.Core.Controls.RadioGroup(),
+            "checkboxgroup" => new Forma.Core.Controls.CheckBoxGroup(),
+            "segmentedcontrol" => new Forma.Core.Controls.SegmentedControl(),
+            "rating" => new Forma.Core.Controls.Rating(),
+            "chip" => new Forma.Core.Controls.Chip(),
+            "chipgroup" => new Forma.Core.Controls.ChipGroup(),
+            "buttongroup" => new Forma.Core.Controls.ButtonGroup(),
+            "iconbutton" => new Forma.Core.Controls.IconButton(),
+            "floatingactionbutton" => new Forma.Core.Controls.FloatingActionButton(),
+            "dropdownbutton" => new Forma.Core.Controls.DropdownButton(),
+            "splitbutton" => new Forma.Core.Controls.SplitButton(),
+            "commandbutton" => new Forma.Core.Controls.CommandButton(),
             "textbox" => new Forma.Core.Controls.TextBox { Text = "" },
             "panel" => new Forma.Core.Controls.Panel(),
             "groupbox" => new Forma.Core.Controls.GroupBox { Text = "Group" },
@@ -200,6 +220,18 @@ public sealed class DesignerEditingService(BuilderViewModel viewModel)
             "tabcontrol" => new Forma.Core.Controls.TabControl(),
             "flowlayoutpanel" => new Forma.Core.Controls.FlowLayoutPanel(),
             "tablelayoutpanel" => new Forma.Core.Controls.TableLayoutPanel(),
+            "accordion" => new Forma.Core.Controls.Accordion(),
+            "sidebar" => new Forma.Core.Controls.Sidebar(),
+            "appshell" => new Forma.Core.Controls.AppShell(),
+            "responsivepanel" => new Forma.Core.Controls.ResponsivePanel(),
+            "stackpanel" => new Forma.Core.Controls.StackPanel(),
+            "hstack" => new Forma.Core.Controls.HStack(),
+            "vstack" => new Forma.Core.Controls.VStack(),
+            "wrappanel" => new Forma.Core.Controls.WrapPanel(),
+            "centerpanel" => new Forma.Core.Controls.CenterPanel(),
+            "scrollablepanel" => new Forma.Core.Controls.ScrollablePanel(),
+            "breadcrumb" => new Forma.Core.Controls.Breadcrumb(),
+            "sidenavigation" => new Forma.Core.Controls.SideNavigation(),
             "checkbox" => new Forma.Core.Controls.CheckBox { Text = "CheckBox" },
             "radiobutton" => new Forma.Core.Controls.RadioButton { Text = "RadioButton" },
             "combobox" => new Forma.Core.Controls.ComboBox(),
@@ -249,7 +281,7 @@ public sealed class DesignerEditingService(BuilderViewModel viewModel)
             or "splitcontainer"
             or "tabcontrol"
             or "flowlayoutpanel"
-            or "tablelayoutpanel" => new Appearance
+            or "accordion" or "sidebar" or "appshell" or "responsivepanel" or "tablelayoutpanel" or "stackpanel" or "hstack" or "vstack" or "wrappanel" or "centerpanel" or "scrollablepanel" => new Appearance
             {
                 Width = 300,
                 Height = 200,
@@ -276,6 +308,15 @@ public sealed class DesignerEditingService(BuilderViewModel viewModel)
                 ForeColor = "#1f2937",
                 BackColor = "#ffffff",
             },
+            "radiogroup" or "checkboxgroup" or "chipgroup" => new Appearance { Width = 280, Height = 100, ForeColor = "#1f2937", BackColor = "#ffffff" },
+            "segmentedcontrol" or "rating" or "buttongroup" => new Appearance { Width = 280, Height = 44, ForeColor = "#1f2937", BackColor = "#ffffff" },
+            "chip" => new Appearance { Width = 120, Height = 36, BorderRadius = 18, BackColor = "#ffffff", ForeColor = "#1f2937" },
+            "iconbutton" => new Appearance { Width = 44, Height = 44 },
+            "dropdownbutton" or "splitbutton" => new Appearance { Width = 160, Height = 40, PaddingTop = 0, PaddingBottom = 0, PaddingLeft = 0, PaddingRight = 0 },
+            "breadcrumb" => new Appearance { Width = 320, Height = 40, ForeColor = "#1f2937", BackColor = "#ffffff", PaddingTop = 0, PaddingBottom = 0 },
+            "sidenavigation" => new Appearance { Width = 200, Height = 220, ForeColor = "#1f2937", BackColor = "#ffffff" },
+            "commandbutton" => new Appearance { Width = 240, Height = 64 },
+            "floatingactionbutton" => new Appearance { Width = 56, Height = 56, BorderRadius = 28 },
             "listbox" or "listview" or "treeview" or "checkedlistbox" or "richtextbox" or "textarea" or "circularprogress" => new Appearance
             {
                 Width = 180,
@@ -351,7 +392,7 @@ public sealed class DesignerEditingService(BuilderViewModel viewModel)
             control.LayoutSlot = parent.Children.Count + 1;
         if (layoutSlot is int slot && parent is Forma.Core.Controls.SplitContainer or Forma.Core.Controls.TableLayoutPanel)
             control.LayoutSlot = parent is Forma.Core.Controls.SplitContainer ? Math.Clamp(slot, 1, 2) : Math.Clamp(slot, 1, 1200);
-        if (parent is Forma.Core.Controls.FlowLayoutPanel && index is int insertionIndex)
+        if (parent is Forma.Core.Controls.LinearLayout && index is int insertionIndex)
             parent.Insert(Math.Clamp(insertionIndex, 0, parent.Children.Count), control);
         else parent.Add(control);
         if (control is not Forma.Core.Controls.INonvisualControl)
@@ -363,16 +404,18 @@ public sealed class DesignerEditingService(BuilderViewModel viewModel)
     private (int Width, int Height) AvailableBounds(FControl parent)
     {
         var a = _viewModel.Appearance[parent.Id];
+        if (parent is Forma.Core.Controls.ScrollablePanel) return (1600, 1600);
         if (parent == _viewModel.Form)
             return (a.Width, a.Height);
         var header =
             parent is Forma.Core.Controls.Card card && card.HeaderVisible ? 56
             : parent is Forma.Core.Controls.GroupBox ? 28
+            : parent is Forma.Core.Controls.Accordion accordion ? (accordion.Tabs.Length + 1) * 36
             : parent is Forma.Core.Controls.TabControl tabs && tabs.Orientation != "vertical" ? 36
             : 0;
         var width = a.Width - a.PaddingLeft - a.PaddingRight - 2 * a.BorderWidth;
         var height = a.Height - a.PaddingTop - a.PaddingBottom - 2 * a.BorderWidth - header;
-        if (parent is Forma.Core.Controls.TabControl verticalTabs && verticalTabs.Orientation == "vertical") width -= 120;
+        if (parent is Forma.Core.Controls.TabControl verticalTabs && parent is not Forma.Core.Controls.Accordion && verticalTabs.Orientation == "vertical") width -= 120;
         if (parent is Forma.Core.Controls.SplitContainer split)
         {
             if (split.Orientation == "vertical") height = (height - split.Gap) / 2;
@@ -532,10 +575,29 @@ public sealed class DesignerEditingService(BuilderViewModel viewModel)
         }
         if (control is Forma.Core.Controls.LinkLabel link && property == "url" && text is not null) link.Url = text;
         if (control is Forma.Core.Controls.MaskedTextBox masked && property == "mask" && text is not null) masked.Mask = text;
-        if (control is Forma.Core.Controls.CheckedListBox checkedList) {
+        if (control is Forma.Core.Controls.MultiChoiceControl checkedList) {
             if (property == "items" && text is not null) checkedList.Items = Lines(text);
             if (property == "checkedIndices" && text is not null) checkedList.CheckedIndices = text.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).Select(int.Parse).ToArray();
         }
+        if (control is Forma.Core.Controls.SelectionGroup group && property == "orientation" && text is not null) group.Orientation = text;
+        if (control is Forma.Core.Controls.MultiSelectionGroup checkGroup && property == "orientation" && text is not null) checkGroup.Orientation = text;
+        if (control is Forma.Core.Controls.IconButton iconButton) {
+            if (property == "iconName" && text is not null) iconButton.IconName = text;
+            if (property == "showText") iconButton.ShowText = Boolean(payload, "value", iconButton.ShowText);
+        }
+        if (control is Forma.Core.Controls.SplitButton split && property == "primaryEnabled") split.PrimaryEnabled = Boolean(payload, "value", split.PrimaryEnabled);
+        if (control is Forma.Core.Controls.CommandButton commandButton && property == "description" && text is not null) commandButton.Description = text;
+        if (control is Forma.Core.Controls.Chip chip) {
+            if (property == "variant" && text is not null) chip.Variant = text;
+            if (property == "removable") chip.Removable = Boolean(payload, "value", chip.Removable);
+        }
+        if (control is Forma.Core.Controls.Rating rating) {
+            if (property == "stars" && number is int stars) rating.Stars = stars;
+            if (property == "readOnly") rating.ReadOnly = Boolean(payload, "value", rating.ReadOnly);
+        }
+        if (control is Forma.Core.Controls.Accordion accordion && property == "expanded" && payload.TryGetProperty("value", out var expanded) && expanded.ValueKind is JsonValueKind.True or JsonValueKind.False) accordion.Expanded = expanded.GetBoolean();
+        if (control is Forma.Core.Controls.ResponsiveLayout responsive && property == "breakpoint" && number is int breakpoint) responsive.Breakpoint = breakpoint;
+        if (control is Forma.Core.Controls.ScrollablePanel scroll && property == "scrollDirection" && text is not null) scroll.ScrollDirection = text;
         if (control is Forma.Core.Controls.RichTextBox rich) {
             if (property == "text" && text is not null) rich.SetPlainText(text);
             if (property == "document" && text is not null) rich.Document = JsonSerializer.Deserialize<Forma.Core.Controls.RichBlock[]>(text, new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? [];
@@ -553,12 +615,19 @@ public sealed class DesignerEditingService(BuilderViewModel viewModel)
         }
         switch (property)
         {
+            case "dock" when text is not null && Appearance.DockValues.Contains(text):
+                a.Dock = text;
+                break;
+            case "anchor" when text is not null && Appearance.AnchorValues.Contains(text):
+                a.Anchor = text;
+                break;
             case "name" when !string.IsNullOrWhiteSpace(text):
                 var name = text.Trim();
                 if (
                     !(char.IsLetter(name[0]) || name[0] == '_')
                     || name.Any(c => !char.IsLetterOrDigit(c) && c != '_')
                     || Walk(_viewModel.Form!).Any(c => c != control && c.Name == name)
+                    || control == _viewModel.Form && _viewModel.Forms.Any(form => form != control && form.Name == name)
                 )
                     throw new ArgumentException(
                         "Name must be a unique C# identifier using letters, digits, or underscores."
@@ -790,6 +859,7 @@ public sealed class DesignerEditingService(BuilderViewModel viewModel)
     private void ResizeControl(FControl control, int width, int height)
     {
         var a = _viewModel.Appearance[control.Id];
+        var oldBounds = AvailableBounds(control);
         if (control == _viewModel.Form)
         {
             var minWidth = Math.Max(
@@ -797,7 +867,7 @@ public sealed class DesignerEditingService(BuilderViewModel viewModel)
                 _viewModel.Form
                     .Children.Where(c => c is not Forma.Core.Controls.INonvisualControl)
                     .Select(c =>
-                        _viewModel.Appearance[c.Id].Width
+                        (ControlsWidth(_viewModel.Appearance[c.Id]) ? Math.Max(24, _viewModel.Appearance[c.Id].MinimumWidth) : _viewModel.Appearance[c.Id].Width)
                         + _viewModel.Appearance[c.Id].MarginLeft
                         + _viewModel.Appearance[c.Id].MarginRight
                         + (_viewModel.Appearance[c.Id].Locked ? c.X ?? 0 : 0)
@@ -810,7 +880,7 @@ public sealed class DesignerEditingService(BuilderViewModel viewModel)
                 _viewModel.Form
                     .Children.Where(c => c is not Forma.Core.Controls.INonvisualControl)
                     .Select(c =>
-                        _viewModel.Appearance[c.Id].Height
+                        (ControlsHeight(_viewModel.Appearance[c.Id]) ? Math.Max(20, _viewModel.Appearance[c.Id].MinimumHeight) : _viewModel.Appearance[c.Id].Height)
                         + _viewModel.Appearance[c.Id].MarginTop
                         + _viewModel.Appearance[c.Id].MarginBottom
                         + (_viewModel.Appearance[c.Id].Locked ? c.Y ?? 0 : 0)
@@ -832,8 +902,6 @@ public sealed class DesignerEditingService(BuilderViewModel viewModel)
                 a.MinimumHeight,
                 a.MaximumHeight
             );
-            foreach (var child in _viewModel.Form.Children.Where(c => c is not Forma.Core.Controls.INonvisualControl))
-                Position(child, child.X ?? 0, child.Y ?? 0);
         }
         else
         {
@@ -852,9 +920,44 @@ public sealed class DesignerEditingService(BuilderViewModel viewModel)
                 a.MinimumHeight,
                 a.MaximumHeight
             );
-            Position(control, control.X ?? 0, control.Y ?? 0);
-            foreach (var child in control.Children)
-                ResizeControl(child, _viewModel.Appearance[child.Id].Width, _viewModel.Appearance[child.Id].Height);
+            if (control.Parent is not Forma.Core.Controls.LinearLayout and not Forma.Core.Controls.TableLayoutPanel)
+                Position(control, control.X ?? 0, control.Y ?? 0);
+        }
+        ArrangeChildren(control, oldBounds);
+    }
+
+    public void ReflowLayouts()
+    {
+        if (_viewModel.Form is not null) ArrangeChildren(_viewModel.Form, AvailableBounds(_viewModel.Form));
+    }
+
+    private static bool ControlsWidth(Appearance appearance) => appearance.Dock is "top" or "bottom" or "fill"
+        || appearance.Anchor.Contains("left") && appearance.Anchor.Contains("right");
+    private static bool ControlsHeight(Appearance appearance) => appearance.Dock is "left" or "right" or "fill"
+        || appearance.Anchor.Contains("top") && appearance.Anchor.Contains("bottom");
+
+    private void ArrangeChildren(FControl parent, (int Width, int Height) oldBounds)
+    {
+        var size = AvailableBounds(parent);
+        var managed = parent is Forma.Core.Controls.LinearLayout or Forma.Core.Controls.TableLayoutPanel;
+        var children = parent.Children.Where(c => c is not Forma.Core.Controls.INonvisualControl);
+        foreach (var group in children.GroupBy(c => parent is Forma.Core.Controls.TabControl or Forma.Core.Controls.SplitContainer ? c.LayoutSlot : 0))
+        {
+            var remaining = new LayoutGeometry.Bounds(0, 0, size.Width, size.Height);
+            foreach (var child in group.OrderBy(c => _viewModel.Appearance[c.Id].Dock == "fill" ? 1 : 0))
+            {
+                var appearance = _viewModel.Appearance[child.Id];
+                var current = new LayoutGeometry.Bounds(child.X ?? 0, child.Y ?? 0, appearance.Width, appearance.Height);
+                var target = !managed && appearance.Dock != "none" && appearance.Visible
+                    ? LayoutGeometry.Dock(appearance.Dock, appearance, ref remaining)
+                    : !managed && appearance.Dock == "none"
+                        ? LayoutGeometry.Anchor(current, appearance.Anchor, size.Width - oldBounds.Width, size.Height - oldBounds.Height)
+                        : current;
+                if (target.Width != appearance.Width || target.Height != appearance.Height || size != oldBounds)
+                    ResizeControl(child, target.Width, target.Height);
+                else ArrangeChildren(child, AvailableBounds(child));
+                if (!managed && (target.X != current.X || target.Y != current.Y)) Position(child, target.X, target.Y);
+            }
         }
     }
 

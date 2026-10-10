@@ -39,7 +39,7 @@ public abstract class NumericControl : Control
     }
 
     // A numeric value is separate from Control.Value's text alias.
-    public new double Value
+    public new virtual double Value
     {
         get => _value;
         set

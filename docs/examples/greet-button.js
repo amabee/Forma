@@ -1,5 +1,5 @@
 // Attach to the Button. Name the TextBox "nameInput" and Label "greetingLabel".
-api.on("click", () => {
-  const name = String(api.get("nameInput", "value") ?? "").trim();
-  api.set("greetingLabel", "text", name ? `Hello, ${name}!` : "Enter your name first.");
+forma.on("click", () => {
+  const name = String(forma.get("nameInput", "value") ?? "").trim();
+  forma.set("greetingLabel", "text", name ? `Hello, ${name}!` : "Enter your name first.");
 });

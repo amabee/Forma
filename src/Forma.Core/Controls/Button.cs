@@ -2,7 +2,7 @@ using Forma.Core.Events;
 
 namespace Forma.Core.Controls;
 
-public sealed class Button : Control
+public class Button : Control
 {
     public event EventHandler? Click;
 

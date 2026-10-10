@@ -5,11 +5,13 @@ public sealed class CoalescedRefresh(Func<string, Task> send)
 {
     private Task? _pending;
     private string _status = "Ready";
+
     public Task Request(string status)
     {
         _status = status;
         return _pending ??= FlushAsync();
     }
+
     private async Task FlushAsync()
     {
         await Task.Yield();

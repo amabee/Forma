@@ -4,6 +4,15 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 
+test('managed corner resize changes dimensions and leaves stored position untouched', () => {
+  const { window } = fixture();
+  const item = { x: 180, y: 90, width: 120, height: 36 };
+  const result = window.formaDesigner.managedResizeBounds(item, 'nw', -25, -10, 300, 200);
+  assert.deepEqual(JSON.parse(JSON.stringify(result)), { x: 180, y: 90, width: 145, height: 46 });
+  const controlled = window.formaDesigner.managedResizeBounds({ ...item, lockWidth: true }, 'se', 30, 20, 300, 200);
+  assert.equal(controlled.width, 120); assert.equal(controlled.height, 56);
+});
+
 function fixture() {
   const messages = [];
   const listeners = {};

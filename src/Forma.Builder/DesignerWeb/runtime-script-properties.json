@@ -1,0 +1,32 @@
+{
+  "layout": ["layoutSlot"],
+  "appearance": ["tag", "x", "y", "width", "height", "minimumWidth", "minimumHeight", "maximumWidth", "maximumHeight", "backColor", "foreColor", "borderStyle", "borderColor", "borderWidth", "borderRadius", "opacity", "shadow", "cursor", "fontFamily", "fontSize", "fontWeight", "fontStyle", "textAlign", "lineHeight", "letterSpacing", "marginTop", "marginRight", "marginBottom", "marginLeft", "paddingTop", "paddingRight", "paddingBottom", "paddingLeft", "focusable", "tabIndex", "toolTip", "cssClass"],
+  "specific": {
+    "textbox": ["placeholder", "readOnly", "password", "maxLength"],
+    "maskedtextbox": ["placeholder", "readOnly", "password", "maxLength", "mask"],
+    "searchbox": ["placeholder", "readOnly", "password", "maxLength"],
+    "passwordbox": ["placeholder", "readOnly", "password", "maxLength"],
+    "textarea": ["placeholder", "readOnly", "password", "maxLength"],
+    "richtextbox": ["readOnly", "document"], "propertygrid": ["readOnly", "entries"],
+    "treeview": ["nodes", "selectedNode", "expandedNodes"],
+    "backgroundworker": ["workerReportsProgress", "workerSupportsCancellation"],
+    "button": ["style"],
+    "image": ["sizeMode"], "picturebox": ["sizeMode"],
+    "card": ["description", "headerVisible"], "avatar": ["initials", "shape", "sizeMode"],
+    "badge": ["variant"], "icon": ["iconName", "strokeWidth"],
+    "emptystate": ["description", "iconName"], "divider": ["orientation", "thickness", "lineStyle"],
+    "rating": ["stars"], "tablelayoutpanel": ["columns", "rowCount"],
+    "checkboxgroup": ["orientation"], "chipgroup": ["orientation"],
+    "toolbar": ["orientation"], "toolstrip": ["orientation"],
+    "tooltip": ["targetId", "initialDelay", "showDuration", "placement"],
+    "loadingoverlay": ["targetId"], "contextmenu": ["targetId"], "contextmenustrip": ["targetId"],
+    "dialog": ["dialogTitle", "message", "buttons", "canCancel"],
+    "confirmationdialog": ["dialogTitle", "message", "buttons", "canCancel"],
+    "filepicker": ["dialogTitle", "filter"], "folderpicker": ["dialogTitle"],
+    "pagination": ["totalItems", "pageSize", "page"], "statusbar": ["rightText"], "linklabel": ["url"]
+  },
+  "readOnly": {
+    "pagination": ["pageCount"], "dialog": ["result", "isOpen"],
+    "confirmationdialog": ["result", "isOpen"], "maskedtextbox": ["maskCompleted"], "backgroundworker": ["isBusy"]
+  }
+}

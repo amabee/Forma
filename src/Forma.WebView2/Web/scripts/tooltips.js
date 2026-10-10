@@ -26,6 +26,7 @@
     delay = setTimeout(() => {
       if (!current?.isConnected || !target?.isConnected || current.dataset.disabled === "true" || window.formaDesigner?.preview === false) { close(); return; }
       popup = document.createElement("div"); popup.id = `${current.id}-popup`;
+      popup.dataset.componentSource = current.id;
       popup.className = "forma-tooltip-popup"; popup.setAttribute("role", "tooltip"); popup.textContent = current.dataset.tooltipText;
       document.body.appendChild(popup);
       target.setAttribute("aria-describedby", [target.getAttribute("aria-describedby"), popup.id].filter(Boolean).join(" "));

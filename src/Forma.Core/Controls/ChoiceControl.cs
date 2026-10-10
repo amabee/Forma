@@ -10,6 +10,7 @@ public abstract class ChoiceControl : Control
         set
         {
             ArgumentNullException.ThrowIfNull(value);
+            if (value.Any(item => item is null)) throw new ArgumentException("Items cannot be null.");
             SetProperty(ref _items, (string[])value.Clone());
             if (_selectedIndex >= value.Length)
                 SelectedIndex = value.Length - 1;

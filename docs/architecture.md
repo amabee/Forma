@@ -4,6 +4,12 @@ Forma uses a layered architecture with an incremental MVVM implementation in the
 
 ## Existing layers
 
+Linear layout containers share `LinearLayout : LayoutContainer` so the editing
+service and designer use the same child ordering rules. StackPanel/HStack/VStack,
+WrapPanel/FlowLayoutPanel, and CenterPanel keep children in managed flow; free
+positions are retained for ScrollablePanel. Navigation controls reuse ChoiceControl
+and the selection renderer, with application scripts handling navigation events.
+
 | Layer | Responsibility | Examples |
 | --- | --- | --- |
 | Core | Control state, validation, parent/child relationships, events, rendering contracts | `Control`, `NumericControl`, `IRenderer`, `IBridge` |
@@ -13,6 +19,15 @@ Forma uses a layered architecture with an incremental MVVM implementation in the
 | Designer browser UI | Toolbox, inspector editors, drag/resize gestures, alignment guides, and preview interaction | `designer.js`, generated Tailwind styles |
 
 Core must remain independent of WinForms, WebView2, DOM, CSS, and native file dialogs. Renderer interfaces provide a boundary for a different rendering implementation. Browser gestures send commands to the C# host, where authoritative control state and validation live; the browser keeps transient interaction state.
+
+`DesignerWeb/reactivity.js` owns the script-side observer scopes for refs,
+shallow reactive state, computed values, effects, and control bindings.
+`component-customization.js` connects those scopes to the runtime get/set bridge
+and disposes them with their component behavior. Binding reads reflect live DOM
+input and projected runtime state; writes remain C#-validated bridge commands.
+This is a browser runtime service supporting the View, separate from the Builder's
+document ViewModel and the Core model. Component-local script state is not saved
+into the design or shared implicitly across behaviors.
 
 The control tree follows the **Composite** pattern: controls contain child controls. Property notifications and control events follow the **Observer** pattern. The renderer and bridge form an **adapter** between C# models and the browser. These describe specific parts of the code, not a claim that the whole application already follows one formal pattern.
 
@@ -210,3 +225,96 @@ current component names and the runtime API contract. Sources remain
 ComponentCustomization model data; ComponentSaveSession and ComponentEditorService
 still validate, save and watch external files. Editor diagnostics are authoring
 feedback, not an execution engine or a generated C# application.
+
+### Responsive and section containers
+
+`Controls/ResponsiveLayout.cs` is the shared Model for AppShell and
+ResponsivePanel, with a validated Breakpoint. Sidebar reuses LinearLayout;
+Accordion extends TabControl with Expanded and section child slots. Editing,
+Undo/Redo, serialization and PreviewSession remain the ViewModel boundary.
+The browser View uses one ResizeObserver per responsive container, lays out
+children using flex, and disconnects observers when a subtree is removed.
+Accordion renders native section buttons and sends selection/expanded commands
+through the bridge. Browser geometry and transient selection styling do not
+become additional persisted models.
+
+Dock and Anchor belong to the Builder Appearance model. LayoutGeometry holds
+pure docking/anchoring calculations; DesignerEditingService applies them within
+the current edit before history capture. Parent resizing carries child anchors
+through nested containers. layout-properties.js is the browser View counterpart:
+it observes free content hosts, applies runtime geometry, and releases observers
+on removal/reset. It does not replace stack/table/AppShell layout rules or store
+DOM coordinates as project data. Script edits change PreviewSession appearance,
+then the refreshed runtime snapshot updates the View.
+
+RuntimePropertyService extends the typed Preview API using the explicit
+DesignerWeb/runtime-script-properties.json catalog. The same catalog is embedded
+in Builder/tests and imported by code-assistance.mjs. InspectorCatalog supplies
+type, range and option validation; only registered members are reflected.
+Runtime snapshots advertise available extension fields, and the browser getter
+reads their projected values, cloning structured arrays before returning them.
+Core setters still validate TreeView, PropertyGrid and rich document structures.
+PreviewSession adjusts nested anchors when scripts change container dimensions.
+
+Project global source is held in the root Appearance.GlobalScript model and
+validated by the global-script editing command. Existing snapshot/restore paths
+therefore preserve it in Save/Open and history. Preview copies the source into
+its own runtime snapshot. The editor uses script.js and main.js names;
+legacy Behavior serialization and behavior.js fallback remain compatible.
+component-customization.js initializes one shared reactive scope and module
+registry before component scripts, using provide/use and shared access. Consumer
+effects are still owned by their component scopes; the project scope is disposed
+after consumers on Preview reset/close. Runtime values are not saved to disk.
+
+
+JavaScript authoring uses a bundled TypeScript language service in
+`Frontend/javascript-service.mjs`, hosted by `javascript-worker.mjs`. The worker
+has an in-memory filesystem containing standard library declarations, generated
+Forma declarations, the component draft and the saved global script. Static
+exports from `forma.provide` supply shared-module shapes; no user code executes
+for inference. `javascript-completion.mjs` correlates worker requests and cleans
+up on tab deactivation. CodeMirror shows completions, type/documentation hover
+and signature help. The editor uses a WebView2 virtual host so its worker and
+assets share a local HTTPS origin; the main designer/runtime bridge is unchanged.
+
+
+BuilderViewModel now owns a project-level list of forms and appearance entries,
+with `Form` identifying the active designer form. `AddForm` records a project
+history edit; `SelectForm` changes the workspace selection without changing the
+saved design. ProjectFile supports legacy single-root version 1 and multi-form
+version 2, validating IDs and project limits across all trees. History snapshots
+carry the active form ID separately from persisted project content. PreviewSession
+clones only the selected form and injects the project global script. The native
+view changes the rendered form while retaining other models and open editor drafts.
+
+
+`ProjectExplorerService` projects the in-memory project into a lightweight logical
+tree of all forms, nested controls, source documents and image references. The
+browser's `solution-explorer.js` filters and navigates that tree while preserving
+expansion and focus. Stable IDs route selection and source commands to the owning
+form in BuilderWindow. Explorer navigation never reads arbitrary folders or
+changes the saved design. Image contents and source bodies are excluded from the
+tree payload; unchanged structural state reuses its DOM nodes.
+
+
+Custom project resources use ProjectEntry records persisted by project format
+version 3. ProjectEntryService validates names, sibling uniqueness, content limits
+and parent relationships. BuilderViewModel wraps edits in project history.
+ComponentEditorView's single-file mode reuses the docked editor for project JS,
+CSS and arbitrary JSON while keeping component customization's JSON-object
+contract. Explorer menu commands resolve stable project IDs in the native host;
+file names and logical folder paths never grant arbitrary filesystem access.
+
+### Project JavaScript modules
+
+`main.js` is the startup ViewModel script shared by the project's forms. The
+legacy `Appearance.GlobalScript` storage key stays compatible with existing
+projects. `ProjectEntryService` maps logical file/folder IDs into portable module
+paths; PreviewSession snapshots paths and source content so running code cannot
+edit the designer or be changed by a later save. The browser module runtime
+transforms JavaScript imports/exports with locally bundled Sucrase and resolves
+relative JavaScript/JSON imports from the project. Each Preview has its own
+module cache; imported providers belong to the startup reactive scope and are
+cleaned up with that scope. Component scripts keep their own event/cleanup scope.
+The JavaScript language-service worker receives the same file paths and source
+snapshots to infer imported exports without executing user code.

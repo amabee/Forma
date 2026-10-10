@@ -28,6 +28,18 @@ function fixture(t) {
   return { window, editor: window.formaCodeEditor, messages };
 }
 
+test('global editor shows only main.js and component editor uses script.js', async t => {
+  const { window, editor } = fixture(t);
+  editor.receive({ action: 'source', globalScript: true, name: 'Global script', source: { css: '', behavior: 'forma.provide("app", {});', characteristics: '{}' } });
+  assert.equal(window.document.getElementById('tab-css').hidden, true);
+  assert.equal(window.document.getElementById('tab-characteristics').hidden, true);
+  assert.equal(window.document.querySelector('#tab-behavior span').textContent, 'main.js');
+  assert.equal(window.document.getElementById('editor-behavior').hidden, false);
+  editor.receive({ action: 'source', globalScript: false, source: { css: '', behavior: '', characteristics: '{}' } });
+  assert.equal(window.document.getElementById('tab-css').hidden, false);
+  assert.equal(window.document.querySelector('#tab-behavior span').textContent, 'script.js');
+});
+
 test('editor has line numbers, syntax colors, tabs, formats and saves all sources to the host', async t => {
   const { window, editor, messages } = fixture(t);
   const source = { css: ':host{color:red}', behavior: 'api.on("click",()=>{});', characteristics: '{"count":1}' };
@@ -75,11 +87,11 @@ test('selection has a contrasting color and remains visible under the active lin
   view.dispatch({ selection: { anchor: 0, head: 5 } }); view.focus();
   assert.equal(view.state.selection.main.empty, false);
   const line = view.dom.querySelector('.cm-activeLine');
-  assert.equal(window.getComputedStyle(line).backgroundColor, 'rgba(148, 163, 184, 0.08)');
+  assert.equal(window.getComputedStyle(line).backgroundColor, 'rgba(0, 0, 0, 0)');
   // jsdom has no text geometry; probe the same selection layer's theme rule.
   const box = window.document.createElement('div'); box.className = 'cm-selectionBackground';
   view.dom.querySelector('.cm-selectionLayer').appendChild(box);
-  assert.equal(window.getComputedStyle(box).backgroundColor, 'rgb(37, 99, 235)');
+  assert.equal(window.getComputedStyle(box).backgroundColor, 'rgb(38, 79, 120)');
   assert.equal(window.document.querySelectorAll('.editor-footer').length, 1);
 });
 
@@ -111,6 +123,46 @@ test('editor theme switches live without changing source, selection or dirty sta
   assert.equal(view.state.selection.main.anchor, selection.anchor); assert.equal(view.state.selection.main.head, selection.head);
   assert.equal(window.document.getElementById('editor-dirty').textContent, 'Unsaved changes');
   editor.receive({ action: 'theme', theme: 'dark' });
-  assert.equal(window.getComputedStyle(view.dom).backgroundColor, 'rgb(15, 23, 42)');
+  assert.equal(window.getComputedStyle(view.dom).backgroundColor, 'rgb(31, 31, 31)');
   assert.equal(JSON.stringify(editor.source()), source);
+});
+
+
+test('requested source tabs preserve drafts, selection and undo when switching files', t => {
+  const { window, editor } = fixture(t);
+  editor.receive({ action: 'source', document: 'behavior', name: 'button1', source: { css: ':host {}', behavior: 'const count = 0;', characteristics: '{}' } });
+  assert.equal(window.document.getElementById('editor-behavior').hidden, false);
+  assert.equal(window.document.getElementById('editor-file-name').textContent, 'script.js');
+  const view = editor.views.get('behavior');
+  view.dispatch({ changes: { from: 0, insert: '// draft\n' }, selection: { anchor: 3, head: 8 } });
+  const selection = view.state.selection.main;
+  editor.receive({ action: 'activate', document: 'css' });
+  editor.receive({ action: 'activate', document: 'behavior' });
+  assert.match(editor.source().behavior, /^\/\/ draft/);
+  assert.equal(view.state.selection.main.head, selection.head);
+  assert.equal(window.document.querySelector('#tab-behavior .file-dirty').hidden, false);
+  assert.equal(window.document.querySelector('#tab-css .file-dirty').hidden, true);
+  assert.equal(window.document.querySelector('#tab-behavior').tabIndex, 0);
+  editor.receive({ action: 'saved', source: editor.source() });
+  assert.equal(window.document.querySelector('#tab-behavior .file-dirty').hidden, true);
+});
+
+
+test('standalone project CSS and JSON files format and save only their own content', async t => {
+  const { window, editor, messages } = fixture(t);
+  editor.receive({ action: 'source', name: 'settings.json', singleFileName: 'settings.json', singleDocument: 'characteristics', document: 'characteristics', source: { css: '', behavior: '[1,2]', characteristics: '{}' } });
+  assert.equal(window.document.getElementById('tab-css').hidden, true);
+  assert.equal(window.document.getElementById('tab-behavior').hidden, true);
+  assert.equal(window.document.getElementById('editor-file-name').textContent, 'settings.json');
+  await editor.command('save');
+  assert.deepEqual(JSON.parse(messages.at(-1).source.behavior), [1, 2]);
+  assert.equal(messages.at(-1).source.characteristics, '{}');
+  editor.receive({ action: 'saved', source: messages.at(-1).source });
+  assert.equal(window.document.getElementById('editor-dirty').textContent, 'Saved');
+  editor.receive({ action: 'source', name: 'styles.css', singleFileName: 'styles.css', singleDocument: 'css', document: 'css', source: { css: '', behavior: 'body{color:red}', characteristics: '{}' } });
+  assert.equal(window.document.getElementById('editor-css').hidden, false);
+  await editor.command('save'); assert.match(messages.at(-1).source.behavior, /color: red/);
+  assert.equal(messages.at(-1).source.css, '');
+  editor.receive({ action: 'file-name', name: 'theme.css', singleFileName: 'theme.css' });
+  assert.equal(window.document.getElementById('editor-file-name').textContent, 'theme.css');
 });

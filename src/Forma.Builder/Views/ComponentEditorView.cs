@@ -8,14 +8,20 @@ namespace Forma.Builder;
 public sealed class ComponentEditorView : UserControl
 {
     private readonly string _folder;
+    private readonly bool _globalScript;
+    private const string GlobalFile = "main.js";
     private readonly Microsoft.Web.WebView2.WinForms.WebView2 _web = new() { Dock = DockStyle.Fill };
     private ComponentCustomization _draft;
     private bool _editorReady;
-    private readonly string _componentName;
+    private string _componentName;
+    private string? _projectFileName;
     private readonly Func<object>? _completionContext;
     private Task? _initialization;
     private string _theme = "dark";
+    private string _activeDocument = "css";
     public bool HasUnsavedChanges { get; private set; }
+    public string DocumentName => _componentName;
+    public event EventHandler? MetadataChanged;
     private static readonly JsonSerializerOptions JsonOptions = new() { PropertyNamingPolicy = JsonNamingPolicy.CamelCase, PropertyNameCaseInsensitive = true };
     private readonly Label _status = new() { Dock = DockStyle.Bottom, Height = 32, Padding = new Padding(8) };
     private static string? _preferredEditor;
@@ -28,16 +34,19 @@ public sealed class ComponentEditorView : UserControl
     private readonly TaskCompletionSource<bool> _editorLoaded = new(TaskCreationOptions.RunContinuationsAsynchronously);
     public ComponentCustomization Result => _saveSession.Current;
 
-    public ComponentEditorView(string name, string folder, ComponentCustomization source, Func<ComponentCustomization, Task> apply, Func<object>? completionContext = null)
+    public ComponentEditorView(string name, string folder, ComponentCustomization source, Func<ComponentCustomization, Task> apply, Func<object>? completionContext = null, bool globalScript = false, string? projectFileName = null)
     {
         Text = $"{name} — Custom Properties";
         _componentName = name;
+        _globalScript = globalScript;
+        _projectFileName = projectFileName;
+        if (projectFileName is not null) _activeDocument = Path.GetExtension(projectFileName).ToLowerInvariant() switch { ".css" => "css", ".json" => "characteristics", _ => "behavior" };
         _completionContext = completionContext;
         _folder = folder; _saveSession = new ComponentSaveSession(source, apply); _draft = source;
         ClientSize = new Size(1040, 720); MinimumSize = new Size(760, 500);
-        _status.BackColor = Color.FromArgb(30, 41, 59); _status.ForeColor = Color.FromArgb(148, 163, 184);
+        PaintStatus();
         Controls.Add(_web); Controls.Add(_status);
-        if (File.Exists(Path.Combine(folder, "component.css")) && File.Exists(Path.Combine(folder, "behavior.js"))
+        if (!globalScript && projectFileName is null && File.Exists(Path.Combine(folder, "component.css")) && (File.Exists(Path.Combine(folder, ComponentEditorService.ScriptFile)) || File.Exists(Path.Combine(folder, "behavior.js")))
             && (File.Exists(Path.Combine(folder, ComponentEditorService.PropertiesFile)) || File.Exists(Path.Combine(folder, "characteristics.json"))))
             _draft = ComponentEditorService.Read(folder);
         _status.Text = folder;
@@ -49,13 +58,14 @@ public sealed class ComponentEditorView : UserControl
         try {
             SetStatus("Loading code editor…");
             var page = Path.Combine(AppContext.BaseDirectory, "DesignerWeb", "code-editor.html");
-            foreach (var asset in new[] { page, Path.Combine(Path.GetDirectoryName(page)!, "code-editor.bundle.js"), Path.Combine(Path.GetDirectoryName(page)!, "code-editor.css") })
+            foreach (var asset in new[] { page, Path.Combine(Path.GetDirectoryName(page)!, "code-editor.bundle.js"), Path.Combine(Path.GetDirectoryName(page)!, "code-editor.css"), Path.Combine(Path.GetDirectoryName(page)!, "javascript-worker.bundle.js") })
                 if (!File.Exists(asset)) throw new FileNotFoundException("Code editor asset missing. Rebuild Forma.", asset);
             await _web.EnsureCoreWebView2Async().WaitAsync(TimeSpan.FromSeconds(30));
             if (_closed || IsDisposed) return;
             _web.CoreWebView2.WebMessageReceived += EditorMessage;
             _web.CoreWebView2.NavigationCompleted += EditorNavigated;
-            _web.CoreWebView2.Navigate(new Uri(page).AbsoluteUri + "?embedded=1");
+            _web.CoreWebView2.SetVirtualHostNameToFolderMapping("forma-editor.local", AppContext.BaseDirectory, CoreWebView2HostResourceAccessKind.DenyCors);
+            _web.CoreWebView2.Navigate("https://forma-editor.local/DesignerWeb/code-editor.html?embedded=1");
             await _editorLoaded.Task.WaitAsync(TimeSpan.FromSeconds(30));
         } catch (Exception error) {
             if (!_closed && !IsDisposed) SetStatus($"Could not load code editor: {error.Message}");
@@ -71,12 +81,35 @@ public sealed class ComponentEditorView : UserControl
     {
         if (_editorReady && !_closed && !IsDisposed) _web.CoreWebView2.PostWebMessageAsJson(JsonSerializer.Serialize(message, JsonOptions));
     }
+    public void SetEditorVisible(bool visible) { Visible = visible; SendEditor(new { action = "editor-active", active = visible }); }
     public Task StartEditorAsync() => _initialization ??= InitializeEditorAsync();
+    public void RenameProjectFile(string name) {
+        _projectFileName = name; _componentName = name;
+        SendEditor(new { action = "file-name", name, singleFileName = name });
+        WriteSources(Result); MetadataChanged?.Invoke(this, EventArgs.Empty);
+    }
+    public void RefreshProjectSource(string name, string content) {
+        if (_projectFileName != name) RenameProjectFile(name);
+        if (HasUnsavedChanges || _draft.Behavior == content) return;
+        var source = new ComponentCustomization { Behavior = content };
+        _saveSession.Synchronize(source); WriteSources(source); Populate(source);
+    }
+    public void ActivateDocument(string document) {
+        if (_projectFileName is not null) document = _activeDocument;
+        _activeDocument = document is "behavior" or "characteristics" ? document : "css";
+        SendEditor(new { action = "activate", document = _activeDocument });
+    }
     public void RefreshCompletionContext() => SendEditor(new { action = "context", context = _completionContext?.Invoke() });
     public void ApplyTheme(string theme) {
         var value = theme == "light" ? "light" : "dark";
         if (value == _theme) return;
-        _theme = value; SendEditor(new { action = "theme", theme = _theme });
+        _theme = value; PaintStatus(); SendEditor(new { action = "theme", theme = _theme });
+    }
+    // Matches the editor's VS Code status bar (Dark Modern / Light Modern).
+    private void PaintStatus() {
+        var light = _theme == "light";
+        _status.BackColor = light ? Color.FromArgb(248, 248, 248) : Color.FromArgb(24, 24, 24);
+        _status.ForeColor = light ? Color.FromArgb(111, 111, 111) : Color.FromArgb(157, 157, 157);
     }
 
     private void EditorMessage(object? sender, CoreWebView2WebMessageReceivedEventArgs e)
@@ -109,7 +142,13 @@ public sealed class ComponentEditorView : UserControl
             }
             if (command == "dirty") {
                 HasUnsavedChanges = message.GetProperty("dirty").GetBoolean();
-                Text = $"{(message.GetProperty("dirty").GetBoolean() ? "* " : "")}{_componentName} — Custom Properties"; return;
+                Text = $"{(message.GetProperty("dirty").GetBoolean() ? "* " : "")}{_componentName} — Custom Properties";
+                MetadataChanged?.Invoke(this, EventArgs.Empty); return;
+            }
+            if (command == "document") {
+                var document = message.GetProperty("document").GetString();
+                if (document is "css" or "behavior" or "characteristics") _activeDocument = document;
+                return;
             }
             if (command is "save" or "external") {
                 _draft = message.GetProperty("source").Deserialize<ComponentCustomization>(JsonOptions)
@@ -117,17 +156,34 @@ public sealed class ComponentEditorView : UserControl
                 await RunAsync(command == "save" ? SaveAsync : OpenExternalEditor);
             }
             if (command == "choose-editor") ChooseEditor();
-            if (command == "close" && (!HasUnsavedChanges || MessageBox.Show(this, "Discard unsaved component code?", "Unsaved code", MessageBoxButtons.YesNo) == DialogResult.Yes)) Close();
+            if (command == "close") RequestClose();
         } catch (Exception error) when (error is JsonException or ArgumentException or InvalidOperationException or KeyNotFoundException) {
             SendEditor(new { action = "error", status = error.Message });
         }
     }
 
     private ComponentCustomization Source() => _draft;
+    private void WriteSources(ComponentCustomization source)
+    {
+        if (_projectFileName is not null) { Directory.CreateDirectory(_folder); File.WriteAllText(Path.Combine(_folder, _projectFileName), source.Behavior); return; }
+        if (!_globalScript) { ComponentEditorService.Write(_folder, source); return; }
+        ComponentCustomization.Validate(source);
+        Directory.CreateDirectory(_folder);
+        File.WriteAllText(Path.Combine(_folder, GlobalFile), source.Behavior);
+    }
+    private ComponentCustomization ReadSources()
+    {
+        if (_projectFileName is not null) { var file = Path.Combine(_folder, _projectFileName); if (new FileInfo(file).Length > 800_000) throw new ArgumentException("File is too large."); return ComponentCustomization.Validate(new() { Behavior = File.ReadAllText(file), Characteristics = "{}" }); }
+        if (!_globalScript) return ComponentEditorService.Read(_folder);
+        var path = Path.Combine(_folder, GlobalFile);
+        if (!File.Exists(path)) path = Path.Combine(_folder, "global-script.js");
+        if (new FileInfo(path).Length > 800_000) throw new ArgumentException("Global script is too large.");
+        return ComponentCustomization.Validate(new() { Behavior = File.ReadAllText(path) });
+    }
     private void Populate(ComponentCustomization source)
     {
         _draft = source;
-        SendEditor(new { action = "source", source, theme = _theme, context = _completionContext?.Invoke(), name = _componentName, status = "Use :host for styles. Behavior runs in Preview. Save applies automatically." });
+        SendEditor(new { action = "source", source, singleDocument = _projectFileName is null ? null : _activeDocument, singleFileName = _projectFileName, document = _activeDocument, globalScript = _globalScript, theme = _theme, context = _completionContext?.Invoke(), name = _componentName, status = _projectFileName is not null ? "Project resource. Save stores content; import JavaScript from main.js or a component script to run it." : _globalScript ? "main.js runs before component scripts. Save applies automatically." : "Use :host for styles. Script runs in Preview. Save applies automatically." });
     }
 
     private async Task OpenExternalEditor()
@@ -147,7 +203,7 @@ public sealed class ComponentEditorView : UserControl
         }
         await SaveAsync();
         var start = new ProcessStartInfo(_preferredEditor!) { UseShellExecute = false, WorkingDirectory = _folder };
-        foreach (var file in new[] { "component.css", "behavior.js", ComponentEditorService.PropertiesFile }) start.ArgumentList.Add(Path.Combine(_folder, file));
+        foreach (var file in _projectFileName is not null ? new[] { _projectFileName } : _globalScript ? new[] { GlobalFile } : new[] { "component.css", ComponentEditorService.ScriptFile, ComponentEditorService.PropertiesFile }) start.ArgumentList.Add(Path.Combine(_folder, file));
         using var process = Process.Start(start);
         SetStatus("Save in your external editor; changes apply automatically here.");
     }
@@ -166,10 +222,10 @@ public sealed class ComponentEditorView : UserControl
         try
         {
             var source = ComponentCustomization.Validate(Source());
-            ComponentEditorService.Write(_folder, source);
+            WriteSources(source);
             await ApplyAsync(source);
             if (!IsDisposed) {
-                SetStatus("Saved and applied. Start a new Preview to test behavior changes.");
+                SetStatus(_projectFileName is null ? "Saved and applied. Start a new Preview to test script changes." : "Project file saved. Save the project to retain it in the .forma file.");
                 SendEditor(new { action = "saved", source, status = _status.Text });
             }
         }
@@ -187,7 +243,7 @@ public sealed class ComponentEditorView : UserControl
         try
         {
             Directory.CreateDirectory(_folder);
-            if (!File.Exists(Path.Combine(_folder, "component.css"))) ComponentEditorService.Write(_folder, Source());
+            if (_projectFileName is not null || _globalScript || !File.Exists(Path.Combine(_folder, "component.css"))) WriteSources(Source());
             _watcher = new FileSystemWatcher(_folder)
             {
                 NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.FileName | NotifyFilters.Size,
@@ -195,7 +251,7 @@ public sealed class ComponentEditorView : UserControl
             };
             void Changed(object sender, FileSystemEventArgs e)
             {
-                if (_closed || IsDisposed || Disposing || e.Name is not ("component.css" or "behavior.js" or "custom-properties.json" or "characteristics.json")) return;
+                if (_closed || IsDisposed || Disposing || e.Name != _projectFileName && e.Name is not ("component.css" or "script.js" or "behavior.js" or "main.js" or "global-script.js" or "custom-properties.json" or "characteristics.json")) return;
                 _readRetries = 0; _reloadDelay.Stop(); _reloadDelay.Start();
             }
             _watcher.Changed += Changed; _watcher.Created += Changed; _watcher.Renamed += Changed;
@@ -214,12 +270,12 @@ public sealed class ComponentEditorView : UserControl
         _saving = true;
         try
         {
-            var source = ComponentEditorService.Read(_folder);
+            var source = ReadSources();
             if (_saveSession.IsCurrent(source)) return;
             await ApplyAsync(source);
             if (_closed || IsDisposed) return;
             Populate(source);
-            SetStatus("External save applied. Start a new Preview to test behavior changes.");
+            SetStatus(_projectFileName is null ? "External save applied. Start a new Preview to test script changes." : "External save stored in the project.");
         }
         catch (Exception error) when (error is ArgumentException or System.Text.Json.JsonException or IOException or UnauthorizedAccessException)
         {
@@ -230,6 +286,9 @@ public sealed class ComponentEditorView : UserControl
     }
 
     public event EventHandler? Closed;
+    public void RequestClose() {
+        if (!HasUnsavedChanges || MessageBox.Show(this, "Discard unsaved component code?", "Unsaved code", MessageBoxButtons.YesNo) == DialogResult.Yes) Close();
+    }
     public void Close() { if (_closed) return; Closed?.Invoke(this, EventArgs.Empty); Dispose(); }
 
     protected override void Dispose(bool disposing)

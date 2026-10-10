@@ -1,71 +1,94 @@
-# Builder workspace
+# Builder workspace walkthrough
 
 Run `dotnet run --project src/Forma.Builder` from the repository root. Close the
-old running Builder before rebuilding its executable. The host is a Windows
-form; menus, toolbar, toolbox, canvas, inspector, and status bar are web UI.
+old Builder before rebuilding its executable. The native Windows host contains
+the web workspace: menus, toolbox, canvas, inspector and docked code editor.
 
-## Manual checks
+## Build and test a small form
 
-1. Drag Button, Label, TextBox, or Panel from the toolbox onto the white form.
-   Double-click a toolbox entry to insert it at (32, 32).
-2. Drag a control already on the form. X/Y in the inspector and status bar should
-   follow it, and its position should persist when another control is selected.
-3. Change zoom to 125% and drag again. Movement should use form coordinates,
-   rather than screen pixels. Controls must stay inside the form's edges.
-4. Press Escape during a drag to cancel it. A click without movement should
-   select the control without changing its position.
-5. Edit Text, font size, colors, Width, Height, X, and Y. Select another control
-   and return to confirm each control keeps its own properties.
-6. Use arrow keys to move the selected control by one pixel; Shift+arrow uses ten.
-   Delete removes the selected control. Input fields keep normal editing keys.
-7. Click empty form space to edit the form title and background. Root dimensions
-   are fixed at 640 × 440 for this milestone.
-8. Preview hides design outlines and lets TextBox accept input. Enabled and
-   Visible affect controls in Preview; in Design they appear dimmed so they can
-   still be selected. Escape or Back to design returns to editing.
-9. Search the toolbox, hide/show side panels through View, and open Help → About.
-10. New Form creates a blank design and resets selection. Designs are in memory.
+1. Click **Toolbox** in the left sidebar, then drag a Panel onto the form, then drop a TextBox, Label and Button inside it.
+   The children belong to the panel and move with it. Double-clicking a toolbox
+   entry also inserts a control.
+2. Name them `nameInput`, `greetingLabel` and `greetButton` in Properties. Names
+   are unique identifiers; the read-only ID stays stable across renames.
+3. Move and resize them using selection handles or Layout values. Change zoom
+   and confirm movement still uses form coordinates. Hold Alt to bypass snapping
+   guides; Escape cancels an active drag.
+4. Select the Button and click **Custom Properties…** below the property search.
+   In the **Script** tab, replace the starter source with:
 
-Save/Open, undo/redo, event binding, layout providers, nested panel drops, and
-resizing by selection handles are not implemented. Their corresponding UI is
-disabled where present. Preview is a visual mode, not a compiled application.
+   ```js
+   forma.on("click", () => {
+     const name = String(forma.get("nameInput", "value") ?? "").trim();
+     forma.set("greetingLabel", "text", name ? `Hello, ${name}!` : "Enter a name.");
+   });
+   ```
 
-## Architecture
+5. Save the editor, then click Preview. Type a name and click the button. Preview
+   runs a separate design copy in a resizable window with maximize support.
+   Close it to end that runtime session. Saving script edits requires a fresh
+   Preview to test the changed source.
+6. Save the project with Ctrl+S. Open the `.forma` file with Ctrl+O to confirm the
+   design and script reopen. Ctrl+Z/Ctrl+Y undo and redo design edits; focused
+   text editors keep their own text undo behavior.
 
-`ViewModels/BuilderViewModel.cs` owns the control tree in C#, and
-`Services/DesignerEditingService.cs` validates committed edits and positions.
-`Views/BuilderWindow.cs` hosts the native window and dispatches browser messages.
-Appearance and dimensions are currently Builder-owned metadata keyed by control
-ID; they are not yet a shared framework styling API. Property updates, drops,
-selection, and movement use dedicated designer messages through the bridge.
+## Browse the project
 
-`DesignerWeb/designer.js` handles pointer capture and immediate drag feedback.
-It divides pointer deltas by canvas zoom, clamps bounds, and sends a final move
-on pointer release. C# validates the target and clamps positions again before
-updating the control. Cancellation restores the original position. Normal
-application Click events are suppressed in Design and available in Preview.
+The left sidebar switches between **Explorer** and **Toolbox**. Solution Explorer
+shows all forms, nested components, source files, the global script and image
+assets in use. Click a component to select it in Design, or expand it and click
+`script.js`, `component.css` or `custom-properties.json` to edit that source.
+See [Solution Explorer](solution-explorer.md) for search and keyboard navigation.
 
-Control X/Y properties stay optional: null uses normal flow, explicit coordinates
-use absolute positioning. The greeting demo retains its normal layout.
+## Add another form
 
-## Your next piece: CheckBox
+Choose **File → New form** or Ctrl+N. The new form belongs to the current project;
+use the form selector above the canvas to return to the first form. Save retains
+all forms in the same file. Use **File → New project** or Ctrl+Shift+N to start a
+separate project. Preview runs the currently selected form.
 
-- Add a `CheckBox` control to Forma.Core with checked state and an event.
-- Extend the runtime's DOM control map and event handling to support it.
-- Enable its toolbox entry and add its kind to the designer drop whitelist.
-- Add its factory case and checked property to the C# inspector state.
-- Cover checked-state round trips with a test.
+## Layout and properties
 
-Your About dialog text is preserved in the C# host.
+Panel and GroupBox allow free positioning. Flow/stack/table layouts own child
+positions; X/Y edits do not override their arrangement. Use layout slots for
+split panes, tabs and table cells. TabControl has an Add tab action and horizontal
+or vertical tabs. Dock/Anchor apply to free-position children; Dock controls
+position and can control dimensions. This is intentional layout behavior.
+
+Click empty form space to edit the form title, dimensions and appearance. Use
+property search to find component-specific settings. Enabled/Visible affect
+Preview; Design keeps components selectable. Locked prevents design edits.
+The workspace theme toggle changes the editor, not your form's appearance.
+
+For live values outside events, use `forma.bind` and read `.value` when needed.
+For shared values, open **Project → Main script** and use
+`forma.provide`/`forma.use` or `forma.shared`. See the
+[script guide](components-and-scripting.md), [runtime property reference](runtime-properties.md)
+and [global script examples](global-scripts.md).
+
+Preview runs inside Builder. A saved design is not an exported executable;
+executable export and generated C# event handlers remain roadmap work.
+
+## Architecture and contributing
+
+`BuilderViewModel` owns design state; services validate editing, persistence,
+properties and Preview operations. Views host native windows and dispatch
+browser messages. The browser handles immediate pointer feedback, while C#
+validates committed edits. Preview owns its own model and reactive script scope.
+See [the MVVM architecture and folder structure](architecture.md).
+
+Before adding a control, check the [roadmap](roadmap-stages.md) and
+[toolbox implementation](toolbox-implementation.md). A complete addition needs
+a model, renderer, factory/toolbox registration, contextual inspector properties,
+persistence, supported script operations and meaningful verification.
 
 ## Automated checks
 
 ```powershell
 dotnet build Forma.slnx
 dotnet test Forma.slnx
-node --test tests/WebRuntime/designer.test.cjs
+node --test tests/WebRuntime/*.test.cjs
 ```
 
-JavaScript tests cover drops, selection, dragging at zoom, edge clamping,
-cancellation, and Preview mode using a mock DOM. Desktop checks cover integration
-and layout; they complement these automated checks.
+Desktop testing complements these checks for pointer interactions, rendering
+and native window integration.

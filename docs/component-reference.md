@@ -1,11 +1,14 @@
 # Component and property reference
 
-This reference covers the 60 implemented toolbox entries plus Form. It was checked against the compiled Core models and InspectorCatalog. The larger roadmap is separate. Start with [the usage guide](components-and-scripting.md) for setup, JavaScript recipes, and C# integration.
+This reference covers the 84 implemented toolbox entries plus Form. It was checked against the compiled Core models and InspectorCatalog. The larger roadmap is separate. Start with [the usage guide](components-and-scripting.md) for setup, JavaScript recipes, and C# integration.
 
 ## Reading the tables
 
 - Inspector IDs are the field names stored in Builder state; C# model properties use PascalCase.
-- A property in the inspector is **not automatically supported by `api.get` or `api.set`**. See the JavaScript API table in the usage guide.
+- A property in the inspector is **not automatically supported by `forma.get` or `forma.set`**. See the JavaScript API table in the usage guide.
+  The [extended runtime property guide](runtime-properties.md) lists the shared
+  and component-specific fields now connected to get/set/bind, with read-only
+  status fields separated from setters.
 - Shared visual properties are in Builder `Appearance`, not automatically properties on every Core control.
 - C# defaults below are model constructor defaults. Builder may supply different initial geometry, colors, or text when you drop a control.
 - Image source is a read-only field filled by picker actions. File/folder selected paths can be edited or chosen. IDs are immutable.
@@ -16,6 +19,9 @@ This reference covers the 60 implemented toolbox entries plus Form. It was check
 Visual controls expose geometry and appearance. Tray components expose the applicable General/Behavior fields and Custom Properties action. The inspector filters these by kind; do not apply a visual field to a tray component.
 
 ### Advanced
+
+The Custom Properties action is directly below Search properties, above the
+property categories, for both visual controls and tray components.
 
 | ID | Label | Editor | Values / range | Notes |
 | --- | --- | --- | --- | --- |
@@ -57,6 +63,11 @@ Visual controls expose geometry and appearance. Tray components expose the appli
 | `locked` | Locked | checkbox | — | Editable |
 
 ### Layout
+
+| ID | Label | Editor | Values / range | Notes |
+| --- | --- | --- | --- | --- |
+| `dock` | Dock | select | `none`, `top`, `bottom`, `left`, `right`, `fill` | Visual children; disabled in managed layouts |
+| `anchor` | Anchor | select | All combinations of `top`, `bottom`, `left`, `right`; `none` | Default `top,left`; Dock takes priority |
 
 | ID | Label | Editor | Values / range | Notes |
 | --- | --- | --- | --- | --- |
@@ -1167,6 +1178,12 @@ Uses the shared inspector fields and contextual actions.
 
 ### Timer
 
+Preview scripts support interval through forma.get/set/bind. Pass an integer
+number of milliseconds, e.g. forma.set("timer1", "interval", 1000). The value
+is clamped to 10–3600000, applies to a running timer, and does not edit the
+saved design. Set enabled=true to start and enabled=false to stop. Numeric
+strings such as "1000" are rejected and flagged by the editor.
+
 **Kind:** `timer` · **Base model:** `Component` · **Designer:** component tray.
 
 | Inspector ID | Label | Editor | Values / range | Read-only |
@@ -1325,7 +1342,160 @@ Uses the shared inspector fields and contextual actions.
 
 `Id` is an init-only stable identifier; `Name` is the script lookup name; `Text` is display text; `X`/`Y` are nullable positions; `LayoutSlot` is a one-based pane/tab/cell. `Children` and `Parent` describe ownership. `Add`, `Insert`, `Remove` and `MoveChild` manage the tree. Every control has `PropertyChanged`. The base `Value` is a string field; NumericControl shadows it with a double. Input JavaScript should use the guide’s typed runtime API.
 
-## Important inspector/model aliases
+## Selection controls and Rating
+
+### RadioGroup
+
+Inherits ChoiceControl through SelectionGroup. `Items` defaults to three items,
+`SelectedIndex` defaults to zero (-1 clears), and `Orientation` defaults to
+horizontal. Inspector: Items, Selected index, Orientation, and common properties.
+JS: items and selectedIndex get/set/bind. C# event: SelectedIndexChanged.
+
+### SegmentedControl
+
+Uses the same model and properties as RadioGroup, rendered as buttons. Supports
+arrow keys/Home/End and a single keyboard tab stop for the selected segment.
+
+### CheckBoxGroup
+
+Inherits MultiChoiceControl. `Items` defaults to three items; `CheckedIndices`
+defaults to empty and normalizes to unique valid ascending indices. Orientation
+defaults to horizontal. Inspector: Items, Checked indices, Orientation, and common
+properties. JS: items and checkedIndices get/set/bind. C# method/event:
+SetItemChecked(index, checked), ItemCheck. CheckedListBox shares this model base.
+
+### Rating
+
+Inherits NumericControl. Stars defaults to five (1–10); Value defaults to zero
+and rounds to whole stars within bounds. ReadOnly defaults to false.
+Inspector: Stars, Value, Read only, and common properties. JS: value and readOnly
+get/set/bind. C# event: ValueChanged. Delete/Backspace clears to zero in Preview.
+
+## Chips and icon action buttons
+
+### Chip
+
+Inherits CheckBox. Checked defaults false, Removable false, Variant neutral.
+Supports neutral/info/success/warning/danger. IsRemoved is transient and omitted
+from saved projects. Remove() requires Removable and raises Removed once;
+Restore() clears removal. JS get/set/bind supports checked, variant, removable,
+isRemoved. Inspector exposes Checked, Variant, and Removable.
+
+### ChipGroup and ButtonGroup
+
+ChipGroup inherits MultiSelectionGroup/MultiChoiceControl: Items, CheckedIndices,
+Orientation, ItemCheck and SetItemChecked. ButtonGroup inherits SelectionGroup/
+ChoiceControl: Items, SelectedIndex, Orientation and SelectedIndexChanged.
+The inspector exposes those choices and orientation; JS uses items plus
+checkedIndices or selectedIndex. Defaults match their shared model bases.
+
+### IconButton and FloatingActionButton
+
+IconButton inherits Button. IconName defaults search; ShowText defaults false;
+Text defaults Search. FloatingActionButton inherits IconButton, defaults to
+file-plus/Add, and has a circular Builder appearance. Icons use Icon.Names.
+Inspector: Icon, Show text, and common properties. JS get/set/bind: iconName,
+showText, and common properties. Both retain Button.Click/OnClick behavior.
+
+## Command menu buttons
+
+### DropdownButton and SplitButton
+
+DropdownButton inherits CommandControl, with Text=Actions and the default Action
+command. SplitButton inherits DropdownButton, defaults Text=Run, and adds
+PrimaryEnabled=true, PrimaryClick, and InvokePrimary(). Both inherit Items,
+ItemClicked, and InvokeItem(id). Inspector: Commands JSON and common properties;
+SplitButton also exposes Primary enabled. JS get/set/bind: commandItems and
+primaryEnabled (SplitButton). Events: command-item and primary-click (SplitButton).
+
+### CommandButton
+
+Inherits IconButton/Button. Defaults: Text=Command, IconName=file-plus,
+ShowText=true, Description=Perform an action. Inspector includes Description,
+Icon, Show text, and common properties. JS get/set/bind supports description,
+iconName, showText, and common properties. Click/OnClick retain Button behavior.
+
+## Modern layouts and navigation
+
+### Dock and Anchor (visual child appearance)
+
+These are Builder Appearance properties rather than Core control members.
+Inspector and Preview JS get/set/bind use dock and anchor. Dock defaults none;
+accepted values: none/top/bottom/left/right/fill. Anchor defaults top,left;
+the inspector offers every combination of top, bottom, left and right, including
+none. Values use the exact lowercase comma-separated strings shown in the
+inspector. Both persist in project appearance and participate in design history.
+
+Dock reserves edges in child order and processes Fill last. Docked positions and
+stretched dimensions cannot be dragged or manually edited. Dock takes priority
+over Anchor. Anchoring opposite edges stretches that dimension; one edge keeps
+its distance; neither edge centers the control along that axis. Width/height
+constraints still apply. Hidden docks reserve no space. Stack, flow, table and
+other managed layouts retain their own placement rules; use an inner Panel to
+apply docking/anchoring. The form itself and nonvisual components have no Dock
+or Anchor inspector. AppShell controls its main area's size automatically.
+
+### Accordion
+
+Inherits TabControl. Tabs defaults to Section 1/Section 2; SelectedTab defaults
+to 0 and Expanded defaults true. Inspector labels are Sections (one per line),
+Expanded section (zero-based), and Expanded. Use the + button or Add section
+context action to create a section, then drop controls into that section.
+Children retain one-based LayoutSlot assignments. One section can be expanded
+at a time; clicking its header again collapses it. Native buttons support Enter
+and Space. JS get/set/bind supports tabs (string array), selectedTab, expanded
+and gap. Change supplies event.detail.selectedTab/expanded. Changing section
+names does not migrate children from removed sections; adjust their Layout slot
+if you remove a section containing controls.
+
+### Sidebar, AppShell and ResponsivePanel
+
+Sidebar inherits LinearLayout and defaults to vertical stacking with scrolling.
+Place navigation or other controls inside it; moving it moves its children.
+AppShell and ResponsivePanel inherit ResponsiveLayout/LinearLayout. Both expose
+Gap (default 8, range 0–64), Orientation, and Breakpoint (inspector: Stack below
+width; default 600, range 100–2400). JS get/set/bind uses gap, orientation and
+breakpoint. The breakpoint measures the container's width, not the window.
+
+AppShell places its first child beside the remaining content at wide horizontal
+widths; the first child's inspector Width sets the sidebar width. Remaining
+children share the available space and fill the height. Below Breakpoint,
+children stack and fill the available width. Start by dropping a Sidebar first,
+then a Panel or ResponsivePanel for the main content. ResponsivePanel wraps
+children at wide widths and stacks them at narrow widths. Child X/Y is managed;
+drag to reorder. This batch does not add routing, a drawer, or automatic form
+docking. Resize the container to test its breakpoint.
+
+### StackPanel, HStack, VStack, WrapPanel and CenterPanel
+
+Inherit LinearLayout/LayoutContainer. StackPanel and VStack default to vertical;
+HStack defaults to horizontal. Orientation is editable; these are presets.
+Stack layouts do not wrap. WrapPanel wraps onto additional rows/columns.
+CenterPanel centers the child group along both axes. All use Gap (0–64, default
+8) and child order. Inspector: Orientation, Gap, common fields. JS get/set/bind:
+orientation, gap. Children are grouped and saved with their parent; moving a
+container moves the entire group. X/Y fields are disabled for managed children;
+dragging reorders instead. Width/height still control each child's dimensions.
+
+### ScrollablePanel
+
+Inherits LayoutContainer. Children use free X/Y positioning and may be larger
+than the visible panel. Set child size/position in the inspector for overflowing
+content. ScrollDirection defaults both; horizontal hides vertical overflow and
+vertical hides horizontal overflow. Inspector and JS get/set/bind use
+scrollDirection. The runtime's content area provides native browser scrolling.
+
+### Breadcrumb and SideNavigation
+
+Both inherit ChoiceControl; SideNavigation also inherits SelectionGroup.
+Breadcrumb defaults to Home/Projects/Details with SelectedIndex=2.
+SideNavigation defaults to Dashboard/Projects/Settings, SelectedIndex=0,
+Orientation=vertical. Inspector: Items, Selected index, plus Orientation for
+SideNavigation. JS get/set/bind: items, selectedIndex, and SideNavigation
+orientation. SelectedIndexChanged is the Core event. JS navigate supplies
+event.detail.index/text; application code decides what page/content to display.
+
+## Inspector/model property aliases
 
 | Inspector ID | C# model property | JavaScript API when supported |
 | --- | --- | --- |
@@ -1333,10 +1503,10 @@ Uses the shared inspector fields and contextual actions.
 | `dateValue` | `DateTimeInput.DateValue` | `value` |
 | `color` | `ColorPicker.Color` | `value` |
 | `commandItems` | `CommandControl.Items` | Configure in inspector/C# |
-| `gridColumns`, `gridRows` | `DataGridView.Columns`, `Rows` | Configure in inspector/C# |
+| `gridColumns`, `gridRows` | `DataGridView.Columns`, `Rows` | Inspector/C#; JS `forma.get/set` uses array properties `columns`, `rows` |
 | `source` | `Image.Source` | Choose image / configure in C# |
 | `rowCount` | `TableLayoutPanel.RowCount` | Configure in inspector/C# |
-| `checkedIndices` | `CheckedListBox.CheckedIndices` | Configure in inspector/C# |
+| `checkedIndices` | `MultiChoiceControl.CheckedIndices` | JS get/set uses an integer array |
 | `targetId` | `TargetId` | Inspector resolves names to stable IDs; C# uses the target’s Id |
 
 The current Core LayoutContainer base also exposes shared fields such as Tabs/Columns on its descendants. Only the contextual fields listed above have meaning for that particular rendered layout; for example Card is not a tab control.

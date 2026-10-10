@@ -69,8 +69,8 @@ controls keep their designed positions. It runs a copy of the control tree with 
 pickers; testing does not alter the original design. Close the window to end the
 session. This currently runs inside Builder; executable export and C# event
 code generation remain later roadmap work. Component-specific CSS, JavaScript
-behavior and custom JSON values are available through **Advanced → Custom
-Properties…**. See [component customization](component-customization.md).
+scripts and custom JSON values are available through **Custom Properties…**
+below the property search field. See [component customization](component-customization.md).
 
 CheckBox/RadioButton expose Checked. RadioButton browser interactions group by
 parent container. ComboBox/ListBox expose newline-separated Items and Selected
@@ -115,7 +115,7 @@ screen pixels, with measurement guides for 8 px and 16 px gaps. Hold Alt to
 bypass snapping. Release, Escape, or cancellation clears the guides.
 Containers start behind regular controls regardless of insertion order.
 Use Bring to front / Send to back in Properties for sibling layer order;
-Advanced Z-index can also adjust the order. Layer actions work within a parent.
+The Styles tab in Custom Properties can also set `z-index`. Layer actions work within a parent.
 
 ## Data widgets
 
@@ -264,13 +264,30 @@ after sorting/filtering. Selection-only updates preserve the active cell and
 filter updates preserve the search input's focus.
 
 Application code subscribes to RowSelectionChanged or reads SelectedRow. In
-Custom Properties, use api.on("row-selection", event => { ...event.detail.row... })
-and api.get/api.set for selectedRow, filterText, sortColumn, and sortDirection.
+Custom Properties, use forma.on("row-selection", event => { ...event.detail.row... })
+and forma.get/forma.set for selectedRow, filterText, sortColumn, and sortDirection.
 These indices always refer to source Rows, not positions in the filtered view.
 Typed editors, grouping, binding and virtualization remain future enhancements.
 
 
 ## Modern UI batch
+
+The next layout/navigation batches add StackPanel, HStack, VStack, WrapPanel,
+CenterPanel, ScrollablePanel, Breadcrumb and SideNavigation. Linear containers
+support managed child ordering and grouping; ScrollablePanel retains free
+positioning and configurable scroll direction. Navigation selections are exposed
+to scripts through selectedIndex and navigate callbacks. All eight support
+properties, persistence and design history. Toolbox drag acceptance now follows
+the displayed catalog, with a regression check for every entry.
+
+The following batch adds Accordion, Sidebar, AppShell and ResponsivePanel.
+Accordion holds controls in named sections, with one expanded section at a time
+and optional collapse. Sidebar stacks children with scrolling. AppShell gives
+the first child the sidebar role and lets later children fill the main area;
+it stacks below Breakpoint. ResponsivePanel wraps at wide widths and stacks at
+narrow widths. Breakpoints follow each container's width. All four support
+contextual inspector fields, save/open, history and Preview scripting.
+See component-reference.md for section slots and responsive property details.
 
 Card is a free-position container with Title, Description and Show header. Drop
 children into its content area; moving the Card moves the entire group. Badge
@@ -287,12 +304,11 @@ is a visual loading indicator; application scripts supply the actual work.
 
 Toast lives in the component tray. Configure its text, variant, corner position,
 duration and Allow dismissal. It is shown by `Toast.Show()` in C# or
-`api.showToast("nameOrId")` in a Preview script. It closes on timeout, optional
-close-button dismissal, or `api.closeToast("nameOrId")`. Open state is transient
+`forma.showToast("nameOrId")` in a Preview script. It closes on timeout, optional
+close-button dismissal, or `forma.closeToast("nameOrId")`. Open state is transient
 and is excluded from project persistence. Notifications stack in each corner.
 
 All seven controls support contextual properties, save/open and design Undo/Redo.
 Card children keep their identities. The separate runtime helper is
 `src/Forma.WebView2/Web/scripts/modern-controls.js`; styling uses Tailwind source
-in `src/Forma.Builder/Frontend/input.css`. EmptyState, Skeleton, richer selection
-controls and the remaining stage 4 catalog are still pending.
+in `src/Forma.Builder/Frontend/input.css`. EmptyState, Skeleton, RadioGroup, CheckBoxGroup, SegmentedControl, and Rating are also implemented; Chip, ChipGroup, ButtonGroup, IconButton, and FloatingActionButton are also implemented. SplitButton, DropdownButton, and CommandButton are also implemented.

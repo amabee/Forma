@@ -5,6 +5,30 @@
 //   "value"   - written to the value property (form fields)
 //   "none"    - ignored, so containers never overwrite their own children
 const CONTROL_TYPES = {
+  accordion: { tag: "div", text: "none", init: initContainer },
+  sidebar: { tag: "aside", text: "none", init: initContainer },
+  appshell: { tag: "div", text: "none", init: initContainer },
+  responsivepanel: { tag: "div", text: "none", init: initContainer },
+  stackpanel: { tag: "div", text: "none", init: initContainer },
+  hstack: { tag: "div", text: "none", init: initContainer },
+  vstack: { tag: "div", text: "none", init: initContainer },
+  wrappanel: { tag: "div", text: "none", init: initContainer },
+  centerpanel: { tag: "div", text: "none", init: initContainer },
+  scrollablepanel: { tag: "div", text: "none", init: initContainer },
+  breadcrumb: { tag: "nav", text: "none" },
+  sidenavigation: { tag: "nav", text: "none" },
+  dropdownbutton: { tag: "div", text: "none" },
+  splitbutton: { tag: "div", text: "none" },
+  commandbutton: { tag: "button", text: "none" },
+  chip: { tag: "div", text: "none" },
+  chipgroup: { tag: "div", text: "none" },
+  buttongroup: { tag: "div", text: "none" },
+  iconbutton: { tag: "button", text: "none" },
+  floatingactionbutton: { tag: "button", text: "none" },
+  radiogroup: { tag: "div", text: "none" },
+  checkboxgroup: { tag: "div", text: "none" },
+  segmentedcontrol: { tag: "div", text: "none" },
+  rating: { tag: "div", text: "none" },
   card: { tag: "section", text: "none", init: initContainer },
   icon: { tag: "span", text: "none" },
   emptystate: { tag: "section", text: "none" },
@@ -90,6 +114,7 @@ function applyDialog(source, properties) {
   if (!properties.isOpen || window.formaDesigner?.preview === false) { modal?.remove(); return; }
   if (!modal) {
     modal = document.createElement("dialog"); modal.id = id; modal.dataset.dialogSource = source.id;
+    modal.dataset.componentSource = source.id;
     modal.className = "forma-dialog-popup";
     modal.setAttribute("aria-labelledby", `${id}-title`);
     modal.setAttribute("aria-describedby", `${id}-message`);
@@ -163,7 +188,8 @@ function ensureLayoutCells(container, requiredSlot = 1) {
   Array.from(host.children).forEach((cell, index) => cell.setAttribute("aria-label", split ? `Pane ${index + 1}` : `Row ${Math.floor(index / columns) + 1}, column ${index % columns + 1}`));
 }
 function childHost(parent, slot = 1) {
-  const host = parent.querySelector?.(":scope > .layout-content") ?? parent;
+  const host = parent.querySelector?.(parent.dataset.formaType === "accordion"
+    ? ":scope > .layout-header > .layout-content" : ":scope > .layout-content") ?? parent;
   if (["splitcontainer", "tablelayoutpanel"].includes(parent.dataset?.formaType)) {
     ensureLayoutCells(parent, slot);
     const cells = Array.from(host.children).filter(child => child.dataset.layoutSlot);
@@ -176,7 +202,18 @@ window.formaChildHost = childHost;
 function initContainer(el) {
   const header = document.createElement("div"); header.className = "layout-header";
   const content = document.createElement("div"); content.className = "layout-content";
+  if (["stackpanel", "hstack", "vstack", "wrappanel", "centerpanel", "scrollablepanel", "sidebar", "appshell", "responsivepanel"].includes(el.dataset.formaType)) header.hidden = true;
   el.append(header, content);
+}
+
+// Observe only responsive containers; partial property updates retain their configuration.
+function updateResponsiveLayout(element) {
+  const props = element._layoutProperties ?? {};
+  const width = element.clientWidth || parseFloat(element.style.width) || 0;
+  const narrow = width < (props.breakpoint ?? 600);
+  element.dataset.narrow = String(narrow);
+  const host = element.querySelector(".layout-content");
+  host.style.flexDirection = narrow ? "column" : (props.orientation === "vertical" ? "column" : "row");
 }
 
 function richFlags(node, editor) {
@@ -351,7 +388,8 @@ window.forma = {
   },
 
   applyData(element, properties) {
-    if (["icon", "emptystate", "skeleton", "card", "badge", "avatar", "divider", "toast", "spinner", "loadingoverlay"].includes(element.dataset.formaType)) window.formaModern?.update(element, properties);
+    window.formaSelections?.update(element, properties);
+    if (["icon", "emptystate", "skeleton", "card", "badge", "avatar", "divider", "toast", "spinner", "loadingoverlay", "chip", "iconbutton", "floatingactionbutton", "commandbutton"].includes(element.dataset.formaType)) window.formaModern?.update(element, properties);
     if (element.dataset.formaType === "tooltip") window.formaTooltip?.update(element, properties);
     const kind = element.dataset.formaType;
     if (kind === "treeview") {
@@ -425,12 +463,13 @@ window.forma = {
     if (kind === "colorpicker") element.value = properties.color ?? "#2878ff";
     if (["dialog", "confirmationdialog"].includes(kind)) applyDialog(element, properties);
     if (["contextmenu", "contextmenustrip"].includes(kind)) element.dataset.targetId = properties.targetId ?? "";
-    if (["menustrip", "toolbar", "toolstrip", "contextmenu", "contextmenustrip"].includes(kind)) {
-      const items = properties.commandItems ?? [];
-      element.setAttribute("aria-label", kind === "menustrip" ? "Menu" : "Toolbar");
-      if (kind !== "menustrip") element.setAttribute("role", "toolbar");
-      element.dataset.orientation = properties.orientation ?? "horizontal";
-      const signature = JSON.stringify(items);
+    if (["menustrip", "toolbar", "toolstrip", "contextmenu", "contextmenustrip", "dropdownbutton", "splitbutton"].includes(kind)) {
+      const p = element._commandProperties = { ...element._commandProperties, ...properties };
+      const items = p.commandItems ?? [], actionMenu = ["dropdownbutton", "splitbutton"].includes(kind);
+      element.setAttribute("aria-label", actionMenu ? p.text ?? "Actions" : kind === "menustrip" ? "Menu" : "Toolbar");
+      if (kind !== "menustrip") element.setAttribute("role", actionMenu ? "group" : "toolbar");
+      element.dataset.orientation = p.orientation ?? "horizontal";
+      const signature = JSON.stringify([items, actionMenu ? p.text : null, actionMenu ? p.primaryEnabled : null]);
       if (element.dataset.commands !== signature) {
         const activeId = document.activeElement?.dataset.commandItem;
         const get = (item, key) => item[key] ?? item[key[0].toUpperCase() + key.slice(1)];
@@ -440,6 +479,7 @@ window.forma = {
           if (children.length) {
             const details = document.createElement("details"), summary = document.createElement("summary"), popup = document.createElement("div");
             summary.textContent = get(item, "text"); summary.setAttribute("aria-disabled", String(!enabled));
+            summary.dataset.itemDisabled = String(!enabled);
             details.className = "command-menu"; popup.className = "command-popup";
             details.addEventListener("toggle", () => {
               if (element.querySelector("details[open]")) {
@@ -455,10 +495,12 @@ window.forma = {
             popup.append(...render(children, enabled)); details.append(summary, popup); return details;
           }
           const button = document.createElement("button"); button.type = "button";
+          if (actionMenu) button.setAttribute("role", get(item, "checkOnClick") ? "menuitemcheckbox" : "menuitem");
           button.dataset.commandItem = get(item, "id"); button.dataset.itemDisabled = String(!enabled);
           button.disabled = !enabled || element.dataset.disabled === "true";
           button.textContent = `${get(item, "checked") ? "✓ " : ""}${get(item, "text")}`;
           if (get(item, "checkOnClick")) button.setAttribute("aria-pressed", String(get(item, "checked") ?? false));
+          if (actionMenu && get(item, "checkOnClick")) button.setAttribute("aria-checked", String(get(item, "checked") ?? false));
           button.addEventListener("click", () => {
             if (button.disabled || (window.formaDesigner && !window.formaDesigner.preview)) return;
             element.querySelectorAll("details").forEach(menu => { menu.open = false; });
@@ -467,7 +509,54 @@ window.forma = {
           });
           return button;
         });
-        element.replaceChildren(...render(items)); element.dataset.commands = signature;
+        if (actionMenu) {
+          const menu = document.createElement("details"), trigger = document.createElement("summary"), popup = document.createElement("div");
+          menu.className = "command-menu action-menu"; popup.className = "command-popup"; popup.id = `${element.id}-menu`;
+          popup.setAttribute("role", "menu");
+          trigger.textContent = kind === "splitbutton" ? "▾" : `${p.text ?? "Actions"} ▾`;
+          trigger.setAttribute("aria-label", kind === "splitbutton" ? `More ${p.text ?? "actions"}` : p.text ?? "Actions");
+          trigger.setAttribute("aria-haspopup", "menu"); trigger.setAttribute("aria-controls", popup.id);
+          trigger.setAttribute("aria-disabled", String(element.dataset.disabled === "true"));
+          trigger.addEventListener("click", event => {
+            if (element.dataset.disabled === "true" || window.formaDesigner?.preview === false) event.preventDefault();
+          });
+          trigger.addEventListener("keydown", event => {
+            if (event.key === "ArrowDown" && element.dataset.disabled !== "true" && window.formaDesigner?.preview !== false) {
+              event.preventDefault(); menu.open = true; popup.querySelector('button:not(:disabled),summary:not([aria-disabled="true"])')?.focus();
+            }
+          });
+          menu.addEventListener("toggle", () => {
+            trigger.setAttribute("aria-expanded", String(menu.open));
+            if (menu.open) { element.dataset.menuZIndex ??= element.style.zIndex; element.style.zIndex = "10000"; }
+            else if (element.dataset.menuZIndex != null) { element.style.zIndex = element.dataset.menuZIndex; delete element.dataset.menuZIndex; }
+          });
+          trigger.setAttribute("aria-expanded", "false");
+          menu.addEventListener("keydown", event => { if (event.key === "Escape") { menu.open = false; trigger.focus(); event.stopPropagation(); } });
+          popup.addEventListener("keydown", event => {
+            if (!["ArrowDown", "ArrowUp", "Home", "End"].includes(event.key)) return;
+            const entries = [...popup.querySelectorAll(':scope > button:not(:disabled), :scope > .command-menu > summary:not([aria-disabled="true"])')];
+            const index = entries.indexOf(event.target); if (index < 0 || !entries.length) return;
+            event.preventDefault();
+            const target = event.key === "Home" ? 0 : event.key === "End" ? entries.length - 1 : (index + (event.key === "ArrowDown" ? 1 : -1) + entries.length) % entries.length;
+            entries[target].focus();
+          });
+          popup.append(...render(items)); menu.append(trigger, popup);
+          if (kind === "splitbutton") {
+            const primary = document.createElement("button"); primary.type = "button"; primary.className = "split-primary";
+            primary.dataset.itemDisabled = String(p.primaryEnabled === false);
+            primary.disabled = p.primaryEnabled === false || element.dataset.disabled === "true";
+            primary.textContent = p.text ?? "Run";
+            primary.addEventListener("click", () => {
+              if (primary.disabled || window.formaDesigner?.preview === false) return;
+              menu.open = false;
+              window.forma.send({ type: "event", id: element.id, event: "primary-click", payload: {} });
+              element.dispatchEvent(new CustomEvent("primary-click"));
+            });
+            element.replaceChildren(primary, menu);
+          } else element.replaceChildren(menu);
+        } else element.replaceChildren(...render(items));
+        element.dataset.commands = signature;
+        element.dataset.commandItems = JSON.stringify(items);
         if (activeId) Array.from(element.querySelectorAll("button")).find(button => button.dataset.commandItem === activeId)?.focus();
       }
     }
@@ -523,7 +612,7 @@ window.forma = {
     if (["textbox", "maskedtextbox", "searchbox", "passwordbox", "textarea"].includes(kind) && "placeholder" in properties) element.placeholder = properties.placeholder ?? "";
     if ("layoutSlot" in properties) element.dataset.slot = properties.layoutSlot;
     const parent = element.parentElement?.closest("[data-forma-type]");
-    if (parent?.dataset.formaType === "tabcontrol") element.hidden = Number(element.dataset.slot ?? 1) !== Number(parent.dataset.activeTab ?? 0) + 1;
+    if (["tabcontrol", "accordion"].includes(parent?.dataset.formaType)) element.hidden = Number(element.dataset.slot ?? 1) !== Number(parent.dataset.activeTab ?? 0) + 1 || parent.dataset.formaType === "accordion" && parent.dataset.expanded === "false";
     if (["splitcontainer", "tablelayoutpanel"].includes(parent?.dataset.formaType)) {
       const host = childHost(parent, Number(element.dataset.slot ?? 1));
       if (host !== element.parentElement) host.appendChild(element);
@@ -543,35 +632,68 @@ window.forma = {
       if (properties.source) element.src = properties.source; else element.removeAttribute("src");
       element.style.objectFit = properties.sizeMode ?? "contain";
     }
-    if (["splitcontainer", "flowlayoutpanel", "tablelayoutpanel", "tabcontrol", "groupbox"].includes(kind)) {
+    if (["splitcontainer", "flowlayoutpanel", "tablelayoutpanel", "tabcontrol", "groupbox", "stackpanel", "hstack", "vstack", "wrappanel", "centerpanel", "scrollablepanel", "accordion", "sidebar", "appshell", "responsivepanel"].includes(kind)) {
+      properties = element._layoutProperties = { ...element._layoutProperties, ...properties };
       const host = element.querySelector(".layout-content");
       element.dataset.orientation = properties.orientation ?? "horizontal";
       host.style.gap = `${properties.gap ?? 8}px`;
-      if (kind === "flowlayoutpanel") { host.style.display = "flex"; host.style.flexDirection = properties.orientation === "vertical" ? "column" : "row"; host.style.flexWrap = "wrap"; host.style.alignContent = "flex-start"; host.style.alignItems = "flex-start"; }
+      if (["flowlayoutpanel", "stackpanel", "hstack", "vstack", "wrappanel", "centerpanel", "sidebar", "appshell", "responsivepanel"].includes(kind)) {
+        host.style.display = "flex"; host.style.flexDirection = properties.orientation === "vertical" ? "column" : "row";
+        host.style.flexWrap = ["flowlayoutpanel", "wrappanel", "responsivepanel"].includes(kind) ? "wrap" : "nowrap";
+        host.style.justifyContent = kind === "centerpanel" ? "center" : "flex-start";
+        host.style.alignItems = kind === "centerpanel" ? "center" : "flex-start"; host.style.alignContent = "flex-start";
+      }
+      if (["appshell", "responsivepanel"].includes(kind)) {
+        if (!element._responsiveObserver && typeof ResizeObserver !== "undefined") {
+          element._responsiveObserver = new ResizeObserver(() => updateResponsiveLayout(element));
+          element._responsiveObserver.observe(element);
+        }
+        updateResponsiveLayout(element);
+      }
+      if (kind === "scrollablepanel") {
+        host.style.overflowX = properties.scrollDirection === "vertical" ? "hidden" : "auto";
+        host.style.overflowY = properties.scrollDirection === "horizontal" ? "hidden" : "auto";
+      }
       if (kind === "splitcontainer" || kind === "tablelayoutpanel") {
         element.dataset.orientation = properties.orientation ?? "horizontal";
         element.dataset.columns = properties.columns ?? 2;
         element.dataset.rowCount = properties.rowCount ?? 2;
         ensureLayoutCells(element);
       }
-      if (kind === "tabcontrol") {
+      if (kind === "tabcontrol" || kind === "accordion") {
         element.dataset.orientation = properties.orientation ?? "horizontal";
         const bar = element.querySelector(".layout-header");
-        bar.setAttribute("role", "tablist"); bar.setAttribute("aria-orientation", element.dataset.orientation);
+        bar.setAttribute("role", kind === "accordion" ? "group" : "tablist");
+        if (kind === "tabcontrol") bar.setAttribute("aria-orientation", element.dataset.orientation);
+        host.id = `${element.id}-content`;
+        if (kind === "accordion") { host.setAttribute("role", "region"); host.setAttribute("aria-label", (properties.tabs ?? ["Section 1"])[properties.selectedTab ?? 0] ?? "Section"); }
         bar.replaceChildren(...(properties.tabs ?? ["Tab 1"]).map((text, index) => {
           const button = document.createElement("button"); button.textContent = text; button.dataset.tabIndex = index;
-          button.type = "button"; button.setAttribute("role", "tab");
-          button.setAttribute("aria-selected", String(index === (properties.selectedTab ?? 0)));
+          button.type = "button";
+          if (kind === "accordion") { button.setAttribute("aria-expanded", String(properties.expanded !== false && index === (properties.selectedTab ?? 0))); button.setAttribute("aria-controls", host.id); }
+          else button.setAttribute("role", "tab");
+          if (kind === "tabcontrol") button.setAttribute("aria-selected", String(index === (properties.selectedTab ?? 0)));
           button.className = index === (properties.selectedTab ?? 0) ? "tab-active" : "";
-          button.addEventListener("click", () => window.forma.send({ type: "event", id: element.id, event: "tab", payload: { selectedTab: index } }));
+          button.addEventListener("click", () => {
+            if (element.dataset.disabled === "true") return;
+            const expanded = index === Number(element.dataset.activeTab ?? 0) ? element.dataset.expanded === "false" : true;
+            if (kind === "accordion") window.forma.applyData(element, { selectedTab: index, expanded });
+            window.forma.send({ type: "event", id: element.id, event: "tab", payload: { selectedTab: index, expanded } });
+            if (kind === "accordion") element.dispatchEvent(new CustomEvent("change", { bubbles: true, detail: { selectedTab: index, expanded } }));
+          });
           return button;
         }));
         const addTab = document.createElement("button"); addTab.type = "button"; addTab.textContent = "+";
-        addTab.dataset.tabAdd = "true"; addTab.setAttribute("aria-label", "Add tab");
+        addTab.dataset.tabAdd = "true"; addTab.setAttribute("aria-label", kind === "accordion" ? "Add section" : "Add tab");
         addTab.addEventListener("click", () => { if (window.formaDesigner?.preview === false) window.forma.send({ type: "designer", id: element.id, event: "command", payload: { command: "add-tab" } }); });
         bar.appendChild(addTab);
+        if (kind === "accordion") {
+          const active = bar.querySelector(`[data-tab-index="${properties.selectedTab ?? 0}"]`);
+          if (active) active.after(host); else bar.append(host);
+        }
         element.dataset.activeTab = properties.selectedTab ?? 0;
-        for (const child of host.children) child.hidden = Number(child.dataset.slot ?? 1) !== Number(element.dataset.activeTab) + 1;
+        if (kind === "accordion") { element.dataset.expanded = String(properties.expanded !== false); host.hidden = properties.expanded === false; }
+        for (const child of host.children) child.hidden = Number(child.dataset.slot ?? 1) !== Number(element.dataset.activeTab) + 1 || kind === "accordion" && properties.expanded === false;
       }
     }
     if (kind === "datagridview") {
@@ -586,9 +708,9 @@ window.forma = {
     element.style.left = Number.isFinite(properties.x) ? `${properties.x}px` : "";
     element.style.top = Number.isFinite(properties.y) ? `${properties.y}px` : "";
     const parent = element.parentElement?.closest("[data-forma-type]");
-    if (["flowlayoutpanel", "tablelayoutpanel"].includes(parent?.dataset.formaType))
+    if (["flowlayoutpanel", "tablelayoutpanel", "stackpanel", "hstack", "vstack", "wrappanel", "centerpanel", "sidebar", "appshell", "responsivepanel"].includes(parent?.dataset.formaType))
       Object.assign(element.style, { position: "relative", left: "", top: "" });
-    if (parent?.dataset.formaType === "flowlayoutpanel") element.style.flexShrink = "0";
+    if (["flowlayoutpanel", "stackpanel", "hstack", "vstack", "wrappanel", "centerpanel", "sidebar", "appshell", "responsivepanel"].includes(parent?.dataset.formaType)) element.style.flexShrink = "0";
   },
 
   create(message) {
@@ -643,7 +765,7 @@ window.forma = {
       if (element.getAttribute("aria-disabled") === "true") return;
       window.forma.send({ type: "event", id: element.id, event: "link", payload: {} });
     });
-    if (message.control === "button") {
+    if (["button", "iconbutton", "floatingactionbutton", "commandbutton"].includes(message.control)) {
       element.addEventListener("click", () => {
         window.forma.send({
           type: "event",
@@ -704,6 +826,8 @@ window.forma = {
 
   remove(message) {
     const element = document.getElementById(message.id);
+    window.formaLayout?.removing(element);
+    for (const layout of [element, ...(element?.querySelectorAll("[data-forma-type]") ?? [])]) layout?._responsiveObserver?.disconnect();
     window.formaTooltip?.removing(element);
     window.formaModern?.removing(element);
     document.querySelectorAll("[data-dialog-source]").forEach(modal => {
@@ -740,14 +864,18 @@ document.addEventListener("contextmenu", event => {
   event.preventDefault(); closeContextPopup();
   contextPopup = document.createElement("div"); contextPopup.id = `context-popup-${menu.id}`;
   contextPopup.dataset.formaType = "contextmenu"; contextPopup.dataset.commandSource = menu.id;
+  contextPopup.dataset.componentSource = menu.id;
   contextPopup.className = "forma-context-popup"; document.body.appendChild(contextPopup);
-  window.forma.applyData(contextPopup, { commandItems: JSON.parse(menu.dataset.commands ?? "[]") });
+  window.forma.applyData(contextPopup, { commandItems: JSON.parse(menu.dataset.commandItems ?? "[]") });
   const rect = contextPopup.getBoundingClientRect();
   contextPopup.style.left = `${Math.max(0, Math.min(event.clientX, window.innerWidth - rect.width))}px`;
   contextPopup.style.top = `${Math.max(0, Math.min(event.clientY, window.innerHeight - rect.height))}px`;
   contextPopup.querySelector("button,summary")?.focus();
 });
 document.addEventListener("pointerdown", event => {
+  document.querySelectorAll('[data-forma-type="dropdownbutton"], [data-forma-type="splitbutton"]').forEach(element => {
+    if (!element.contains(event.target)) element.querySelectorAll("details[open]").forEach(menu => { menu.open = false; });
+  });
   if (contextPopup && !contextPopup.contains(event.target)) closeContextPopup();
 });
 document.addEventListener("keydown", event => { if (event.key === "Escape") closeContextPopup(); });

@@ -18,7 +18,7 @@
 
 **Forma** is an experimental, Windows-first desktop UI framework for **C#/.NET**.
 
-Start with [Using components and scripts](docs/components-and-scripting.md) and the [complete component/property reference](docs/component-reference.md). Copyable JavaScript and compiled C# recipes are in [docs/examples](docs/examples).
+Browse the [documentation index](docs/README.md). Start with [Using components and scripts](docs/components-and-scripting.md) and the [complete component/property reference](docs/component-reference.md). Copyable JavaScript and compiled C# recipes are in [docs/examples](docs/examples).
 
 See [the architecture guide](docs/architecture.md) for current layer boundaries, control organization, and planned refactors.
 
@@ -416,17 +416,28 @@ Forma/
 
 # 🧪 Current Status
 
-The current code includes a WebView2 greeting demo, a persistent control tree,
-incremental updates, Button/Label/TextBox/Panel controls, and browser input events
-that update C# TextBox state. The roadmap checkboxes below describe the broader
-plan and are not a complete inventory of the implementation.
+Forma.Builder has a searchable toolbox of 84 controls/components, a resizable
+form canvas, nested containers, selection handles, snapping guides, and a
+contextual property inspector. Free-position containers support Dock and Anchor;
+flow, stack and table layouts manage child placement. The workspace supports
+light/dark themes and a docked code editor.
 
-**Forma.Builder** now uses a web workspace with menus, toolbar, searchable grouped
-toolbox, centered form canvas, and appearance/layout inspector. Drag Button,
-Label, TextBox, or Panel onto the 640 × 440 form, then drag an existing control to
-move it. Selection supports text, colors, font size, dimensions, and X/Y edits.
-New Form, Delete, zoom, panel visibility, and visual Preview work. Designs live
-in memory; save/load, event binding, resizing by handles, and undo are future milestones.
+Save/Open uses `.forma` projects with embedded images and component sources.
+Undo/Redo covers design edits and applied custom sources. Preview opens a
+separate resizable desktop window with live inputs, scripts, events, timers,
+pickers and other runtime interactions, using an independent copy of the design.
+
+Component Custom Properties includes CSS, `script.js` and JSON. The editor has
+formatting, syntax diagnostics and property suggestions. `global-script.js`
+initializes shared modules before component scripts; `forma.provide`, `forma.use`
+and `forma.shared` share values within one Preview session. Reactive refs and
+bindings keep values current. The supported runtime property API is documented
+with exact types and restrictions.
+
+Start with the [documentation index](docs/README.md),
+[workspace walkthrough](docs/builder-first-interaction.md),
+[runtime property guide](docs/runtime-properties.md), and
+[global script guide](docs/global-scripts.md).
 
 Run the apps from the repository root:
 
@@ -435,32 +446,11 @@ dotnet run --project src/Forma.Demo
 dotnet run --project src/Forma.Builder
 ```
 
-The next contributor exercise is adding CheckBox to the designer toolbox. See
-`docs/builder-first-interaction.md` for the current behavior and extension points.
-
-**Early development — architecture and foundation phase.**
-
-The immediate milestone is intentionally tiny:
-
-```text
-Create Forma solution
-        ↓
-Create Forma.Core
-        ↓
-Create Forma.WebView2
-        ↓
-Create Forma.Demo
-        ↓
-Host WebView2
-        ↓
-Render HTML
-        ↓
-Send an event from JavaScript
-        ↓
-Receive the event in C#
-```
-
-Once this works, the first brick of Forma has been laid.
+Forma remains experimental. Preview runs within Builder; executable export,
+C# handler generation, installer/file association, and many advanced components
+remain roadmap work. The vision/checklists elsewhere in this README describe
+the broader plan; the [staged roadmap](docs/roadmap-stages.md) tracks current
+implementation status.
 
 ---
 
