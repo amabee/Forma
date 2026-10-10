@@ -72,9 +72,9 @@ const containerKinds = new Set([
   "flowlayoutpanel",
   "tablelayoutpanel",
 ]);
-const linearKinds = new Set(["flowlayoutpanel", "stackpanel", "hstack", "vstack", "wrappanel", "centerpanel"]);
+const linearKinds = new Set(["flowlayoutpanel", "stackpanel", "hstack", "vstack", "wrappanel", "centerpanel", "sidebar", "appshell", "responsivepanel"]);
 const managedKinds = new Set([...linearKinds, "tablelayoutpanel"]);
-for (const kind of [...linearKinds, "scrollablepanel"]) containerKinds.add(kind);
+for (const kind of [...linearKinds, "scrollablepanel", "accordion"]) containerKinds.add(kind);
 document.querySelectorAll("[data-kind]").forEach(tool => supportedKinds.add(tool.dataset.kind));
 const byId = (id) => document.getElementById(id);
 const send = (event, id, payload = {}) =>
@@ -131,7 +131,8 @@ function canSaveGridDrafts() {
 
 function containerHost(container, x, y) {
   const host =
-    container.querySelector?.(":scope > .layout-content") ?? container;
+    container.querySelector?.(container.dataset.formaType === "accordion"
+      ? ":scope > .layout-header > .layout-content" : ":scope > .layout-content") ?? container;
   if (
     ["splitcontainer", "tablelayoutpanel"].includes(container.dataset.formaType)
   ) {
@@ -239,6 +240,25 @@ function snapPosition(item, x, y, width, height, siblings, threshold = 6) {
   };
 }
 
+function managedResizeBounds(item, direction, dx, dy, parentWidth, parentHeight) {
+  const clamp = (value, min, max) => Math.max(min, Math.min(max, Math.round(value)));
+  const minW = Math.max(24, item.minimumWidth || 24), minH = Math.max(20, item.minimumHeight || 20);
+  return { x: item.x, y: item.y,
+    width: item.lockWidth ? item.width : clamp(item.width + (direction.includes("e") ? dx : direction.includes("w") ? -dx : 0), minW, Math.max(minW, Math.min(parentWidth, item.maximumWidth || parentWidth))),
+    height: item.lockHeight ? item.height : clamp(item.height + (direction.includes("s") ? dy : direction.includes("n") ? -dy : 0), minH, Math.max(minH, Math.min(parentHeight, item.maximumHeight || parentHeight))) };
+}
+
+function controlledAxes(item) {
+  const d = window.formaDesigner, parent = d?.controlById(item?.parentId);
+  if (parent?.kind === "appshell") {
+    const narrow = byId(parent.id)?.dataset.narrow === "true", main = d.state.controls.filter(c => c.parentId === parent.id)[0]?.id !== item.id;
+    return { width: narrow || main, height: main || !narrow && parent.orientation !== "vertical", position: true };
+  }
+  if (parent?.kind === "responsivepanel" && byId(parent.id)?.dataset.narrow === "true") return { width: true, height: false, position: true };
+  const dock = managedKinds.has(parent?.kind) ? "none" : item?.dock ?? "none";
+  return { width: ["top", "bottom", "fill"].includes(dock), height: ["left", "right", "fill"].includes(dock), position: dock !== "none" || managedKinds.has(parent?.kind) };
+}
+
 function resizeBounds(
   item,
   direction,
@@ -314,6 +334,7 @@ window.formaDesigner = {
     return byId(this.rootId);
   },
   resizeBounds,
+  managedResizeBounds,
   snapPosition,
   clearGuides() {
     document.querySelectorAll(".snap-guide").forEach((el) => el.remove());
@@ -406,6 +427,7 @@ window.formaDesigner = {
         if (item.component) byId(item.id).hidden = true;
       }
       window.formaCustomization?.apply(message, true);
+      window.formaLayout?.refresh(message);
       return;
     }
     if (message.action === "return-to-design") {
@@ -415,6 +437,7 @@ window.formaDesigner = {
     }
     if (message.action === "initialize") {
       gridDrafts.clear();
+      window.formaLayout?.clear();
       window.formaCustomization?.clear();
       this.cancelDrag();
       this.rootId = message.id;
@@ -463,6 +486,7 @@ window.formaDesigner = {
         if (byId(name)) byId(name).textContent = message.title;
       if (byId("status")) byId("status").textContent = message.status;
       for (const item of message.controls) this.applyAppearance(item);
+      window.formaLayout?.refresh(message);
       window.formaCustomization?.apply(message);
       this.select(message.selectedId);
       this.inspector();
@@ -635,6 +659,12 @@ window.formaDesigner = {
         el.dataset.customProperties = applied.join(",");
       }
       // Hidden and disabled controls stay selectable in design mode.
+      if (item.kind === "accordion") {
+        el.dataset.disabled = String(this.preview && !item.enabled);
+        el.querySelectorAll(".layout-header > button").forEach(button => {
+          button.disabled = this.preview && !item.enabled;
+        });
+      }
       if (
         ["radiogroup", "checkboxgroup", "segmentedcontrol", "rating", "chipgroup", "buttongroup", "breadcrumb", "sidenavigation"].includes(
           item.kind,
@@ -649,8 +679,8 @@ window.formaDesigner = {
       const parent = this.controlById(item.parentId);
       el.hidden =
         (this.preview && (!item.visible || item.kind === "chip" && item.isRemoved)) ||
-        (parent?.kind === "tabcontrol" &&
-          item.layoutSlot !== parent.selectedTab + 1);
+        (["tabcontrol", "accordion"].includes(parent?.kind) &&
+          (item.layoutSlot !== parent.selectedTab + 1 || parent.kind === "accordion" && parent.expanded === false));
       if (["treeview", "pagination"].includes(item.kind))
         el.querySelectorAll("button").forEach((button) => {
           button.disabled =
@@ -758,6 +788,8 @@ window.formaDesigner = {
   },
   inspector() {
     const selected = this.state?.controls.find((c) => c.id === this.selectedId);
+    const customButton = byId("custom-properties-action")?.querySelector('button');
+    if (customButton) customButton.disabled = !selected || this.preview || selected.locked;
     if (!selected) return;
     const selection = byId("selection");
     if (selection) {
@@ -817,11 +849,16 @@ window.formaDesigner = {
       }
       if (
         ["x", "y"].includes(property) &&
-        managedKinds.has(
-          this.state.controls.find((c) => c.id === selected.parentId)?.kind,
-        )
+        controlledAxes(selected).position
       )
         input.disabled = true;
+      const controlled = controlledAxes(selected);
+      if (property === "width" && controlled.width || property === "height" && controlled.height) {
+        input.disabled = true; input.title = "This dimension is controlled by the parent layout or Dock.";
+      }
+      if (["dock", "anchor"].includes(property) && managedKinds.has(this.controlById(selected.parentId)?.kind)) {
+        input.disabled = true; input.title = "This parent arranges its children. Use a Panel for free positioning, Dock and Anchor.";
+      }
       if (["x", "width"].includes(property))
         input.max =
           selected.id === this.rootId ? 1600 : this.root().clientWidth;
@@ -946,7 +983,7 @@ window.formaDesigner = {
         ]);
       if (["dialog", "confirmationdialog"].includes(selected.kind))
         commands.push(["show-dialog", "Show dialog (Preview)"]);
-      if (selected.kind === "tabcontrol") commands.push(["add-tab", "Add tab"]);
+      if (["tabcontrol", "accordion"].includes(selected.kind)) commands.push(["add-tab", selected.kind === "accordion" ? "Add section" : "Add tab"]);
       if (!selected.component && selected.id !== this.rootId)
         commands.push(
           ["bring-front", "Bring to front"],
@@ -959,24 +996,6 @@ window.formaDesigner = {
         actions.appendChild(button);
       }
       if (commands.length) container.prepend(actions);
-      let advanced = groups.get("Advanced");
-      if (!advanced) {
-        advanced = document.createElement("details");
-        advanced.className = "property-group";
-        advanced.dataset.category = "Advanced";
-        advanced.open = openCategories.get("Advanced") ?? false;
-        const summary = document.createElement("summary");
-        summary.textContent = "Advanced";
-        advanced.appendChild(summary);
-        container.appendChild(advanced);
-      }
-      const customActions = document.createElement("div");
-      customActions.className = "property-actions";
-      const customButton = document.createElement("button");
-      customButton.dataset.command = "edit-custom-properties";
-      customButton.textContent = "Custom Properties…";
-      customActions.appendChild(customButton);
-      advanced.appendChild(customActions);
     }
   },
   coordinates(x, y) {
@@ -1027,8 +1046,11 @@ window.formaDesigner = {
       });
     }
     outline.querySelectorAll?.("[data-handle]").forEach((h) => {
+      const controlled = controlledAxes(item);
       h.hidden =
         item?.locked ||
+        controlled.width && /[we]/.test(h.dataset.handle) ||
+        controlled.height && /[ns]/.test(h.dataset.handle) ||
         (isRoot && !["e", "s", "se"].includes(h.dataset.handle));
     });
   },
@@ -1042,8 +1064,8 @@ window.formaDesigner = {
     if (drag.managed)
       drag.element.style.transform = drag.originalTransform ?? "";
     Object.assign(drag.element.style, {
-      left: drag.managed ? (drag.originalLeft ?? "") : `${drag.x}px`,
-      top: drag.managed ? (drag.originalTop ?? "") : `${drag.y}px`,
+      left: drag.managed || drag.fixedPosition ? (drag.originalLeft ?? "") : `${drag.x}px`,
+      top: drag.managed || drag.fixedPosition ? (drag.originalTop ?? "") : `${drag.y}px`,
     });
     if (drag.mode === "resize")
       Object.assign(drag.element.style, {
@@ -1189,6 +1211,12 @@ document.addEventListener(
         element: byId(item.id),
         capture: handle,
         mode: "resize",
+        managed: managedKinds.has(d.controlById(item.parentId)?.kind),
+        fixedPosition: controlledAxes(item).position,
+        lockWidth: controlledAxes(item).width,
+        lockHeight: controlledAxes(item).height,
+        originalLeft: byId(item.id).style.left,
+        originalTop: byId(item.id).style.top,
         direction: handle.dataset.handle,
         pointerId: event.pointerId,
         startX: event.clientX,
@@ -1222,6 +1250,7 @@ document.addEventListener(
     if (control === root) return;
     const item = d.state?.controls.find((c) => c.id === control.id);
     if (!item || item.locked) return;
+    if (item.dock && item.dock !== "none" && !managedKinds.has(d.controlById(item.parentId)?.kind)) return;
     const managed = managedKinds.has(
       d.state?.controls.find((c) => c.id === item.parentId)?.kind,
     );
@@ -1270,7 +1299,7 @@ document.addEventListener("pointermove", (event) => {
   if (!drag.moved && Math.abs(dx) < 3 && Math.abs(dy) < 3) return;
   drag.moved = true;
   if (drag.mode === "resize") {
-    drag.bounds = resizeBounds(
+    drag.bounds = drag.fixedPosition ? managedResizeBounds(drag, drag.direction, dx, dy, parent.clientWidth, parent.clientHeight) : resizeBounds(
       drag,
       drag.direction,
       dx,
@@ -1280,8 +1309,8 @@ document.addEventListener("pointermove", (event) => {
       drag.element === d.root(),
     );
     Object.assign(drag.element.style, {
-      left: `${drag.bounds.x}px`,
-      top: `${drag.bounds.y}px`,
+      left: drag.fixedPosition ? (drag.originalLeft ?? "") : `${drag.bounds.x}px`,
+      top: drag.fixedPosition ? (drag.originalTop ?? "") : `${drag.bounds.y}px`,
       width: `${drag.bounds.width}px`,
       height: `${drag.bounds.height}px`,
     });

@@ -244,14 +244,22 @@
       get(name, property) {
         const item = target(currentState, name),
           el = document.getElementById(item.id);
+        if (item.kind === "timer" && property === "interval") return item.interval;
+        if (["numericupdown", "slider", "progressbar", "circularprogress", "rating"].includes(item.kind) && ["minimum", "maximum", "increment"].includes(property)) return item[property];
+        if (item.kind === "spinner" && property === "speed") return item.speed;
+        if (item.kind === "skeleton" && ["shape", "lines", "isActive"].includes(property)) return item[property];
+        if (["dock", "anchor"].includes(property) && item.kind !== "form" && !item.component) return item[property] ?? (property === "dock" ? "none" : "top,left");
         if (property === "items" && ["combobox", "listbox", "listview", "checkedlistbox", "radiogroup", "checkboxgroup", "segmentedcontrol", "chipgroup", "buttongroup", "breadcrumb", "sidenavigation"].includes(item.kind)) return [...(item.items ?? [])];
         if (property === "checkedIndices" && item.kind === "chipgroup") return [...el.querySelectorAll('[aria-checked="true"]')].map(button => Number(button.dataset.itemIndex));
         if (item.kind === "chip" && property === "checked") return el.querySelector(".chip-toggle").getAttribute("aria-pressed") === "true";
         if (item.kind === "chip" && ["variant", "removable", "isRemoved"].includes(property)) return property === "isRemoved" ? !!el._modernProperties.isRemoved : item[property];
         if (["iconbutton", "floatingactionbutton"].includes(item.kind) && ["iconName", "showText"].includes(property)) return item[property];
         if (property === "commandItems" && ["menustrip", "toolbar", "toolstrip", "contextmenu", "contextmenustrip", "dropdownbutton", "splitbutton"].includes(item.kind)) return JSON.parse(JSON.stringify(item.commandItems ?? []));
-        if (property === "orientation" && ["stackpanel", "hstack", "vstack", "wrappanel", "centerpanel", "flowlayoutpanel", "tablelayoutpanel", "tabcontrol", "splitcontainer", "scrollablepanel", "sidenavigation", "radiogroup", "segmentedcontrol", "buttongroup"].includes(item.kind)) return item.orientation;
-        if (property === "gap" && ["stackpanel", "hstack", "vstack", "wrappanel", "centerpanel", "flowlayoutpanel", "tablelayoutpanel", "tabcontrol", "splitcontainer", "scrollablepanel"].includes(item.kind)) return item.gap;
+        if (property === "orientation" && ["accordion", "sidebar", "appshell", "responsivepanel", "stackpanel", "hstack", "vstack", "wrappanel", "centerpanel", "flowlayoutpanel", "tablelayoutpanel", "tabcontrol", "splitcontainer", "scrollablepanel", "sidenavigation", "radiogroup", "segmentedcontrol", "buttongroup"].includes(item.kind)) return item.orientation;
+        if (property === "gap" && ["accordion", "sidebar", "appshell", "responsivepanel", "stackpanel", "hstack", "vstack", "wrappanel", "centerpanel", "flowlayoutpanel", "tablelayoutpanel", "tabcontrol", "splitcontainer", "scrollablepanel"].includes(item.kind)) return item.gap;
+        if (item.kind === "accordion" && property === "expanded") return el.dataset.expanded !== "false";
+        if (["appshell", "responsivepanel"].includes(item.kind) && property === "breakpoint") return item.breakpoint;
+        if (["accordion", "tabcontrol"].includes(item.kind) && property === "tabs") return [...(item.tabs ?? [])];
         if (item.kind === "scrollablepanel" && property === "scrollDirection") return item.scrollDirection;
         if (item.kind === "splitbutton" && property === "primaryEnabled") return item.primaryEnabled;
         if (item.kind === "commandbutton" && ["description", "iconName", "showText"].includes(property)) return item[property];

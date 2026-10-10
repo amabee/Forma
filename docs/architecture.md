@@ -225,3 +225,24 @@ current component names and the runtime API contract. Sources remain
 ComponentCustomization model data; ComponentSaveSession and ComponentEditorService
 still validate, save and watch external files. Editor diagnostics are authoring
 feedback, not an execution engine or a generated C# application.
+
+### Responsive and section containers
+
+`Controls/ResponsiveLayout.cs` is the shared Model for AppShell and
+ResponsivePanel, with a validated Breakpoint. Sidebar reuses LinearLayout;
+Accordion extends TabControl with Expanded and section child slots. Editing,
+Undo/Redo, serialization and PreviewSession remain the ViewModel boundary.
+The browser View uses one ResizeObserver per responsive container, lays out
+children using flex, and disconnects observers when a subtree is removed.
+Accordion renders native section buttons and sends selection/expanded commands
+through the bridge. Browser geometry and transient selection styling do not
+become additional persisted models.
+
+Dock and Anchor belong to the Builder Appearance model. LayoutGeometry holds
+pure docking/anchoring calculations; DesignerEditingService applies them within
+the current edit before history capture. Parent resizing carries child anchors
+through nested containers. layout-properties.js is the browser View counterpart:
+it observes free content hosts, applies runtime geometry, and releases observers
+on removal/reset. It does not replace stack/table/AppShell layout rules or store
+DOM coordinates as project data. Script edits change PreviewSession appearance,
+then the refreshed runtime snapshot updates the View.

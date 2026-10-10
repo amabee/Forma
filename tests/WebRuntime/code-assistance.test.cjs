@@ -4,6 +4,20 @@ const path = require('node:path');
 const { pathToFileURL } = require('node:url');
 const load = () => import(pathToFileURL(path.join(__dirname, '../../src/Forma.Builder/Frontend/code-assistance.mjs')).href);
 const controls = [{ name: 'userAvatar', id: 'avatar-id', kind: 'avatar' }, { name: 'nameInput', id: 'input-id', kind: 'textbox' }, { name: 'inputFile', kind: 'filepicker' }];
+
+test('timer interval and loading/numeric properties are offered without unsupported-property diagnostics', async () => {
+  const { propertiesFor, diagnose, formaCompletions } = await load();
+  const known = [{ name: 'timer', kind: 'timer' }];
+  assert.ok(propertiesFor('timer', 'get').includes('interval'));
+  assert.ok(propertiesFor('timer', 'set').includes('interval'));
+  assert.ok(formaCompletions(context('forma.set("timer", "'), known).options.some(option => option.label === 'interval'));
+  assert.deepEqual(await diagnose('javascript', 'forma.set("timer", "interval", 1000);', known), []);
+  const wrongType = await diagnose('javascript', 'forma.set("timer", "interval", "1000");', known);
+  assert.equal(wrongType.length, 1); assert.match(wrongType[0].message, /without quotes/);
+  assert.ok(propertiesFor('slider', 'set').includes('increment'));
+  assert.ok(propertiesFor('spinner', 'get').includes('speed'));
+  assert.ok(propertiesFor('skeleton', 'set').includes('isActive'));
+});
 function context(text) { return { pos: text.length, state: { doc: { sliceString: () => text } } }; }
 test('Forma completion suggests API, known names, control-specific properties and custom values', async () => {
   const { formaCompletions: complete } = await load();
@@ -93,5 +107,9 @@ test('navigation and layout properties are offered to scripts', async () => {
   assert.ok(propertiesFor('sidenavigation', 'set').includes('items'));
   assert.ok(propertiesFor('stackpanel', 'set').includes('gap'));
   assert.ok(propertiesFor('scrollablepanel', 'set').includes('scrollDirection'));
+  assert.ok(propertiesFor('appshell', 'set').includes('breakpoint'));
+  assert.ok(propertiesFor('accordion', 'set').includes('expanded'));
+  assert.ok(propertiesFor('button', 'set').includes('dock'));
+  assert.ok(!propertiesFor('toast', 'set').includes('dock'));
   assert.deepEqual(await diagnose('javascript', 'forma.set("stack", "orientation", "vertical"); forma.bind("nav", "selectedIndex");', [{ name: 'stack', kind: 'stackpanel' }, { name: 'nav', kind: 'sidenavigation' }]), []);
 });

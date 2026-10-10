@@ -116,6 +116,10 @@
         /></label>
         <details open class="tool-group">
           <summary>Layout</summary>
+          <button draggable="true" data-kind="accordion"><img class="icon-svg" src="icons/list.svg" alt="" />Accordion</button>
+          <button draggable="true" data-kind="sidebar"><img class="icon-svg" src="icons/panel-top.svg" alt="" />Sidebar</button>
+          <button draggable="true" data-kind="appshell"><img class="icon-svg" src="icons/panel-top.svg" alt="" />AppShell</button>
+          <button draggable="true" data-kind="responsivepanel"><img class="icon-svg" src="icons/panel-top.svg" alt="" />ResponsivePanel</button>
           <button draggable="true" data-kind="stackpanel"><img class="icon-svg" src="icons/list.svg" alt="" />StackPanel</button>
           <button draggable="true" data-kind="hstack"><img class="icon-svg" src="icons/columns-2.svg" alt="" />HStack</button>
           <button draggable="true" data-kind="vstack"><img class="icon-svg" src="icons/list.svg" alt="" />VStack</button>
@@ -515,6 +519,7 @@
         <div class="inspector-body">
           <select id="selection" aria-label="Selected control"></select>
           <label class="search property-search"><img class="icon-svg" src="icons/search.svg" alt="" /><input id="property-search" placeholder="Search properties…" aria-label="Search properties" /></label>
+          <div class="property-actions" id="custom-properties-action"><button data-command="edit-custom-properties" disabled>Custom Properties…</button></div>
           <div id="property-editors"></div>
         </div>
       </aside>
@@ -529,6 +534,7 @@
     </footer>
     <script src="../Web/scripts/data-grid.js"></script>
     <script src="../Web/scripts/forma.js"></script>
+    <script src="../Web/scripts/layout-properties.js"></script>
     <script src="../Web/scripts/tooltips.js"></script>
     <script src="../Web/scripts/icons.js"></script>
     <script src="../Web/scripts/modern-controls.js"></script>

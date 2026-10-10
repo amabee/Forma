@@ -5,11 +5,17 @@ in stages. That document is the full backlog; items below marked pending are not
 implemented yet. Each stage needs real behavior, contextual properties, persistence,
 Undo/Redo where appropriate, and tests before it is called complete.
 
+Current priority: strengthen component properties before the next component
+batch. Dock and Anchor are implemented for free-position containers, including
+Preview layout and design history. Managed-child resize positions are fixed,
+and dimensions owned by Dock/AppShell are disabled in the inspector. AutoSize,
+more explicit AutoScroll settings, and further layout properties remain pending.
+
 | Stage | Scope | Status |
 | --- | --- | --- |
 | 1 | Basic controls, original six layout containers, practical inputs, image picker, Timer/BackgroundWorker, basic DataGridView | Implemented; advanced layout/grid behavior remains below |
 | 2 | ListView, TreeView, DataGrid enhancements, Pagination, PropertyGrid, FilePicker, menus, toolbar, status bar, dialog, tooltip/context menu | Initial batch implemented, including Tooltip and DataGrid sorting/filtering/row selection; advanced data features continue in stage 6 |
-| 3 | Additional layout primitives, responsive containers, Sidebar/AppShell, breadcrumbs, accordion, tabs and command palette | StackPanel, HStack, VStack, WrapPanel, CenterPanel, ScrollablePanel, Breadcrumb and SideNavigation implemented; responsive layouts, Sidebar/AppShell, Accordion and CommandPalette pending |
+| 3 | Additional layout primitives, responsive containers, Sidebar/AppShell, breadcrumbs, accordion, tabs and command palette | StackPanel, HStack, VStack, WrapPanel, CenterPanel, ScrollablePanel, Breadcrumb, SideNavigation, Accordion, Sidebar, AppShell and ResponsivePanel implemented; ResponsiveGrid/Stack, BreakpointContainer, AspectRatioContainer, other layout primitives and CommandPalette pending |
 | 4 | Cards, badges, avatars, icons, dividers, empty states, toast/notifications, spinner/skeleton, richer selection/button controls | Card, Badge, Avatar, Divider, Toast, Spinner, LoadingOverlay, Icon, EmptyState, Skeleton, RadioGroup, CheckBoxGroup, SegmentedControl and Rating implemented; Chip, ChipGroup, ButtonGroup, IconButton and FloatingActionButton implemented; SplitButton, DropdownButton and CommandButton implemented; extended catalog remains in the full backlog |
 | 5 | Form fields, validation, application components, themes and accessibility | Pending |
 | 6 | Charts, dashboard widgets, advanced tables, sorting/filtering/grouping, data binding and virtualization | Pending |

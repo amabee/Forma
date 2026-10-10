@@ -14,6 +14,11 @@ export const eventNames = [
 ];
 export function propertiesFor(kind, method) {
   const keys = [...common];
+  if (kind === "timer") keys.push("interval");
+  if (numeric.includes(kind)) keys.push("minimum", "maximum", "increment");
+  if (kind === "spinner") keys.push("speed");
+  if (kind === "skeleton") keys.push("shape", "lines", "isActive");
+  if (!["form", "timer", "backgroundworker", "toast", "loadingoverlay", "tooltip", "contextmenu", "contextmenustrip", "dialog", "confirmationdialog"].includes(kind)) keys.push("dock", "anchor");
   if (images.includes(kind)) keys.push("source");
   if (["checkbox", "radiobutton", "toggleswitch", "togglebutton", "chip"].includes(kind)) keys.push("checked");
   if (numeric.includes(kind) || dates.includes(kind) || method === "get" && ["textbox", "searchbox", "passwordbox", "textarea", "maskedtextbox"].includes(kind)) keys.push("value");
@@ -26,10 +31,12 @@ export function propertiesFor(kind, method) {
   if (["menustrip", "toolbar", "toolstrip", "contextmenu", "contextmenustrip", "dropdownbutton", "splitbutton"].includes(kind)) keys.push("commandItems");
   if (kind === "splitbutton") keys.push("primaryEnabled");
   if (kind === "commandbutton") keys.push("description");
-  if (["stackpanel", "hstack", "vstack", "wrappanel", "centerpanel", "scrollablepanel", "flowlayoutpanel", "tablelayoutpanel", "tabcontrol", "splitcontainer"].includes(kind)) keys.push("orientation", "gap");
+  if (["accordion", "sidebar", "appshell", "responsivepanel", "stackpanel", "hstack", "vstack", "wrappanel", "centerpanel", "scrollablepanel", "flowlayoutpanel", "tablelayoutpanel", "tabcontrol", "splitcontainer"].includes(kind)) keys.push("orientation", "gap");
   if (["sidenavigation", "radiogroup", "segmentedcontrol", "buttongroup"].includes(kind)) keys.push("orientation");
+  if (["appshell", "responsivepanel"].includes(kind)) keys.push("breakpoint");
+  if (kind === "accordion") keys.push("tabs", "selectedTab", "expanded");
   if (kind === "scrollablepanel") keys.push("scrollDirection");
-  if (kind === "tabcontrol") keys.push("selectedTab");
+  if (kind === "tabcontrol") keys.push("tabs", "selectedTab");
   if (kind === "datagridview") keys.push("columns", "rows", "readOnly", "sortingEnabled", "filteringEnabled", "selectedRow", "filterText", "sortColumn", "sortDirection");
   if (kind === "toast") { keys.push("variant", "position", "duration", "dismissible"); if (method === "get") keys.push("isOpen"); }
   if (["spinner", "loadingoverlay"].includes(kind)) keys.push("isActive");
@@ -62,6 +69,11 @@ const gridMethods = ["addRow", "updateRow", "removeRow", "clearRows", "setCell"]
 export function formaCompletions(context, controls = [], customValues = {}) {
   const prefix = context.state.doc.sliceString(0, context.pos);
   const result = (from, options) => ({ from, options, validFor: /^[\w$-]*$/ });
+  const layoutValue = /(?:forma|api)\.set\(\s*["'][^"']+["']\s*,\s*["'](dock|anchor)["']\s*,\s*["']([^"']*)$/.exec(prefix);
+  if (layoutValue) return result(context.pos - layoutValue[2].length,
+    (layoutValue[1] === "dock" ? ["none", "top", "bottom", "left", "right", "fill"]
+      : ["none", "top,left", "top,right", "bottom,left", "bottom,right", "top,left,right", "bottom,left,right", "top,bottom,left", "top,bottom,right", "top,bottom,left,right", "top", "bottom", "left", "right", "top,bottom", "left,right"])
+    .map(label => ({ label, type: "text" })));
   const variant = /(?:forma|api)\.set\(\s*["'][^"']+["']\s*,\s*["']variant["']\s*,\s*["']([^"']*)$/.exec(prefix)
     ?? /(?:forma|api)\.showToast\(\s*["'][^"']+["']\s*,\s*\{[^}]*?\bvariant\s*:\s*["']([^"']*)$/.exec(prefix);
   if (variant) return result(context.pos - variant[1].length, ["neutral", "info", "success", "warning", "caution", "error", "danger"].map(label => ({ label, type: "text" })));
@@ -127,6 +139,8 @@ export async function diagnose(language, source, controls = []) {
         else if (gridMethods.includes(method) && control.kind !== "datagridview") warn(args[0], `'${method}' requires a DataGridView.`);
         else if (["get", "set", "bind"].includes(method) && args[1]?.type === "Literal" && !propertiesFor(control.kind, method === "bind" ? "get" : method).includes(args[1].value))
           warn(args[1], `'${args[1].value}' is not supported by ${node.callee.object.name}.${method} for ${control.kind}.`);
+        else if (method === "set" && control.kind === "timer" && args[1]?.value === "interval" && args[2]?.type === "Literal" && !Number.isInteger(args[2].value))
+          warn(args[2], "Timer interval must be an integer number of milliseconds, for example 1000 without quotes.");
       }
     }
     for (const [key, value] of Object.entries(node)) if (key !== "start" && key !== "end") {

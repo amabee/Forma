@@ -5,6 +5,145 @@ const path = require('node:path');
 const { JSDOM } = require('../../src/Forma.Builder/Frontend/node_modules/jsdom');
 const base = path.join(__dirname, '../..');
 
+test('timer interval is readable, bindable and sent as a numeric setting from a click script', () => {
+  const { window, document, create, messages } = fixture('preview.html');
+  window.formaDesigner.preview = true;
+  create('timer', 'timer', 'root'); create('start', 'button', 'root');
+  const controls = [
+    { id: 'timer', name: 'timer', kind: 'timer', component: true, interval: 1000, enabled: false, visible: true },
+    { id: 'start', name: 'start', kind: 'button', enabled: true, visible: true, customization: { behavior:
+      'window.timerApi = forma; window.timerInterval = forma.bind("timer", "interval"); forma.on("click", () => { forma.set("timer", "interval", 250); forma.set("timer", "enabled", true); });' } }
+  ];
+  window.formaCustomization.apply({ controls }, true);
+  assert.equal(window.timerApi.get('timer', 'interval'), 1000);
+  assert.equal(window.timerInterval.value, 1000);
+  document.getElementById('start').click();
+  assert.equal(messages.at(-2).payload.property, 'interval'); assert.equal(messages.at(-2).payload.value, 250);
+  assert.equal(messages.at(-1).payload.property, 'enabled'); assert.equal(messages.at(-1).payload.value, true);
+  controls[0].interval = 250; window.formaCustomization.apply({ controls }, true);
+  assert.equal(window.timerInterval.value, 250);
+  window.close();
+});
+
+test('Dock and Anchor follow real container resize, preserve edge order and clean observers', () => {
+  const { window, document, create } = fixture(); const observations = [];
+  window.ResizeObserver = class {
+    constructor(callback) { this.callback = callback; }
+    observe(host) { observations.push({ host, callback: this.callback }); }
+    unobserve(host) { host.unobserved = true; }
+    disconnect() {}
+  };
+  const parent = document.getElementById('root'); let width = 640, height = 440;
+  Object.defineProperty(parent, 'clientWidth', { get: () => width });
+  Object.defineProperty(parent, 'clientHeight', { get: () => height });
+  const controls = [{ id: 'root', kind: 'form', width: 640, height: 440 },
+    { id: 'fill', parentId: 'root', kind: 'panel', dock: 'fill', width: 100, height: 100 },
+    { id: 'top', parentId: 'root', kind: 'panel', dock: 'top', width: 100, height: 40 },
+    { id: 'side', parentId: 'root', kind: 'panel', dock: 'left', width: 180, height: 100 },
+    { id: 'anchored', parentId: 'root', kind: 'button', anchor: 'bottom,right', x: 400, y: 300, width: 120, height: 36 },
+    { id: 'stretch', parentId: 'root', kind: 'textbox', anchor: 'top,left,right', x: 20, y: 120, width: 250, height: 36 }];
+  for (const item of controls.slice(1)) create(item.id, item.kind, 'root', { x: item.x ?? 0, y: item.y ?? 0 });
+  window.formaLayout.refresh({ controls });
+  assert.equal(document.getElementById('fill').style.left, '180px');
+  assert.equal(document.getElementById('fill').style.top, '40px');
+  assert.equal(document.getElementById('fill').style.width, '460px');
+  width = 740; height = 540; observations[0].callback([{ target: parent }]);
+  assert.equal(document.getElementById('fill').style.width, '560px');
+  assert.equal(document.getElementById('anchored').style.left, '500px');
+  assert.equal(document.getElementById('anchored').style.top, '400px');
+  assert.equal(document.getElementById('stretch').style.width, '350px');
+  width = 640; height = 440; observations[0].callback([{ target: parent }]);
+  assert.equal(document.getElementById('anchored').style.left, '400px');
+  window.formaLayout.removing(parent); assert.equal(parent.unobserved, true);
+  window.close();
+});
+
+test('managed resize pointer gestures retain relative positioning and commit unchanged X/Y', () => {
+  const { window, document, create, messages } = fixture();
+  create('stack', 'stackpanel', 'root', { orientation: 'vertical' });
+  create('child', 'button', 'stack', { x: 180, y: 90 });
+  const d = window.formaDesigner, child = document.getElementById('child'), host = child.parentElement;
+  Object.defineProperties(host, { clientWidth: { value: 300 }, clientHeight: { value: 200 } });
+  d.state = { controls: [{ id: 'root', kind: 'form', width: 640, height: 440 },
+    { id: 'stack', parentId: 'root', kind: 'stackpanel', width: 300, height: 200 },
+    { id: 'child', parentId: 'stack', kind: 'button', x: 180, y: 90, width: 120, height: 36 }] };
+  d.select('child'); const handle = document.querySelector('[data-handle="nw"]');
+  handle.setPointerCapture = () => {}; handle.hasPointerCapture = () => false;
+  const pointer = (type, x, y) => {
+    const event = new window.MouseEvent(type, { bubbles: true, cancelable: true, button: 0, clientX: x, clientY: y });
+    Object.defineProperty(event, 'pointerId', { value: 1 });
+    (type === 'pointerdown' ? handle : document).dispatchEvent(event);
+  };
+  pointer('pointerdown', 100, 100); pointer('pointermove', 75, 90);
+  assert.equal(child.style.left, ''); assert.equal(child.style.top, '');
+  assert.equal(child.style.position, 'relative'); assert.equal(child.style.width, '145px');
+  pointer('pointerup', 75, 90);
+  const resize = messages.find(message => message.event === 'resize');
+  assert.equal(resize.payload.x, 180); assert.equal(resize.payload.y, 90);
+  assert.equal(resize.payload.width, 145); assert.equal(resize.payload.height, 46);
+  window.close();
+});
+
+test('Accordion sections switch their actual children and keep them through header updates', () => {
+  const { window, document, create, messages } = fixture();
+  create('sections', 'accordion', 'root', { tabs: ['Account', 'Settings'], selectedTab: 0 });
+  create('account', 'textbox', 'sections', { layoutSlot: 1, text: 'Ada' });
+  create('settings', 'button', 'sections', { layoutSlot: 2 });
+  const section = document.getElementById('sections');
+  assert.equal(document.getElementById('settings').hidden, true);
+  section.querySelector('[data-tab-index="1"]').click();
+  assert.equal(messages.at(-1).payload.selectedTab, 1);
+  assert.equal(document.getElementById('account').hidden, true);
+  assert.equal(document.getElementById('settings').hidden, false);
+  assert.equal(section.querySelector('[data-tab-index="1"]').getAttribute('aria-expanded'), 'true');
+  assert.equal(section.querySelector('.layout-content').previousElementSibling.dataset.tabIndex, '1');
+  section.querySelector('[data-tab-index="1"]').click();
+  assert.equal(section.querySelector('.layout-content').hidden, true);
+  assert.equal(messages.at(-1).payload.expanded, false);
+  section.querySelector('[data-tab-index="1"]').click();
+  assert.equal(section.querySelector('.layout-content').hidden, false);
+  window.forma.update({ id: 'sections', properties: { tabs: ['Profile', 'Settings', 'Extra'] } });
+  assert.equal(document.getElementById('account').value, 'Ada');
+  assert.equal(section.querySelectorAll('[data-tab-index]').length, 3);
+  section.querySelector('[data-tab-add]').click();
+  assert.equal(messages.at(-1).payload.command, 'add-tab');
+  window.formaDesigner.preview = true;
+  window.formaDesigner.applyAppearance({ id: 'sections', kind: 'accordion', width: 300, height: 200, enabled: false, visible: true });
+  const count = messages.length;
+  section.querySelector('[data-tab-index="0"]').click();
+  assert.equal(messages.length, count);
+  window.close();
+});
+
+test('responsive containers follow their own width, preserve partial settings and dispose observers', () => {
+  const { window, document, create } = fixture(); const observed = [];
+  window.ResizeObserver = class {
+    constructor(callback) { this.callback = callback; observed.push(this); }
+    observe(element) { this.element = element; }
+    disconnect() { this.disconnected = true; }
+  };
+  create('shell', 'appshell', 'root', { breakpoint: 600, orientation: 'horizontal' });
+  create('sidebar', 'sidebar', 'shell', { orientation: 'vertical' });
+  create('main', 'responsivepanel', 'shell', { breakpoint: 400, orientation: 'horizontal' });
+  create('field', 'textbox', 'main', { x: 12, y: 24 });
+  const shell = document.getElementById('shell'), main = document.getElementById('main');
+  shell.style.width = '800px'; observed[0].callback();
+  assert.equal(shell.dataset.narrow, 'false');
+  assert.equal(shell.querySelector('.layout-content').style.flexDirection, 'row');
+  shell.style.width = '500px'; observed[0].callback();
+  assert.equal(shell.dataset.narrow, 'true');
+  assert.equal(shell.querySelector('.layout-content').style.flexDirection, 'column');
+  window.forma.update({ id: 'shell', properties: { gap: 20 } });
+  assert.equal(shell._layoutProperties.breakpoint, 600);
+  main.style.width = '450px'; observed[1].callback();
+  assert.equal(main.dataset.narrow, 'false');
+  assert.equal(main.querySelector('.layout-content').style.flexWrap, 'wrap');
+  assert.equal(document.getElementById('field').style.position, 'relative');
+  window.forma.remove({ id: 'shell' });
+  assert.ok(observed.every(observer => observer.disconnected));
+  window.close();
+});
+
 test('grid inspector commits valid drafts before Save and preserves drafts across stale state refreshes', () => {
   const { window, document, create, messages } = fixture();
   create('grid', 'datagridview', 'root');
@@ -445,7 +584,7 @@ function fixture(page = 'index.html') {
   const dom = new JSDOM(fs.readFileSync(path.join(base, 'src/Forma.Builder/DesignerWeb', page), 'utf8'), { runScripts: 'outside-only' });
   const messages = []; const window = dom.window;
   window.chrome = { webview: { postMessage: m => messages.push(m), addEventListener() {} } };
-  for (const file of ['src/Forma.WebView2/Web/scripts/data-grid.js', 'src/Forma.WebView2/Web/scripts/forma.js', 'src/Forma.WebView2/Web/scripts/tooltips.js', 'src/Forma.WebView2/Web/scripts/icons.js', 'src/Forma.WebView2/Web/scripts/modern-controls.js', 'src/Forma.WebView2/Web/scripts/selection-controls.js', 'src/Forma.Builder/DesignerWeb/designer.js', 'src/Forma.Builder/DesignerWeb/reactivity.js', 'src/Forma.Builder/DesignerWeb/component-customization.js']) window.eval(fs.readFileSync(path.join(base, file), 'utf8'));
+  for (const file of ['src/Forma.WebView2/Web/scripts/data-grid.js', 'src/Forma.WebView2/Web/scripts/forma.js', 'src/Forma.WebView2/Web/scripts/layout-properties.js', 'src/Forma.WebView2/Web/scripts/tooltips.js', 'src/Forma.WebView2/Web/scripts/icons.js', 'src/Forma.WebView2/Web/scripts/modern-controls.js', 'src/Forma.WebView2/Web/scripts/selection-controls.js', 'src/Forma.Builder/DesignerWeb/designer.js', 'src/Forma.Builder/DesignerWeb/reactivity.js', 'src/Forma.Builder/DesignerWeb/component-customization.js']) window.eval(fs.readFileSync(path.join(base, file), 'utf8'));
   const create = (id, control, parentId, properties = {}) => window.forma.receive({ type: 'create', id, control, parentId, properties });
   create('root', 'form'); window.formaDesigner.receive({ action: 'initialize', id: 'root' });
   return { window, document: window.document, messages, create };
@@ -652,7 +791,7 @@ test('nonvisual custom CSS styles runtime popups without changing designer tray 
   window.close();
 });
 
-test('custom properties live in Advanced for nonvisual components and the form', () => {
+test('custom properties sit below search for nonvisual components and the form', () => {
   const { window, document, create } = fixture();
   create('timer', 'timer', 'root');
   const d = window.formaDesigner;
@@ -661,7 +800,9 @@ test('custom properties live in Advanced for nonvisual components and the form',
     const button = document.querySelector('.inspector-body [data-command="edit-custom-properties"]');
     assert.ok(button);
     assert.equal(button.textContent, 'Custom Properties…');
-    assert.equal(button.closest('details').dataset.category, 'Advanced');
+    assert.equal(button.closest('details'), null);
+    assert.equal(document.getElementById('custom-properties-action').previousElementSibling.className, 'search property-search');
+    assert.equal(document.getElementById('custom-properties-action').nextElementSibling.id, 'property-editors');
     assert.equal(document.getElementById('prop-customCss'), null);
     assert.equal(document.getElementById('prop-zIndex'), null);
     assert.equal(document.querySelector('[data-command="bring-front"]'), null);

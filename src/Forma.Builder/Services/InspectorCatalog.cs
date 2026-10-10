@@ -344,7 +344,7 @@ public static class InspectorCatalog
             "Layout",
             "select",
             Options: ["horizontal", "vertical"],
-            Kind: "splitcontainer,flowlayoutpanel,tabcontrol,toolbar,toolstrip,divider,radiogroup,checkboxgroup,segmentedcontrol,chipgroup,buttongroup,stackpanel,hstack,vstack,wrappanel,centerpanel,sidenavigation"
+            Kind: "splitcontainer,flowlayoutpanel,tabcontrol,toolbar,toolstrip,divider,radiogroup,checkboxgroup,segmentedcontrol,chipgroup,buttongroup,sidebar,appshell,responsivepanel,stackpanel,hstack,vstack,wrappanel,centerpanel,sidenavigation"
         ),
         new(
             "gap",
@@ -353,14 +353,20 @@ public static class InspectorCatalog
             "number",
             0,
             64,
-            Kind: "splitcontainer,flowlayoutpanel,tablelayoutpanel,stackpanel,hstack,vstack,wrappanel,centerpanel"
+            Kind: "splitcontainer,flowlayoutpanel,tablelayoutpanel,sidebar,appshell,responsivepanel,accordion,stackpanel,hstack,vstack,wrappanel,centerpanel"
         ),
         new("scrollDirection", "Scroll direction", "Layout", "select", Options: ["both", "horizontal", "vertical"], Kind: "scrollablepanel"),
         new("columns", "Columns", "Layout", "number", 1, 12, Kind: "tablelayoutpanel"),
         new("rowCount", "Rows", "Layout", "number", 1, 100, Kind: "tablelayoutpanel"),
+        new("breakpoint", "Stack below width", "Layout", "number", 100, 2400, Kind: "appshell,responsivepanel"),
+        new("tabs", "Sections (one per line)", "General", "textarea", Kind: "accordion"),
+        new("expanded", "Expanded", "Behavior", "checkbox", Kind: "accordion"),
+        new("selectedTab", "Expanded section", "Behavior", "number", 0, 99, Kind: "accordion"),
         new("tabs", "Tabs (one per line)", "General", "textarea", Kind: "tabcontrol"),
         new("selectedTab", "Selected tab", "Behavior", "number", 0, 99, Kind: "tabcontrol"),
         new("layoutSlot", "Pane / tab / cell", "Layout", "number", 1, 100, ChildOnly: true),
+        new("dock", "Dock", "Layout", "select", Options: Appearance.DockValues, ChildOnly: true),
+        new("anchor", "Anchor", "Layout", "select", Options: Appearance.AnchorValues, ChildOnly: true),
         new("gridColumns", "Columns (one per line)", "General", "textarea", Kind: "datagridview"),
         new("gridRows", "Rows (JSON)", "General", "textarea", Kind: "datagridview"),
         new("readOnly", "Read only", "Behavior", "checkbox", Kind: "datagridview"),

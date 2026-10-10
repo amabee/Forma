@@ -15,7 +15,8 @@ public static class ComponentEditorService
         var toast = control is Forma.Core.Controls.Toast;
         var eventName = control is Forma.Core.Controls.SplitButton ? "primary-click"
             : control is Forma.Core.Controls.DropdownButton ? "command-item"
-            : control is Forma.Core.Controls.Breadcrumb or Forma.Core.Controls.SideNavigation ? "navigate" : "click";
+            : control is Forma.Core.Controls.Breadcrumb or Forma.Core.Controls.SideNavigation ? "navigate"
+            : control is Forma.Core.Controls.Accordion ? "change" : "click";
         var palette = toast ? "/* Colors follow Variant. Use :host[data-variant=\"error\"] for custom colors. */"
             : $"color: {appearance.ForeColor};\n  background-color: {appearance.BackColor};";
         var border = toast ? $"border-width: {appearance.BorderWidth}px;\n  border-style: {appearance.BorderStyle};"

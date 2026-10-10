@@ -1,6 +1,6 @@
 # Using Forma components, properties, and code
 
-This guide describes the current Builder and its 80 toolbox entries. The [component reference](component-reference.md) lists every implemented control, contextual inspector property, range, C# property, constructor default, and declared method/event. The [roadmap](roadmap-stages.md) tracks features still pending.
+This guide describes the current Builder and its 84 toolbox entries. The [component reference](component-reference.md) lists every implemented control, contextual inspector property, range, C# property, constructor default, and declared method/event. The [roadmap](roadmap-stages.md) tracks features still pending.
 
 ## Contents
 
@@ -44,9 +44,38 @@ X/Y are pixels in the parent content area, below headers. Width/Height and min/m
 
 FlowLayoutPanel uses child order/orientation instead of free X/Y; drag to reorder. TableLayoutPanel uses Columns/Rows and cell placement. SplitContainer horizontal means left/right panes, vertical means top/bottom; splitter dragging is pending. TabControl supports horizontal/vertical headers; use Add tab, select a page, then drop its children. Tab selected index is zero-based; a child's LayoutSlot is one-based.
 
+### Dock and Anchor
+
+Dock and Anchor are in Layout for visual children of free-position containers.
+Dock values are none, top, bottom, left, right and fill. Edge docks reserve space
+in child order; Fill uses what remains. Resize an edge-docked control along its
+free axis to change its thickness. Dock controls its position and the other
+dimension. Use one Fill control per content area.
+
+Anchor defaults to top,left. top,right keeps the right-edge distance;
+bottom,right keeps the bottom/right distances. top,left,right stretches width,
+and top,bottom,left,right stretches both dimensions. An axis with neither edge
+anchored stays centered on that axis. Dock takes precedence over Anchor.
+These settings persist and are undoable, and also work as Preview containers
+resize. Managed stack/flow/table layouts control child placement, so Dock/Anchor
+are disabled there. Use a Panel inside a managed layout for freely positioned
+or anchored content. AppShell-controlled dimensions are also disabled in the
+inspector and their resize handles are hidden.
+
+```js
+forma.set("sidebarPanel", "dock", "left");
+forma.set("mainPanel", "dock", "fill");
+forma.set("submitButton", "anchor", "bottom,right");
+const dock = forma.get("mainPanel", "dock");
+```
+
+Resizing managed children changes their size without changing their stored
+X/Y or applying relative left/top offsets. Dragging still reorders them.
+In free-position containers, hold Alt while dragging to bypass alignment snaps.
+
 ## Custom Properties editor
 
-Select a component → **Advanced → Custom Properties**. Edit:
+Select a component → **Custom Properties**, directly below Search properties. Edit:
 
 - **CSS:** scoped visual overrides using `:host`.
 - **Behavior:** JavaScript executed once per Preview start.
@@ -116,6 +145,10 @@ Use exact camelCase keys. `forma.set` uses the bridge; it is not a synchronous D
 | `selectedPath` | FilePicker/FolderPicker displayed selected path | Not supported | String; read after Browse finishes |
 | `text` | Display/state text; use `value` for live input | All models | String, max 32767 characters |
 | `enabled`, `visible` | All controls | All controls; enabling Timer also starts/stops it | Boolean |
+| `interval` | Timer | Timer | Integer milliseconds, clamped to 10–3600000; use `1000`, not `"1000"` |
+| `minimum`, `maximum`, `increment` | NumericControl descendants | Same types | Finite numbers; increment must be positive; range edits clamp Value |
+| `speed` | Spinner | Spinner | Integer milliseconds, clamped to 100–5000 |
+| `shape`, `lines` | Skeleton | Skeleton | text/rectangle/circle; integer lines clamped to 1–10 |
 | `checked` | CheckBox, RadioButton, ToggleSwitch, ToggleButton | Same types | Boolean |
 | `value` | Live text inputs; NumericUpDown/Slider and native ProgressBar numbers; native date/time/color input values | NumericControl descendants, DateTimeInput descendants, ColorPicker | Finite number or correctly formatted string |
 | `selectedIndex` | ComboBox/ListBox native selects; ListView has no equivalent DOM getter | ComboBox/ListBox/ListView | Zero-based integer; -1 clears |
@@ -131,7 +164,7 @@ Use exact camelCase keys. `forma.set` uses the bridge; it is not a synchronous D
 | `filterText` | DataGridView | DataGridView | String |
 | `sortColumn` | DataGridView | DataGridView | Zero-based column; -1 unsorted |
 | `sortDirection` | DataGridView | DataGridView | `ascending`, `descending` |
-| `isActive` | Spinner, LoadingOverlay | Spinner, LoadingOverlay | Boolean |
+| `isActive` | Spinner, LoadingOverlay, Skeleton | Same types | Boolean |
 | `variant`, `position`, `duration`, `dismissible` | Toast | Toast | Severity string, corner string, milliseconds, boolean |
 | `isOpen` | Toast | Not supported | Boolean; use showToast/closeToast to change |
 

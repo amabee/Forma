@@ -7,6 +7,51 @@ namespace Forma.Tests;
 public class PreviewSessionTests
 {
     [Fact]
+    public void TimerIntervalIsTypedClampedAndRuntimeOnly()
+    {
+        var design = new BuilderViewModel(); design.CreateNew();
+        var original = Assert.IsType<Forma.Core.Controls.Timer>(design.ExecuteEdit("drop", design.Form.Id,
+            JsonSerializer.SerializeToElement(new { control = "timer", x = 0, y = 0 })).AddedControl);
+        using var preview = new PreviewSession(design);
+        var timer = Assert.IsType<Forma.Core.Controls.Timer>(preview.Controls.Single(c => c.Id == original.Id));
+        preview.SetValue(timer.Id, "interval", JsonSerializer.SerializeToElement(250));
+        Assert.Equal(250, timer.Interval); Assert.Equal(1000, original.Interval);
+        var state = JsonSerializer.SerializeToElement(preview.State()).GetProperty("controls").EnumerateArray().Single(c => c.GetProperty("id").GetString() == timer.Id);
+        Assert.Equal(250, state.GetProperty("interval").GetInt32());
+        preview.SetValue(timer.Id, "enabled", JsonSerializer.SerializeToElement(true));
+        Assert.True(timer.Enabled);
+        preview.SetValue(timer.Id, "interval", JsonSerializer.SerializeToElement(2000));
+        Assert.Equal(2000, timer.Interval); Assert.True(timer.Enabled);
+        preview.SetValue(timer.Id, "enabled", JsonSerializer.SerializeToElement(false)); Assert.False(timer.Enabled);
+        Assert.Throws<ArgumentException>(() => preview.SetValue(timer.Id, "interval", JsonSerializer.SerializeToElement("1000")));
+        Assert.Throws<ArgumentException>(() => preview.SetValue(timer.Id, "interval", JsonSerializer.SerializeToElement(1000.5)));
+        Assert.Equal(2000, timer.Interval);
+        preview.SetValue(timer.Id, "interval", JsonSerializer.SerializeToElement(0)); Assert.Equal(10, timer.Interval);
+        preview.SetValue(timer.Id, "interval", JsonSerializer.SerializeToElement(4000000)); Assert.Equal(3600000, timer.Interval);
+    }
+
+    [Fact]
+    public void NumericRangesAndLoadingPropertiesHaveRuntimeAccess()
+    {
+        var design = new BuilderViewModel(); design.CreateNew();
+        foreach (var kind in new[] { "numericupdown", "spinner", "skeleton" }) design.ExecuteEdit("drop", design.Form.Id, JsonSerializer.SerializeToElement(new { control = kind, x = 0, y = 0 }));
+        using var preview = new PreviewSession(design);
+        var numeric = preview.Controls.OfType<NumericUpDown>().Single();
+        preview.SetValue(numeric.Id, "maximum", JsonSerializer.SerializeToElement(200));
+        preview.SetValue(numeric.Id, "minimum", JsonSerializer.SerializeToElement(20));
+        preview.SetValue(numeric.Id, "increment", JsonSerializer.SerializeToElement(5));
+        preview.SetValue(numeric.Id, "value", JsonSerializer.SerializeToElement(10));
+        Assert.Equal(20, numeric.Value); Assert.Equal(5, numeric.Increment);
+        Assert.Throws<ArgumentException>(() => preview.SetValue(numeric.Id, "increment", JsonSerializer.SerializeToElement(0)));
+        var spinner = preview.Controls.OfType<Spinner>().Single();
+        preview.SetValue(spinner.Id, "speed", JsonSerializer.SerializeToElement(1200)); Assert.Equal(1200, spinner.Speed);
+        var skeleton = preview.Controls.OfType<Skeleton>().Single();
+        preview.SetValue(skeleton.Id, "lines", JsonSerializer.SerializeToElement(5));
+        preview.SetValue(skeleton.Id, "shape", JsonSerializer.SerializeToElement("rectangle"));
+        preview.SetValue(skeleton.Id, "isActive", JsonSerializer.SerializeToElement(false));
+        Assert.Equal(5, skeleton.Lines); Assert.Equal("rectangle", skeleton.Shape); Assert.False(skeleton.IsActive);
+    }
+    [Fact]
     public void ScriptGridOperationsUseLatestRowsPreserveSelectionAndLeaveDesignUntouched()
     {
         var design = new BuilderViewModel(); design.CreateNew();

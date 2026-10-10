@@ -1,6 +1,6 @@
 # Component and property reference
 
-This reference covers the 80 implemented toolbox entries plus Form. It was checked against the compiled Core models and InspectorCatalog. The larger roadmap is separate. Start with [the usage guide](components-and-scripting.md) for setup, JavaScript recipes, and C# integration.
+This reference covers the 84 implemented toolbox entries plus Form. It was checked against the compiled Core models and InspectorCatalog. The larger roadmap is separate. Start with [the usage guide](components-and-scripting.md) for setup, JavaScript recipes, and C# integration.
 
 ## Reading the tables
 
@@ -16,6 +16,9 @@ This reference covers the 80 implemented toolbox entries plus Form. It was check
 Visual controls expose geometry and appearance. Tray components expose the applicable General/Behavior fields and Custom Properties action. The inspector filters these by kind; do not apply a visual field to a tray component.
 
 ### Advanced
+
+The Custom Properties action is directly below Search properties, above the
+property categories, for both visual controls and tray components.
 
 | ID | Label | Editor | Values / range | Notes |
 | --- | --- | --- | --- | --- |
@@ -57,6 +60,11 @@ Visual controls expose geometry and appearance. Tray components expose the appli
 | `locked` | Locked | checkbox | — | Editable |
 
 ### Layout
+
+| ID | Label | Editor | Values / range | Notes |
+| --- | --- | --- | --- | --- |
+| `dock` | Dock | select | `none`, `top`, `bottom`, `left`, `right`, `fill` | Visual children; disabled in managed layouts |
+| `anchor` | Anchor | select | All combinations of `top`, `bottom`, `left`, `right`; `none` | Default `top,left`; Dock takes priority |
 
 | ID | Label | Editor | Values / range | Notes |
 | --- | --- | --- | --- | --- |
@@ -1167,6 +1175,12 @@ Uses the shared inspector fields and contextual actions.
 
 ### Timer
 
+Preview scripts support interval through forma.get/set/bind. Pass an integer
+number of milliseconds, e.g. forma.set("timer1", "interval", 1000). The value
+is clamped to 10–3600000, applies to a running timer, and does not edit the
+saved design. Set enabled=true to start and enabled=false to stop. Numeric
+strings such as "1000" are rejected and flagged by the editor.
+
 **Kind:** `timer` · **Base model:** `Component` · **Designer:** component tray.
 
 | Inspector ID | Label | Editor | Values / range | Read-only |
@@ -1399,6 +1413,55 @@ Icon, Show text, and common properties. JS get/set/bind supports description,
 iconName, showText, and common properties. Click/OnClick retain Button behavior.
 
 ## Modern layouts and navigation
+
+### Dock and Anchor (visual child appearance)
+
+These are Builder Appearance properties rather than Core control members.
+Inspector and Preview JS get/set/bind use dock and anchor. Dock defaults none;
+accepted values: none/top/bottom/left/right/fill. Anchor defaults top,left;
+the inspector offers every combination of top, bottom, left and right, including
+none. Values use the exact lowercase comma-separated strings shown in the
+inspector. Both persist in project appearance and participate in design history.
+
+Dock reserves edges in child order and processes Fill last. Docked positions and
+stretched dimensions cannot be dragged or manually edited. Dock takes priority
+over Anchor. Anchoring opposite edges stretches that dimension; one edge keeps
+its distance; neither edge centers the control along that axis. Width/height
+constraints still apply. Hidden docks reserve no space. Stack, flow, table and
+other managed layouts retain their own placement rules; use an inner Panel to
+apply docking/anchoring. The form itself and nonvisual components have no Dock
+or Anchor inspector. AppShell controls its main area's size automatically.
+
+### Accordion
+
+Inherits TabControl. Tabs defaults to Section 1/Section 2; SelectedTab defaults
+to 0 and Expanded defaults true. Inspector labels are Sections (one per line),
+Expanded section (zero-based), and Expanded. Use the + button or Add section
+context action to create a section, then drop controls into that section.
+Children retain one-based LayoutSlot assignments. One section can be expanded
+at a time; clicking its header again collapses it. Native buttons support Enter
+and Space. JS get/set/bind supports tabs (string array), selectedTab, expanded
+and gap. Change supplies event.detail.selectedTab/expanded. Changing section
+names does not migrate children from removed sections; adjust their Layout slot
+if you remove a section containing controls.
+
+### Sidebar, AppShell and ResponsivePanel
+
+Sidebar inherits LinearLayout and defaults to vertical stacking with scrolling.
+Place navigation or other controls inside it; moving it moves its children.
+AppShell and ResponsivePanel inherit ResponsiveLayout/LinearLayout. Both expose
+Gap (default 8, range 0–64), Orientation, and Breakpoint (inspector: Stack below
+width; default 600, range 100–2400). JS get/set/bind uses gap, orientation and
+breakpoint. The breakpoint measures the container's width, not the window.
+
+AppShell places its first child beside the remaining content at wide horizontal
+widths; the first child's inspector Width sets the sidebar width. Remaining
+children share the available space and fill the height. Below Breakpoint,
+children stack and fill the available width. Start by dropping a Sidebar first,
+then a Panel or ResponsivePanel for the main content. ResponsivePanel wraps
+children at wide widths and stacks them at narrow widths. Child X/Y is managed;
+drag to reorder. This batch does not add routing, a drawer, or automatic form
+docking. Resize the container to test its breakpoint.
 
 ### StackPanel, HStack, VStack, WrapPanel and CenterPanel
 

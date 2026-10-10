@@ -39,8 +39,12 @@ public sealed class PreviewSession : IDisposable
             item["kind"] = control.ControlType;
             item["parentId"] = control.Parent?.Id;
             item["layoutSlot"] = control.LayoutSlot;
+            item["x"] = control.X ?? 0;
+            item["y"] = control.Y ?? 0;
             item["component"] = control is INonvisualControl;
             item["selectedTab"] = (control as TabControl)?.SelectedTab ?? 0;
+            if (control is TabControl tabControl) item["tabs"] = tabControl.Tabs;
+            if (control is Accordion accordion) item["expanded"] = accordion.Expanded;
             item["readOnly"] = control switch
             {
                 RichTextBox rich => rich.ReadOnly,
@@ -68,9 +72,14 @@ public sealed class PreviewSession : IDisposable
             if (control is CommandControl commands) item["commandItems"] = commands.Items;
             if (control is LayoutContainer layout) { item["orientation"] = layout.Orientation; item["gap"] = layout.Gap; }
             if (control is SelectionGroup group) item["orientation"] = group.Orientation;
+            if (control is ResponsiveLayout responsive) item["breakpoint"] = responsive.Breakpoint;
             if (control is ScrollablePanel scroll) item["scrollDirection"] = scroll.ScrollDirection;
             if (control is PathPicker picker) item["selectedPath"] = picker.SelectedPath;
             if (control is Spinner spinner) item["isActive"] = spinner.IsActive;
+            if (control is Forma.Core.Controls.Timer timer) item["interval"] = timer.Interval;
+            if (control is NumericControl numeric) { item["minimum"] = numeric.Minimum; item["maximum"] = numeric.Maximum; item["increment"] = numeric.Increment; }
+            if (control is Spinner animation) item["speed"] = animation.Speed;
+            if (control is Skeleton skeleton) { item["shape"] = skeleton.Shape; item["lines"] = skeleton.Lines; item["isActive"] = skeleton.IsActive; }
             if (control is LoadingOverlay overlay) item["isActive"] = overlay.IsActive;
             if (control is Toast toast) {
                 item["variant"] = toast.Variant; item["position"] = toast.Position;
@@ -92,9 +101,23 @@ public sealed class PreviewSession : IDisposable
             ?? throw new ArgumentException("The target control no longer exists.");
         switch (property)
         {
+            case "interval" when control is Forma.Core.Controls.Timer intervalTimer && value.ValueKind == JsonValueKind.Number && value.TryGetInt32(out var interval): intervalTimer.Interval = interval; return;
+            case "minimum" when control is NumericControl minimumControl && value.ValueKind == JsonValueKind.Number && value.TryGetDouble(out var minimum) && double.IsFinite(minimum): minimumControl.Minimum = minimum; return;
+            case "maximum" when control is NumericControl maximumControl && value.ValueKind == JsonValueKind.Number && value.TryGetDouble(out var maximum) && double.IsFinite(maximum): maximumControl.Maximum = maximum; return;
+            case "increment" when control is NumericControl stepControl && value.ValueKind == JsonValueKind.Number && value.TryGetDouble(out var increment) && double.IsFinite(increment) && increment > 0: stepControl.Increment = increment; return;
+            case "speed" when control is Spinner animation && value.ValueKind == JsonValueKind.Number && value.TryGetInt32(out var speed): animation.Speed = speed; return;
+            case "shape" when control is Skeleton skeleton && value.ValueKind == JsonValueKind.String && value.GetString() is "text" or "rectangle" or "circle": skeleton.Shape = value.GetString()!; return;
+            case "lines" when control is Skeleton skeleton && value.ValueKind == JsonValueKind.Number && value.TryGetInt32(out var lines): skeleton.Lines = lines; return;
+            case "isActive" when control is Skeleton skeleton && value.ValueKind is JsonValueKind.True or JsonValueKind.False: skeleton.IsActive = value.GetBoolean(); return;
+            case "dock" when control.Parent is not null && control is not INonvisualControl && value.ValueKind == JsonValueKind.String && Forma.Builder.Appearance.DockValues.Contains(value.GetString()!): Appearance[id].Dock = value.GetString()!; return;
+            case "anchor" when control.Parent is not null && control is not INonvisualControl && value.ValueKind == JsonValueKind.String && Forma.Builder.Appearance.AnchorValues.Contains(value.GetString()!): Appearance[id].Anchor = value.GetString()!; return;
             case "orientation" when control is LayoutContainer layout && value.ValueKind == JsonValueKind.String && value.GetString() is "horizontal" or "vertical": layout.Orientation = value.GetString()!; return;
             case "orientation" when control is SelectionGroup group && value.ValueKind == JsonValueKind.String && value.GetString() is "horizontal" or "vertical": group.Orientation = value.GetString()!; return;
             case "gap" when control is LayoutContainer layout && value.ValueKind == JsonValueKind.Number && value.TryGetInt32(out var gap): layout.Gap = gap; return;
+            case "expanded" when control is Accordion accordion && value.ValueKind is JsonValueKind.True or JsonValueKind.False: accordion.Expanded = value.GetBoolean(); return;
+            case "breakpoint" when control is ResponsiveLayout responsive && value.ValueKind == JsonValueKind.Number && value.TryGetInt32(out var breakpoint): responsive.Breakpoint = breakpoint; return;
+            case "tabs" when control is TabControl tabs && value.ValueKind == JsonValueKind.Array:
+                tabs.Tabs = value.Deserialize<string[]>() ?? []; return;
             case "scrollDirection" when control is ScrollablePanel scroll && value.ValueKind == JsonValueKind.String && value.GetString() is "both" or "horizontal" or "vertical": scroll.ScrollDirection = value.GetString()!; return;
             case "commandItems" when control is CommandControl commands:
                 if (value.ValueKind != JsonValueKind.Array) throw new ArgumentException("Commands must be an array.");

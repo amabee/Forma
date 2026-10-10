@@ -77,6 +77,7 @@ public sealed class BuilderViewModel : INotifyPropertyChanged
         {
             if (before is not null)
             {
+                _editing.ReflowLayouts();
                 var property = action == "property" && payload.ValueKind == JsonValueKind.Object
                     && payload.TryGetProperty("property", out var field) && field.ValueKind == JsonValueKind.String
                     ? field.GetString() : null;

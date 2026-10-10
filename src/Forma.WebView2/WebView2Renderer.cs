@@ -106,6 +106,8 @@ public sealed class WebView2Renderer : IRenderer
         if (control is IconButton iconButton) { properties["iconName"] = iconButton.IconName; properties["showText"] = iconButton.ShowText; }
         if (control is SplitButton splitButton) properties["primaryEnabled"] = splitButton.PrimaryEnabled;
         if (control is CommandButton commandButton) properties["description"] = commandButton.Description;
+        if (control is Accordion accordion) properties["expanded"] = accordion.Expanded;
+        if (control is ResponsiveLayout responsive) properties["breakpoint"] = responsive.Breakpoint;
         if (control is ScrollablePanel scroll) properties["scrollDirection"] = scroll.ScrollDirection;
         if (control is Chip chip) { properties["variant"] = chip.Variant; properties["removable"] = chip.Removable; properties["isRemoved"] = chip.IsRemoved; }
         if (control is Rating rating) { properties["stars"] = rating.Stars; properties["readOnly"] = rating.ReadOnly; }
@@ -322,7 +324,10 @@ public sealed class WebView2Renderer : IRenderer
             choice.SelectedIndex = selected;
         if (registration.Control is TabControl tabs && message.Event == "tab"
             && data.TryGetProperty("selectedTab", out var tab) && tab.ValueKind == JsonValueKind.Number && tab.TryGetInt32(out var active))
+        {
             tabs.SelectedTab = active;
+            if (tabs is Accordion accordion && data.TryGetProperty("expanded", out var expanded) && expanded.ValueKind is JsonValueKind.True or JsonValueKind.False) accordion.Expanded = expanded.GetBoolean();
+        }
         if (registration.Control is DataGridView grid && message.Event == "cell"
             && data.TryGetProperty("row", out var row) && row.ValueKind == JsonValueKind.Number && row.TryGetInt32(out var r)
             && data.TryGetProperty("column", out var column) && column.ValueKind == JsonValueKind.Number && column.TryGetInt32(out var c)

@@ -8,6 +8,40 @@ public class LayoutNavigationTests
 {
     private static JsonElement Payload(object value) => JsonSerializer.SerializeToElement(value);
     [Fact]
+    public void AccordionSectionsAndResponsiveContainersPersistAndRuntimeEditsStayIsolated()
+    {
+        var model = new BuilderViewModel(); model.CreateNew();
+        var accordion = Assert.IsType<Accordion>(model.ExecuteEdit("drop", model.Form.Id, Payload(new { control = "accordion", x = 0, y = 0 })).AddedControl);
+        var first = model.ExecuteEdit("drop", accordion.Id, Payload(new { control = "label", x = 0, y = 0 })).AddedControl!;
+        model.ExecuteEdit("command", accordion.Id, Payload(new { command = "add-tab" }));
+        Assert.Equal("Section 3", accordion.Tabs[2]);
+        var third = model.ExecuteEdit("drop", accordion.Id, Payload(new { control = "button", x = 0, y = 0 })).AddedControl!;
+        Assert.Equal(1, first.LayoutSlot); Assert.Equal(3, third.LayoutSlot);
+        foreach (var kind in new[] { "sidebar", "appshell", "responsivepanel" })
+        {
+            var parent = model.ExecuteEdit("drop", model.Form.Id, Payload(new { control = kind, x = 0, y = 0 })).AddedControl!;
+            model.ExecuteEdit("drop", parent.Id, Payload(new { control = "button", x = 0, y = 0 }));
+            Assert.Single(parent.Children);
+        }
+        var shell = model.Form.Children.OfType<AppShell>().Single();
+        model.ExecuteEdit("select", shell.Id, default);
+        model.ExecuteEdit("property", shell.Id, Payload(new { property = "breakpoint", value = 720 }));
+        var undone = ProjectFile.Restore(ProjectFile.Parse(model.Undo()!.Json));
+        Assert.Equal(600, undone.Form.Children.OfType<AppShell>().Single().Breakpoint);
+        var saved = ProjectFile.Restore(ProjectFile.Parse(ProjectFile.Serialize(model.CaptureProject()))).Form;
+        Assert.Equal(720, saved.Children.OfType<AppShell>().Single().Breakpoint);
+        Assert.Equal("vertical", saved.Children.OfType<Sidebar>().Single().Orientation);
+        Assert.Equal(3, saved.Children.OfType<Accordion>().Single().Children[1].LayoutSlot);
+        using var preview = new PreviewSession(model);
+        preview.SetValue(shell.Id, "breakpoint", Payload(420));
+        preview.SetValue(accordion.Id, "tabs", Payload(new[] { "Only" }));
+        preview.SetValue(accordion.Id, "expanded", Payload(false));
+        Assert.True(accordion.Expanded);
+        Assert.Equal(720, shell.Breakpoint); Assert.Equal(3, accordion.Tabs.Length);
+        Assert.Contains("breakpoint", InspectorCatalog.ForKind("appshell").Select(p => p.Id));
+        Assert.Contains("tabs", InspectorCatalog.ForKind("accordion").Select(p => p.Id));
+    }
+    [Fact]
     public void LayoutsKeepNestedChildrenOrderAndSurviveSaveOpenAndUndo()
     {
         var model = new BuilderViewModel(); model.CreateNew();

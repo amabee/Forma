@@ -6,6 +6,20 @@ public sealed class Appearance
 
     public int Width { get; set; } = 120;
     public int Height { get; set; } = 36;
+    private string _dock = "none";
+    private string _anchor = "top,left";
+    public static readonly string[] DockValues = ["none", "top", "bottom", "left", "right", "fill"];
+    public static readonly string[] AnchorValues = ["none", "top,left", "top,right", "bottom,left", "bottom,right", "top,left,right", "bottom,left,right", "top,bottom,left", "top,bottom,right", "top,bottom,left,right", "top", "bottom", "left", "right", "top,bottom", "left,right"];
+    public string Dock
+    {
+        get => _dock;
+        set => _dock = DockValues.Contains(value) ? value : throw new ArgumentException("Invalid Dock value.");
+    }
+    public string Anchor
+    {
+        get => _anchor;
+        set => _anchor = AnchorValues.Contains(value) ? value : throw new ArgumentException("Invalid Anchor value.");
+    }
     public string ForeColor { get; set; } = "#ffffff";
     public string BackColor { get; set; } = "#2878ff";
     public int FontSize { get; set; } = 14;

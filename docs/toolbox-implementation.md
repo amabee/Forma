@@ -280,6 +280,15 @@ to scripts through selectedIndex and navigate callbacks. All eight support
 properties, persistence and design history. Toolbox drag acceptance now follows
 the displayed catalog, with a regression check for every entry.
 
+The following batch adds Accordion, Sidebar, AppShell and ResponsivePanel.
+Accordion holds controls in named sections, with one expanded section at a time
+and optional collapse. Sidebar stacks children with scrolling. AppShell gives
+the first child the sidebar role and lets later children fill the main area;
+it stacks below Breakpoint. ResponsivePanel wraps at wide widths and stacks at
+narrow widths. Breakpoints follow each container's width. All four support
+contextual inspector fields, save/open, history and Preview scripting.
+See component-reference.md for section slots and responsive property details.
+
 Card is a free-position container with Title, Description and Show header. Drop
 children into its content area; moving the Card moves the entire group. Badge
 supports neutral/info/success/warning/danger variants. Avatar uses the existing
