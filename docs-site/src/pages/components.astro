@@ -1,0 +1,36 @@
+---
+import DocsLayout from '../layouts/DocsLayout.astro';
+import navigation from '../generated/navigation.json';
+const components = navigation.filter(page => page.kind);
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+const groups = ['Layouts', 'Controls', 'Services'];
+---
+<DocsLayout title="Component library" description="Every implemented Forma component, in one place. Pick a control for setup, exact properties, JavaScript recipes, C# defaults, and current limitations." group="Reference">
+  <div class="library-intro"><div class="callout"><span aria-hidden="true">✦</span><div><strong>{components.length} components. All the useful details.</strong><p>Each page covers inspector fields, runtime read/write support, a practical script, and Core model defaults. Services live in the tray.</p></div></div><label class="library-search" for="component-filter"><span aria-hidden="true">⌕</span><input id="component-filter" type="search" placeholder="Find a component…" autocomplete="off" /><kbd>/</kbd></label><div class="library-filters" aria-label="Filter component category">{['All', ...groups].map(group => <button data-group={group} aria-pressed={group === 'All'}>{group}</button>)}<span id="library-count" role="status">{components.length} components</span></div></div>
+  {groups.map(group => <section class="library-section" data-library-section={group}><div class="section-label"><h2>{group}</h2><span>{group === 'Layouts' ? 'Give your controls a place to belong.' : group === 'Services' ? 'Behind the scenes. On top of things.' : 'The details that make your app yours.'}</span></div><div class="component-grid">{components.filter(page => page.group === group).map(page => <a class="component-card" data-component-name={page.title.toLowerCase()} data-component-description={page.description.toLowerCase()} data-component-group={group} href={`${base}/${page.slug}/`}><div class="component-card-top"><span class="component-symbol" aria-hidden="true">{group === 'Layouts' ? '▣' : group === 'Services' ? '◌' : '{ }'}</span><span class="card-eyebrow">{page.tray ? 'TRAY' : 'VISUAL'}</span><span class="card-arrow" aria-hidden="true">↗</span></div><h3>{page.title}</h3><p>{page.description}</p></a>)}</div></section>)}
+  <p id="library-empty" class="empty-message" hidden>No match. Try a shorter name or another category.</p>
+  <script>
+    const input = document.getElementById('component-filter') as HTMLInputElement;
+    let category = 'All';
+    function filter() {
+      let count = 0;
+      const query = input.value.trim().toLowerCase();
+      document.querySelectorAll<HTMLAnchorElement>('[data-component-name]').forEach(card => {
+        const matches = (category === 'All' || card.dataset.componentGroup === category) && `${card.dataset.componentName} ${card.dataset.componentDescription}`.includes(query);
+        card.hidden = !matches; if (matches) count++;
+      });
+      document.querySelectorAll<HTMLElement>('[data-library-section]').forEach(section => { section.hidden = !section.querySelector('[data-component-name]:not([hidden])'); });
+      document.getElementById('library-count')!.textContent = `${count} components`;
+      document.getElementById('library-empty')!.hidden = count > 0;
+    }
+    input.addEventListener('input', filter);
+    document.querySelectorAll<HTMLButtonElement>('[data-group]').forEach(button => button.addEventListener('click', () => {
+      category = button.dataset.group!;
+      document.querySelectorAll('[data-group]').forEach(item => item.setAttribute('aria-pressed', String(item === button)));
+      filter();
+    }));
+    document.addEventListener('keydown', event => {
+      if (event.key === '/' && !['INPUT','TEXTAREA'].includes((event.target as HTMLElement).tagName) && !document.querySelector('dialog[open]')) { event.preventDefault(); input.focus(); }
+    });
+  </script>
+</DocsLayout>

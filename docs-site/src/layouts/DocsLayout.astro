@@ -1,0 +1,80 @@
+---
+import '../styles/global.css';
+import navigation from '../generated/navigation.json';
+interface Props { title: string; description: string; group?: string; slug?: string; headings?: { depth: number; slug: string; text: string }[]; home?: boolean; kind?: string; tray?: boolean; }
+const { title, description, group = 'Documentation', slug = '', headings = [], home = false, kind, tray } = Astro.props;
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+const href = (path = '') => `${base}/${path}${path ? '/' : ''}`;
+const sections = ['Getting started', 'Scripting', 'Reference', 'Layouts', 'Controls', 'Services'];
+const siblings = navigation.filter(page => kind ? page.kind : !page.kind);
+const current = siblings.findIndex(page => page.slug === slug);
+const previous = siblings[current - 1], next = siblings[current + 1];
+const componentCount = navigation.filter(page => page.kind).length;
+const generatedSources: Record<string, string> = { events: 'docs/component-customization.md', recipes: 'docs/examples', troubleshooting: 'docs-site/scripts/generate-content.mjs' };
+const editPath = kind ? 'docs/component-reference.md' : slug.startsWith('guides/') ? (generatedSources[slug.slice(7)] ?? `docs/${slug.slice(7)}.md`) : 'docs-site/README.md';
+---
+<!doctype html>
+<html lang="en" data-theme="dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{home ? 'Forma Docs — Build it. Make it yours.' : `${title} — Forma Docs`}</title>
+    <meta name="description" content={description} />
+    <meta name="color-scheme" content="dark light" />
+    <meta property="og:title" content={`${title} — Forma Docs`} />
+    <meta property="og:description" content={description} />
+    <meta property="og:type" content="website" />
+    {Astro.site && <link rel="canonical" href={new URL(Astro.url.pathname, Astro.site)} />}
+    <link rel="icon" type="image/svg+xml" href={`${base}/favicon.svg`} />
+    <script is:inline>
+      try { document.documentElement.dataset.theme = localStorage.getItem('forma-docs-theme') || (matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark'); } catch {}
+    </script>
+  </head>
+  <body>
+    <a class="skip-link" href="#content">Skip to content</a>
+    <header class="site-header">
+      <a class="brand" href={href()} aria-label="Forma documentation home"><span class="brand-symbol" aria-hidden="true">F</span><strong>Forma</strong><span class="brand-divider"></span><span class="brand-docs">docs</span></a>
+      <button class="search-launch" data-search-open><span aria-hidden="true">⌕</span><span>Find your next move…</span><kbd>Ctrl K</kbd></button>
+      <nav class="header-actions" aria-label="Site actions">
+        <a href={href('components')} class="desktop-link">Components</a>
+        <a href="https://github.com/amabee/Forma" target="_blank" rel="noreferrer" class="repo-link">GitHub <span aria-hidden="true">↗</span></a>
+        <button id="theme-toggle" class="icon-button" aria-label="Switch theme" title="Switch theme"><span class="theme-dark-icon" aria-hidden="true">☀</span><span class="theme-light-icon" aria-hidden="true">☾</span></button>
+        <button id="menu-toggle" class="icon-button mobile-menu" aria-label="Open documentation navigation" aria-expanded="false" aria-controls="sidebar">☰</button>
+      </nav>
+    </header>
+    <button id="nav-backdrop" class="nav-backdrop" aria-label="Close navigation" hidden></button>
+    <aside id="sidebar" class="sidebar" aria-label="Documentation navigation">
+      <a class:list={['overview-link', { active: home }]} href={href()}><span aria-hidden="true">◈</span> The essentials <span class="tiny-tag">start</span></a>
+      <a class:list={['overview-link', { active: Astro.url.pathname.endsWith('/components/') }]} href={href('components')}><span aria-hidden="true">▦</span> Component library <span class="count">{componentCount}</span></a>
+      {sections.map(section => <details class="nav-group" open={section === group || ['Getting started', 'Scripting'].includes(section)}>
+        <summary>{section}<span aria-hidden="true">⌄</span></summary>
+        <div class="nav-group-items">{navigation.filter(page => page.group === section).map(page => <a class:list={{ active: page.slug === slug }} href={href(page.slug)} aria-current={page.slug === slug ? 'page' : undefined}>{page.title}{'tray' in page && page.tray && <span class="tray-dot" title="Tray service"></span>}</a>)}</div>
+      </details>)}
+      <div class="sidebar-note"><span class="status-dot"></span> Built for the current Builder<p>Working features. Honest limits.<br />Zero mystery properties.</p></div>
+    </aside>
+    <div class:list={['page-grid', { 'wide-page': home || !headings.length }]}>
+      <main id="content" tabindex="-1" data-pagefind-body>
+        {!home && <header class="article-header">
+          <div class="breadcrumbs"><a href={href()}>Docs</a><span>/</span><span>{group}</span></div>
+          <div class="page-eyebrow">{kind ? 'COMPONENT REFERENCE' : 'THE FIELD GUIDE'}{kind && <span class="kind-pill">{tray ? 'Tray service' : kind === 'form' ? 'Root window' : 'Visual control'}</span>}</div>
+          <h1>{title}</h1><p class="article-description">{description}</p>
+          {kind && <div class="component-meta"><code>kind: {kind}</code><span>JavaScript + C#</span><span class="status-dot"></span><span>Implemented</span></div>}
+        </header>}
+        <slot />
+        {!home && <footer class="article-footer">
+          <a href={`https://github.com/amabee/Forma/blob/master/${editPath}`} target="_blank" rel="noreferrer">View source on GitHub <span aria-hidden="true">↗</span></a><span>Something weird? Check the limits before blaming your coffee.</span>
+          {current >= 0 && <nav class="pagination-links" aria-label="Related documentation">{previous && <a href={href(previous.slug)}><span>← Previous</span><strong>{previous.title}</strong></a>}{next && <a href={href(next.slug)}><span>Next →</span><strong>{next.title}</strong></a>}</nav>}
+        </footer>}
+      </main>
+      {headings.length > 0 && <aside class="toc" aria-label="On this page"><h2>On this page</h2><nav>{headings.filter(heading => heading.depth === 2).map(heading => <a href={`#${heading.slug}`}>{heading.text}</a>)}</nav><div class="toc-tip">Code saved?<br /><strong>Fresh Preview. Fresh start.</strong></div></aside>}
+    </div>
+    <dialog id="search-dialog" aria-labelledby="search-title" data-index-url={`${base}/search-index.json`}>
+      <div class="search-dialog-head"><label id="search-title" for="search-input">Search Forma docs</label><button id="search-close" class="icon-button" aria-label="Close search">×</button></div>
+      <div class="search-input-wrap"><span aria-hidden="true">⌕</span><input id="search-input" type="search" placeholder="Try timer, selectedPath, or providers…" autocomplete="off" /></div>
+      <p id="search-status" role="status" aria-live="polite">Search components, properties, and guides.</p>
+      <div id="search-results" aria-label="Search results"></div>
+      <div class="search-hint"><kbd>↑</kbd><kbd>↓</kbd> navigate <kbd>Enter</kbd> open <kbd>Esc</kbd> close</div>
+    </dialog>
+    <script src="../scripts/docs.ts"></script>
+  </body>
+</html>

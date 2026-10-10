@@ -1,5 +1,9 @@
 # Forma documentation
 
+The [Astro documentation website](../docs-site/README.md) provides searchable,
+individual pages for every implemented component, plus the guides below.
+Run it locally from `docs-site` with `npm ci` and `npm run dev`.
+
 Start with the [workspace walkthrough](builder-first-interaction.md), then
 [using components and scripts](components-and-scripting.md).
 

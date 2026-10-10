@@ -41,7 +41,7 @@ future placeholders:
 
 | Item | Actions |
 | --- | --- |
-| Project | Add Form, new JS/CSS/JSON file, New Folder, Add Existing File, Save Project, Open Global Script, Open Project Folder, expand/collapse |
+| Project | Add Form, new JS/CSS/JSON file, New Folder, Add Existing File, Save Project, Open main.js, Open Project Folder, expand/collapse |
 | Forms folder | Add Form and expand/collapse |
 | Custom folder / Files | New JS/CSS/JSON file, New Folder, Add Existing File; custom folders also support rename and removal |
 | Custom file | Open, Rename, Remove from Project |

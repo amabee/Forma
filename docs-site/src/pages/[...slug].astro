@@ -1,0 +1,15 @@
+---
+import DocsLayout from '../layouts/DocsLayout.astro';
+import type { MarkdownInstance } from 'astro';
+interface Doc { slug: string; title: string; description: string; group: string; kind?: string; tray?: boolean; }
+export function getStaticPaths() {
+  const modules = import.meta.glob<MarkdownInstance<Doc>>('../generated/*.md', { eager: true });
+  return Object.values(modules).map(doc => ({ params: { slug: doc.frontmatter.slug }, props: { doc } }));
+}
+const { doc } = Astro.props;
+const { Content, frontmatter } = doc;
+const headings = doc.getHeadings();
+---
+<DocsLayout {...frontmatter} headings={headings}>
+  <article class="prose"><Content /></article>
+</DocsLayout>

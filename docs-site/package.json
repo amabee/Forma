@@ -1,0 +1,31 @@
+{
+  "name": "forma-documentation",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "content": "node scripts/generate-content.mjs",
+    "catalog": "dotnet run --project tools/CatalogExport -- content/catalog.json",
+    "predev": "npm run content",
+    "dev": "astro dev --host 127.0.0.1",
+    "prebuild": "npm run content",
+    "build": "astro build && node scripts/check-site.mjs",
+    "preview": "astro preview --host 127.0.0.1",
+    "check": "astro check",
+    "test:browser": "node scripts/verify-browser.mjs",
+    "precheck": "npm run content"
+  },
+  "dependencies": {
+    "@astrojs/markdown-remark": "7.3.2",
+    "@tailwindcss/vite": "4.3.0",
+    "astro": "7.3.8",
+    "tailwindcss": "4.3.0"
+  },
+  "devDependencies": {
+    "@astrojs/check": "0.9.10",
+    "playwright": "1.64.0",
+    "typescript": "5.9.3"
+  },
+  "engines": {
+    "node": ">=22.12.0"
+  }
+}
