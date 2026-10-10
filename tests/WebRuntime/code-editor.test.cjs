@@ -87,11 +87,11 @@ test('selection has a contrasting color and remains visible under the active lin
   view.dispatch({ selection: { anchor: 0, head: 5 } }); view.focus();
   assert.equal(view.state.selection.main.empty, false);
   const line = view.dom.querySelector('.cm-activeLine');
-  assert.equal(window.getComputedStyle(line).backgroundColor, 'rgba(148, 163, 184, 0.08)');
+  assert.equal(window.getComputedStyle(line).backgroundColor, 'rgba(0, 0, 0, 0)');
   // jsdom has no text geometry; probe the same selection layer's theme rule.
   const box = window.document.createElement('div'); box.className = 'cm-selectionBackground';
   view.dom.querySelector('.cm-selectionLayer').appendChild(box);
-  assert.equal(window.getComputedStyle(box).backgroundColor, 'rgb(37, 99, 235)');
+  assert.equal(window.getComputedStyle(box).backgroundColor, 'rgb(38, 79, 120)');
   assert.equal(window.document.querySelectorAll('.editor-footer').length, 1);
 });
 
@@ -123,7 +123,7 @@ test('editor theme switches live without changing source, selection or dirty sta
   assert.equal(view.state.selection.main.anchor, selection.anchor); assert.equal(view.state.selection.main.head, selection.head);
   assert.equal(window.document.getElementById('editor-dirty').textContent, 'Unsaved changes');
   editor.receive({ action: 'theme', theme: 'dark' });
-  assert.equal(window.getComputedStyle(view.dom).backgroundColor, 'rgb(30, 30, 36)');
+  assert.equal(window.getComputedStyle(view.dom).backgroundColor, 'rgb(31, 31, 31)');
   assert.equal(JSON.stringify(editor.source()), source);
 });
 

@@ -8,112 +8,95 @@
   </head>
   <body>
     <header class="app-header">
-      <div class="project-bar"><span class="forma-logo">◈</span><strong>Forma</strong><span class="brand-divider" aria-hidden="true">|</span>
-      <nav class="menubar" aria-label="Main menu">
-        <details>
-          <summary>File</summary>
-          <div class="menu">
-            <button data-command="edit-custom-properties">Edit component code</button>
-            <button data-command="new">New Form <kbd>Ctrl+N</kbd></button
-            ><button data-command="open">Open…</button
-            ><button data-command="save">Save <kbd>Ctrl+S</kbd></button
-            ><button data-command="save-as">
-              Save As... <kbd>Ctrl+Shift+S</kbd>
-            </button>
-            <hr />
-            <button data-command="exit">Exit</button>
-          </div>
-        </details>
-        <details>
-          <summary>Edit</summary>
-          <div class="menu">
-            <button data-command="undo" disabled>Undo <kbd>Ctrl+Z</kbd></button
-            ><button data-command="redo" disabled>Redo <kbd>Ctrl+Y</kbd></button
-            ><button data-command="delete">Delete selected</button>
-          </div>
-        </details>
-        <details>
-          <summary>View</summary>
-          <div class="menu">
-            <button data-toggle="toolbox">Toggle Toolbox</button
-            ><button data-toggle="properties">Toggle Properties</button>
-          </div>
-        </details>
-        <details>
-          <summary>Project</summary>
-          <div class="menu"><button data-command="edit-global-script">Global script…</button><button disabled>Project settings</button></div>
-        </details>
-        <details>
-          <summary>Help</summary>
-          <div class="menu">
-            <button data-command="about">About Forma</button>
-          </div>
-        </details>
-      </nav>
-      <button id="theme-toggle" type="button" aria-pressed="true" aria-label="Switch to light mode" title="Switch to light mode">☀ <span>Light mode</span></button></div>
-      <div class="toolbar">
-        <button data-command="new">
-          <img class="icon-svg" src="icons/file-plus.svg" alt="" />New
-        </button>
-        <button data-command="open">
-          <img class="icon-svg" src="icons/folder-open.svg" alt="" />Open
-        </button>
-        <button data-command="save">
-          <img class="icon-svg" src="icons/save.svg" alt="" />Save</button
-        ><i class="separator"></i>
-        <button data-command="undo" disabled>
-          <img class="icon-svg" src="icons/undo-2.svg" alt="" />Undo</button
-        ><button data-command="redo" disabled>
-          <img class="icon-svg" src="icons/redo-2.svg" alt="" />Redo</button
-        ><i class="separator"></i>
-        <button data-preview>
-          <img class="icon-svg" src="icons/play.svg" alt="" />Run / Preview
-        </button>
+      <div class="project-bar">
+        <span class="forma-logo" aria-hidden="true">◈</span><strong>Forma</strong>
+        <nav class="menubar" aria-label="Main menu">
+          <details>
+            <summary>File</summary>
+            <div class="menu">
+              <button data-command="new">New form <kbd>Ctrl+N</kbd></button>
+              <button data-command="open">Open… <kbd>Ctrl+O</kbd></button>
+              <button data-command="save">Save <kbd>Ctrl+S</kbd></button>
+              <button data-command="save-as">Save as… <kbd>Ctrl+Shift+S</kbd></button>
+              <hr />
+              <button data-command="edit-custom-properties">Edit component code</button>
+              <hr />
+              <button data-command="exit">Exit</button>
+            </div>
+          </details>
+          <details>
+            <summary>Edit</summary>
+            <div class="menu">
+              <button data-command="undo" disabled>Undo <kbd>Ctrl+Z</kbd></button>
+              <button data-command="redo" disabled>Redo <kbd>Ctrl+Y</kbd></button>
+              <hr />
+              <button data-command="delete">Delete selected <kbd>Del</kbd></button>
+            </div>
+          </details>
+          <details>
+            <summary>View</summary>
+            <div class="menu">
+              <button data-toggle="toolbox">Toggle toolbox</button>
+              <button data-toggle="properties">Toggle properties</button>
+            </div>
+          </details>
+          <details>
+            <summary>Project</summary>
+            <div class="menu">
+              <button data-command="edit-global-script">Global script…</button>
+              <button disabled>Project settings</button>
+            </div>
+          </details>
+          <details>
+            <summary>Help</summary>
+            <div class="menu">
+              <button data-command="about">About Forma</button>
+            </div>
+          </details>
+        </nav>
+      </div>
+      <div class="toolbar" role="toolbar" aria-label="Document">
+        <div class="tool-cluster">
+          <button data-command="new" aria-label="New form" title="New form (Ctrl+N)"><img class="icon-svg" src="icons/file-plus.svg" alt="" /></button>
+          <button data-command="open" aria-label="Open" title="Open (Ctrl+O)"><img class="icon-svg" src="icons/folder-open.svg" alt="" /></button>
+          <button data-command="save" aria-label="Save" title="Save (Ctrl+S)"><img class="icon-svg" src="icons/save.svg" alt="" /></button>
+        </div>
+        <div class="tool-cluster">
+          <button data-command="undo" disabled aria-label="Undo" title="Undo (Ctrl+Z)"><img class="icon-svg" src="icons/undo-2.svg" alt="" /></button>
+          <button data-command="redo" disabled aria-label="Redo" title="Redo (Ctrl+Y)"><img class="icon-svg" src="icons/redo-2.svg" alt="" /></button>
+        </div>
         <div class="toolbar-right">
-          <span class="device"
-            ><img class="icon-svg" src="icons/monitor.svg" alt="" /><span
-              id="device-caption"
-              >Desktop (640 × 440)</span
-            ></span
-          >
-          <label class="zoom-label"
-            ><img class="icon-svg" src="icons/search.svg" alt="" />
+          <span class="device" title="Form size"><img class="icon-svg" src="icons/monitor.svg" alt="" /><span id="device-caption">Desktop (640 × 440)</span></span>
+          <label class="zoom-label" title="Canvas zoom"><img class="icon-svg" src="icons/search.svg" alt="" />
             <select id="zoom" aria-label="Canvas zoom">
               <option value="0.75">75%</option>
               <option value="1" selected>100%</option>
               <option value="1.25">125%</option>
               <option value="1.5">150%</option>
-            </select></label
-          >
-          <button class="primary" data-preview>
-            <img class="icon-svg" src="icons/play.svg" alt="" /><span
-              id="preview-caption"
-              >Preview</span
-            >
+            </select>
+          </label>
+          <button class="primary" data-preview><img class="icon-svg" src="icons/play.svg" alt="" /><span id="preview-caption">Preview</span></button>
+          <button id="theme-toggle" type="button" aria-pressed="true" aria-label="Switch to light mode" title="Switch to light mode">
+            <img class="icon-svg theme-sun" src="icons/sun.svg" alt="" /><img class="icon-svg theme-moon" src="icons/moon.svg" alt="" />
           </button>
         </div>
       </div>
     </header>
     <main class="workspace">
-      <nav class="activity-rail" aria-label="Workspace panels">
-        <button data-library="all" aria-pressed="true"><img class="icon-svg" src="icons/toolbox.svg" alt="" />Components</button>
-        <button data-library="layouts" aria-pressed="false"><img class="icon-svg" src="icons/panel-top.svg" alt="" />Layouts</button>
-        <button data-library="controls" aria-pressed="false"><img class="icon-svg" src="icons/type.svg" alt="" />Controls</button>
-        <button data-library="components" aria-pressed="false"><img class="icon-svg" src="icons/timer.svg" alt="" />Services</button>
-        <div class="rail-spacer"></div><button data-command="edit-custom-properties"><img class="icon-svg" src="icons/file-plus.svg" alt="" />Code</button>
-        <button data-command="about"><img class="icon-svg" src="icons/settings.svg" alt="" />About</button>
-      </nav>
-      <aside id="toolbox" class="toolbox sidebar">
-        <div class="panel-heading">
-          Components <img class="icon-svg" src="icons/toolbox.svg" alt="" />
+      <aside id="toolbox" class="toolbox sidebar" aria-label="Toolbox">
+        <div class="toolbox-head">
+          <div class="panel-heading">Toolbox</div>
+          <div class="library-filter" role="group" aria-label="Show">
+            <button data-library="all" aria-pressed="true">All</button>
+            <button data-library="layouts" aria-pressed="false">Layouts</button>
+            <button data-library="controls" aria-pressed="false">Controls</button>
+            <button data-library="components" aria-pressed="false">Services</button>
+          </div>
+          <label class="search"><img class="icon-svg" src="icons/search.svg" alt="" />
+            <input id="search" placeholder="Search controls" aria-label="Search controls" />
+          </label>
         </div>
-        <label class="search"
-          ><img class="icon-svg" src="icons/search.svg" alt="" />
-          <input
-            id="search"
-            placeholder="Search controls…"
-            aria-label="Search controls"
-        /></label>
+        <div class="toolbox-list">
         <details open class="tool-group">
           <summary>Layout</summary>
           <button draggable="true" data-kind="accordion"><img class="icon-svg" src="icons/list.svg" alt="" />Accordion</button>
@@ -465,75 +448,61 @@
             <img class="icon-svg" src="icons/circle.svg" alt="" />Spinner
           </button>
         </details>
-        <p class="tool-note">Drag to add · double-click to insert</p>
+        <p class="tool-note">Drag onto the form, or double-click to add.</p>
+        </div>
       </aside>
       <section class="designer-area">
-        <nav class="workspace-tabs" role="tablist" aria-label="Workspace documents">
-          <button id="workspace-design-tab" role="tab" aria-selected="true" aria-controls="stage" data-workspace-tab="design">Design</button>
-          <button id="workspace-code-tab" role="tab" aria-selected="false" aria-controls="editor-dock" data-workspace-tab="code" hidden>Code</button>
-        </nav>
-        <div class="breadcrumb">
-          <img class="icon-svg" src="icons/house.svg" alt="" /><span
-            id="form-name"
-            >Form1</span
-          ><span>›</span><span id="mode-label">Design</span>
+        <div class="designer-bar">
+          <nav class="workspace-tabs" role="tablist" aria-label="Workspace documents">
+            <button id="workspace-design-tab" role="tab" aria-selected="true" aria-controls="stage" data-workspace-tab="design">Design</button>
+            <button id="workspace-code-tab" role="tab" aria-selected="false" aria-controls="editor-dock" data-workspace-tab="code" hidden>Code</button>
+          </nav>
+          <div class="breadcrumb">
+            <img class="icon-svg" src="icons/house.svg" alt="" /><span id="form-name">Form1</span><span aria-hidden="true">/</span><span id="mode-label">Design</span>
+          </div>
         </div>
         <div id="stage" class="stage" role="tabpanel" aria-labelledby="workspace-design-tab">
           <div id="scaled-frame">
             <div id="form-frame">
               <div class="form-titlebar">
-                <span class="brand-icon">F</span
-                ><span id="canvas-title">Form1</span>
-                <div class="window-glyphs">− &nbsp;&nbsp; □ &nbsp;&nbsp; ×</div>
+                <span class="brand-icon" aria-hidden="true">F</span><span id="canvas-title">Form1</span>
+                <div class="window-glyphs" aria-hidden="true">
+                  <svg viewBox="0 0 10 10"><path d="M1 5h8"/></svg>
+                  <svg viewBox="0 0 10 10"><rect x="1.5" y="1.5" width="7" height="7" rx="1"/></svg>
+                  <svg viewBox="0 0 10 10"><path d="M1.5 1.5l7 7M8.5 1.5l-7 7"/></svg>
+                </div>
               </div>
               <div id="canvas-host"></div>
             </div>
           </div>
         </div>
-        <div
-          id="component-tray"
-          class="component-tray"
-          aria-label="Nonvisual components"
-          hidden
-        ></div>
+        <div id="component-tray" class="component-tray" aria-label="Nonvisual components" hidden></div>
         <div id="editor-dock" class="editor-dock" role="tabpanel" aria-labelledby="workspace-code-tab" hidden>
           <div id="editor-mount" aria-label="Component code editor"><p>Loading component editor…</p></div>
         </div>
       </section>
-      <aside id="properties" class="properties sidebar">
+      <aside id="properties" class="properties sidebar" aria-label="Properties">
         <div class="panel-heading">
-          Properties
-          <button
-            class="close-panel"
-            data-toggle="properties"
-            aria-label="Hide properties"
-          >
-            ×
-          </button>
-        </div>
-        <div class="tabs">
-          <span class="active">Properties</span
-          ><span
-            class="unavailable"
-            title="Event binding is not implemented yet"
-            >Events</span
-          >
+          <div class="tabs">
+            <span class="active">Properties</span>
+            <span class="unavailable" title="Event binding is not implemented yet">Events</span>
+          </div>
+          <button class="close-panel" data-toggle="properties" aria-label="Hide properties" title="Hide properties"><img class="icon-svg" src="icons/x.svg" alt="" /></button>
         </div>
         <div class="inspector-body">
           <select id="selection" aria-label="Selected control"></select>
-          <label class="search property-search"><img class="icon-svg" src="icons/search.svg" alt="" /><input id="property-search" placeholder="Search properties…" aria-label="Search properties" /></label>
+          <label class="search property-search"><img class="icon-svg" src="icons/search.svg" alt="" /><input id="property-search" placeholder="Search properties" aria-label="Search properties" /></label>
           <div class="property-actions" id="custom-properties-action"><button data-command="edit-custom-properties" disabled>Custom Properties…</button></div>
           <div id="property-editors"></div>
         </div>
       </aside>
     </main>
     <footer class="statusbar">
-      <span
-        ><i class="ready-dot"></i
-        ><span id="status">Loading designer…</span></span
-      ><span id="selection-status">Form selected</span
-      ><span class="status-spacer"></span
-      ><span id="coordinates">X: 0 &nbsp; Y: 0</span><span>Forma 0.1.0</span>
+      <span><i class="ready-dot"></i><span id="status">Loading designer…</span></span>
+      <span id="selection-status">Form selected</span>
+      <span class="status-spacer"></span>
+      <span id="coordinates">X: 0 &nbsp; Y: 0</span>
+      <span>Forma 0.1.0</span>
     </footer>
     <div id="component-source-menu" class="component-source-menu" role="menu" aria-label="Component source" hidden>
       <div id="component-source-name" class="source-menu-title"></div>

@@ -1,58 +1,289 @@
 @import "tailwindcss";
 @source "../DesignerWeb/code-editor.html";
-@layer base {
-  body { @apply m-0 h-screen overflow-hidden bg-[#1e1e24] text-slate-200 font-sans; }
-  button { @apply cursor-pointer; }
-  button:disabled { @apply opacity-50 cursor-default; }
-  [hidden] { display: none !important; }
+
+/* VS Code "Dark Modern" / "Light Modern" workbench colors. */
+@theme inline {
+  --color-bar: var(--vs-bar);
+  --color-editor: var(--vs-editor);
+  --color-edge: var(--vs-edge);
+  --color-fg: var(--vs-fg);
+  --color-dim: var(--vs-dim);
+  --color-hover: var(--vs-hover);
+  --color-focus: var(--vs-focus);
+  --color-widget: var(--vs-widget);
+  --color-widget-edge: var(--vs-widget-edge);
+  --color-pick: var(--vs-pick);
+  --font-ui: "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif;
 }
+:root {
+  --vs-bar: #181818;
+  --vs-editor: #1f1f1f;
+  --vs-edge: #2b2b2b;
+  --vs-fg: #cccccc;
+  --vs-dim: #9d9d9d;
+  --vs-hover: rgb(90 93 94 / 0.31);
+  --vs-focus: #0078d4;
+  --vs-widget: #1f1f1f;
+  --vs-widget-edge: #454545;
+  --vs-pick: #0078d4;
+  --vs-scroll: rgb(121 121 121 / 0.4);
+  --vs-scroll-hover: rgb(100 100 100 / 0.7);
+  --vs-error: #f85149;
+  --vs-css: #519aba;
+  --vs-js: #cbcb41;
+  --vs-json: #cbcb41;
+}
+[data-theme="light"] {
+  --vs-bar: #f8f8f8;
+  --vs-editor: #ffffff;
+  --vs-edge: #e5e5e5;
+  --vs-fg: #3b3b3b;
+  --vs-dim: #6f6f6f;
+  --vs-hover: rgb(184 184 184 / 0.31);
+  --vs-focus: #005fb8;
+  --vs-widget: #ffffff;
+  --vs-widget-edge: #cecece;
+  --vs-pick: #005fb8;
+  --vs-scroll: rgb(100 100 100 / 0.4);
+  --vs-scroll-hover: rgb(100 100 100 / 0.7);
+  --vs-error: #e51400;
+  --vs-css: #3c7ea6;
+  --vs-js: #a99a1c;
+  --vs-json: #a99a1c;
+}
+
+@layer base {
+  body {
+    @apply m-0 h-screen overflow-hidden bg-editor font-ui text-[13px] text-fg;
+    color-scheme: dark;
+  }
+  [data-theme="light"] body {
+    color-scheme: light;
+  }
+  button {
+    @apply cursor-pointer;
+  }
+  button:disabled {
+    @apply cursor-default opacity-50;
+  }
+  [hidden] {
+    display: none !important;
+  }
+  svg {
+    @apply fill-none stroke-current stroke-[1.6];
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+}
+
 @layer components {
-  .editor-shell { @apply flex h-full flex-col; }
-  .editor-tabs { @apply flex shrink-0 gap-px overflow-x-auto border-b border-[#393544] bg-[#18171d] pt-1; }
-  .editor-tabs button { @apply flex shrink-0 items-center gap-2 border-t-2 border-transparent bg-[#25232c] px-4 py-2.5 text-xs text-slate-400 hover:text-slate-100; }
-  .editor-tabs [aria-selected="true"] { @apply border-t-violet-400 bg-[#1e1e24] text-white; }
-  .file-kind { @apply text-[10px] font-semibold; }
-  .css-kind { @apply text-sky-300; }
-  .js-kind { @apply text-amber-300; }
-  .json-kind { @apply text-violet-300; }
-  .file-dirty { @apply text-[8px] not-italic text-violet-300; }
-  .editor-header { @apply flex shrink-0 items-center justify-between gap-3 border-b border-[#393544] bg-[#25232c] px-3 py-1.5; }
-  .editor-location { @apply flex min-w-0 items-center gap-2 text-xs text-slate-400; }
-  .editor-header h1 { @apply truncate font-medium text-slate-200; }
-  #editor-file-name { @apply truncate; }
-  .location-divider { @apply text-slate-500; }
-  .editor-actions { @apply flex shrink-0 items-center gap-1; }
-  .editor-actions > button { @apply flex items-center gap-1.5 rounded px-2 py-1 text-xs hover:bg-[#393544] focus-visible:outline-2 focus-visible:outline-violet-400; }
-  .editor-primary { @apply text-violet-200; }
-  .editor-primary img { @apply h-3.5 w-3.5; filter: brightness(0) invert(0.8); }
-  .editor-tools { @apply relative; }
-  .editor-tools summary { @apply cursor-pointer list-none rounded px-2 py-0.5 text-lg leading-5 hover:bg-[#393544] focus-visible:outline-2 focus-visible:outline-violet-400; }
-  .editor-tools-menu { @apply absolute right-0 top-full z-50 mt-2 min-w-48 rounded border border-[#494351] bg-[#25232c] p-1 shadow-xl; }
-  .editor-tools-menu button { @apply block w-full rounded px-3 py-2 text-left text-xs hover:bg-violet-600; }
-  .editor-option { @apply flex items-center gap-2 border-t border-[#494351] px-3 py-2 text-xs text-slate-300; }
-  .editor-workspace { @apply min-h-0 flex-1 overflow-hidden; }
-  .editor-document { @apply h-full; }
-  .editor-footer { @apply flex shrink-0 items-center gap-3 border-t border-[#393544] bg-[#25232c] px-3 py-1.5 text-[11px] text-slate-400; }
-  #editor-message { @apply min-w-0 flex-1 truncate; }
-  #editor-cursor, #editor-dirty { @apply shrink-0; }
-  #editor-problems { @apply shrink-0 rounded px-1 text-amber-300 hover:bg-[#393544]; }
-  .editor-tabs button[data-problems]::after { content: attr(data-problems); @apply rounded bg-amber-500/20 px-1 text-amber-300; }
-  [data-theme="light"] body { @apply bg-white text-slate-800; color-scheme: light; }
-  [data-theme="light"] .editor-tabs { @apply border-slate-300 bg-slate-200; }
-  [data-theme="light"] .editor-tabs button { @apply bg-slate-100 text-slate-600; }
-  [data-theme="light"] .editor-tabs [aria-selected="true"] { @apply bg-white text-violet-700; }
-  [data-theme="light"] .editor-header, [data-theme="light"] .editor-footer { @apply border-slate-200 bg-slate-50 text-slate-600; }
-  [data-theme="light"] .editor-header h1 { @apply text-slate-800; }
-  [data-theme="light"] .editor-primary { @apply text-violet-700; }
-  [data-theme="light"] .editor-primary img { filter: none; }
-  [data-theme="light"] .editor-actions > button:hover, [data-theme="light"] .editor-tools summary:hover { @apply bg-slate-200; }
-  [data-theme="light"] .editor-tools-menu { @apply border-slate-300 bg-white; }
-  [data-theme="light"] .editor-tools-menu button:hover { @apply text-white; }
-  [data-theme="light"] .editor-option { @apply border-slate-200 text-slate-700; }
-  [data-theme="light"] .file-dirty, [data-theme="light"] .json-kind { @apply text-violet-700; }
-  [data-theme="light"] .css-kind { @apply text-sky-700; }
-  [data-theme="light"] .js-kind { @apply text-amber-700; }
-  [data-theme="light"] #editor-problems { @apply text-amber-700 hover:bg-amber-50; }
-  [data-theme="light"] .editor-tabs button[data-problems]::after { @apply bg-amber-100 text-amber-800; }
-  @media (max-width: 600px) { #editor-cursor { @apply hidden; } .editor-tabs button { @apply px-2; } }
+  .editor-shell {
+    @apply flex h-full flex-col;
+  }
+
+  /* Tab strip with editor actions on the right, as in VS Code. */
+  .editor-titlebar {
+    @apply flex h-[35px] shrink-0 items-stretch bg-bar;
+    box-shadow: inset 0 -1px 0 var(--vs-edge);
+  }
+  .editor-tabs {
+    @apply flex min-w-0 flex-1 overflow-x-auto;
+    scrollbar-width: none;
+  }
+  .editor-tabs button {
+    @apply relative flex min-w-0 shrink-0 items-center gap-1.5 border-r border-edge bg-bar py-0 pr-3 pl-3 text-dim;
+  }
+  .editor-tabs button:hover {
+    @apply text-fg;
+  }
+  .editor-tabs [aria-selected="true"] {
+    @apply bg-editor text-fg;
+    box-shadow: inset 0 1px 0 var(--vs-focus);
+  }
+  [data-theme="light"] .editor-tabs [aria-selected="true"] {
+    @apply text-[#333333];
+  }
+  .editor-tabs button:focus-visible {
+    @apply outline-1 -outline-offset-1 outline-focus;
+  }
+  .file-kind {
+    @apply w-4 text-center font-mono text-[12px] leading-none font-bold not-italic;
+  }
+  .css-kind {
+    color: var(--vs-css);
+  }
+  .js-kind {
+    @apply text-[10px] tracking-tighter;
+    color: var(--vs-js);
+  }
+  .json-kind {
+    color: var(--vs-json);
+  }
+  .editor-tabs button span {
+    @apply truncate;
+  }
+  /* The dirty marker sits where VS Code draws a tab's close button. */
+  .file-dirty {
+    @apply ml-1 grid size-5 place-items-center;
+  }
+  .file-dirty::before {
+    content: "";
+    @apply size-2 rounded-full bg-current;
+  }
+  .editor-tabs button[data-problems] span {
+    color: var(--vs-error);
+  }
+  .editor-tabs button[data-problems]::after {
+    content: attr(data-problems);
+    @apply -ml-0.5 text-[12px];
+    color: var(--vs-error);
+  }
+
+  .editor-actions {
+    @apply flex shrink-0 items-center gap-0.5 px-2;
+  }
+  .editor-actions > button,
+  .editor-tools summary {
+    @apply grid size-[26px] cursor-pointer list-none place-items-center rounded-[5px] text-fg;
+  }
+  .editor-actions > button:hover:not(:disabled),
+  .editor-tools summary:hover,
+  .editor-tools[open] summary {
+    @apply bg-hover;
+  }
+  .editor-actions svg {
+    @apply size-4;
+  }
+  .editor-actions > button:focus-visible,
+  .editor-tools summary:focus-visible {
+    @apply outline-1 -outline-offset-1 outline-focus;
+  }
+  .editor-tools summary::-webkit-details-marker {
+    display: none;
+  }
+  .editor-tools {
+    @apply relative;
+  }
+  .editor-tools-menu {
+    @apply absolute top-full right-0 z-50 mt-1 flex min-w-60 flex-col rounded-md border border-widget-edge bg-widget p-1;
+    box-shadow: 0 2px 8px rgb(0 0 0 / 0.36);
+  }
+  .editor-tools-menu button,
+  .editor-option {
+    @apply flex h-[26px] w-full items-center gap-2 rounded px-6 text-left text-fg;
+  }
+  .editor-tools-menu button:hover,
+  .editor-tools-menu button:focus-visible,
+  .editor-option:hover {
+    @apply bg-pick text-white outline-none;
+  }
+  .editor-tools-menu hr {
+    @apply mx-1.5 my-1 border-0 border-t border-widget-edge;
+  }
+  .editor-option {
+    @apply relative cursor-pointer;
+  }
+  .editor-option input {
+    @apply absolute left-1.5 size-3.5 cursor-pointer;
+    accent-color: var(--vs-focus);
+  }
+
+  /* Breadcrumbs */
+  .editor-header {
+    @apply flex h-[22px] shrink-0 items-center bg-editor px-4;
+  }
+  .editor-location {
+    @apply flex min-w-0 items-center gap-1 text-dim;
+  }
+  .editor-header h1 {
+    @apply m-0 truncate text-[13px] font-normal;
+  }
+  .location-divider {
+    @apply size-3.5 shrink-0 opacity-80;
+  }
+  #editor-file-name {
+    @apply truncate;
+  }
+  .crumb-kind {
+    @apply w-4 text-center font-mono text-[11px] font-bold not-italic;
+  }
+  [data-document="css"] .crumb-kind::before {
+    content: "#";
+    color: var(--vs-css);
+  }
+  [data-document="behavior"] .crumb-kind::before {
+    content: "JS";
+    @apply text-[9px] tracking-tighter;
+    color: var(--vs-js);
+  }
+  [data-document="characteristics"] .crumb-kind::before {
+    content: "{}";
+    color: var(--vs-json);
+  }
+
+  .editor-workspace {
+    @apply min-h-0 flex-1 overflow-hidden;
+  }
+  .editor-document {
+    @apply h-full;
+  }
+
+  /* Scrollbars like the VS Code editor: square, translucent thumb, no track. */
+  .cm-scroller::-webkit-scrollbar {
+    @apply size-3.5;
+  }
+  .cm-scroller::-webkit-scrollbar-track,
+  .cm-scroller::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+  .cm-scroller::-webkit-scrollbar-thumb {
+    background: var(--vs-scroll);
+  }
+  .cm-scroller::-webkit-scrollbar-thumb:hover {
+    background: var(--vs-scroll-hover);
+  }
+
+  /* Status bar */
+  .editor-footer {
+    @apply flex h-[22px] shrink-0 items-stretch border-t border-edge bg-bar pr-2 text-[12px] text-fg;
+  }
+  .editor-footer > * {
+    @apply flex shrink-0 items-center px-[7px] whitespace-nowrap;
+  }
+  .status-brand {
+    @apply mr-1 bg-focus px-2.5 text-white;
+  }
+  #editor-problems {
+    @apply gap-1 text-fg;
+  }
+  #editor-problems svg {
+    @apply size-3.5;
+  }
+  #editor-problems.has-problems svg {
+    color: var(--vs-error);
+  }
+  #editor-problems:hover,
+  .editor-footer > span:not(.status-brand, #editor-message):hover {
+    @apply bg-hover;
+  }
+  #editor-message {
+    @apply min-w-0 flex-1 truncate text-dim;
+    display: block;
+    line-height: 21px;
+  }
+  @media (max-width: 720px) {
+    #editor-encoding,
+    #editor-indent {
+      @apply hidden;
+    }
+  }
+  @media (max-width: 560px) {
+    #editor-cursor,
+    .status-brand {
+      @apply hidden;
+    }
+    .editor-tabs button {
+      @apply px-2;
+    }
+  }
 }

@@ -74,7 +74,6 @@
     const label = theme === "dark" ? "Switch to light mode" : "Switch to dark mode";
     themeToggle.setAttribute("aria-pressed", String(theme === "dark"));
     themeToggle.setAttribute("aria-label", label); themeToggle.title = label;
-    themeToggle.textContent = theme === "dark" ? "☀ Light mode" : "☾ Dark mode";
     if (persist) try { localStorage.setItem("forma.workspace.theme", theme); } catch {}
     window.forma.send({ type: "designer", event: "theme", payload: { theme } });
     measure();

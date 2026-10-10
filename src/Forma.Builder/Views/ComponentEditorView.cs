@@ -41,7 +41,7 @@ public sealed class ComponentEditorView : UserControl
         _completionContext = completionContext;
         _folder = folder; _saveSession = new ComponentSaveSession(source, apply); _draft = source;
         ClientSize = new Size(1040, 720); MinimumSize = new Size(760, 500);
-        _status.BackColor = Color.FromArgb(30, 41, 59); _status.ForeColor = Color.FromArgb(148, 163, 184);
+        PaintStatus();
         Controls.Add(_web); Controls.Add(_status);
         if (!globalScript && File.Exists(Path.Combine(folder, "component.css")) && (File.Exists(Path.Combine(folder, ComponentEditorService.ScriptFile)) || File.Exists(Path.Combine(folder, "behavior.js")))
             && (File.Exists(Path.Combine(folder, ComponentEditorService.PropertiesFile)) || File.Exists(Path.Combine(folder, "characteristics.json"))))
@@ -86,7 +86,13 @@ public sealed class ComponentEditorView : UserControl
     public void ApplyTheme(string theme) {
         var value = theme == "light" ? "light" : "dark";
         if (value == _theme) return;
-        _theme = value; SendEditor(new { action = "theme", theme = _theme });
+        _theme = value; PaintStatus(); SendEditor(new { action = "theme", theme = _theme });
+    }
+    // Matches the editor's VS Code status bar (Dark Modern / Light Modern).
+    private void PaintStatus() {
+        var light = _theme == "light";
+        _status.BackColor = light ? Color.FromArgb(248, 248, 248) : Color.FromArgb(24, 24, 24);
+        _status.ForeColor = light ? Color.FromArgb(111, 111, 111) : Color.FromArgb(157, 157, 157);
     }
 
     private void EditorMessage(object? sender, CoreWebView2WebMessageReceivedEventArgs e)

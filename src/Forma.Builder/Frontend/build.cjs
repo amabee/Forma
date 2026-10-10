@@ -45,6 +45,8 @@ const names = [
   "link",
   "list-checks",
   "toolbox",
+  "sun",
+  "moon",
 ];
 fs.mkdirSync(destination, { recursive: true });
 for (const name of names)
