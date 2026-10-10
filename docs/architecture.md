@@ -14,6 +14,15 @@ Forma uses a layered architecture with an incremental MVVM implementation in the
 
 Core must remain independent of WinForms, WebView2, DOM, CSS, and native file dialogs. Renderer interfaces provide a boundary for a different rendering implementation. Browser gestures send commands to the C# host, where authoritative control state and validation live; the browser keeps transient interaction state.
 
+`DesignerWeb/reactivity.js` owns the script-side observer scopes for refs,
+shallow reactive state, computed values, effects, and control bindings.
+`component-customization.js` connects those scopes to the runtime get/set bridge
+and disposes them with their component behavior. Binding reads reflect live DOM
+input and projected runtime state; writes remain C#-validated bridge commands.
+This is a browser runtime service supporting the View, separate from the Builder's
+document ViewModel and the Core model. Component-local script state is not saved
+into the design or shared implicitly across behaviors.
+
 The control tree follows the **Composite** pattern: controls contain child controls. Property notifications and control events follow the **Observer** pattern. The renderer and bridge form an **adapter** between C# models and the browser. These describe specific parts of the code, not a claim that the whole application already follows one formal pattern.
 
 ## Current folder structure and MVVM roles

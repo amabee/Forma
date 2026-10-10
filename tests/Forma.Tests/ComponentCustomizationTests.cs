@@ -20,7 +20,7 @@ public class ComponentCustomizationTests
         var (model, button) = Design();
         var template = ComponentEditorService.Template(button, model.Appearance[button.Id]);
         Assert.Contains(model.Appearance[button.Id].BackColor, template.Css);
-        Assert.Contains("api.on", template.Behavior);
+        Assert.Contains("forma.on", template.Behavior);
         model.ExecuteEdit("customize", button.Id, JsonSerializer.SerializeToElement(template));
         var copy = ProjectFile.Restore(ProjectFile.Capture(model.Form!, control => JsonSerializer.SerializeToElement(model.Appearance[control.Id])));
         var restored = copy.Appearance[button.Id].Deserialize<Appearance>()!;

@@ -325,7 +325,7 @@ function fixture(page = 'index.html') {
   const dom = new JSDOM(fs.readFileSync(path.join(base, 'src/Forma.Builder/DesignerWeb', page), 'utf8'), { runScripts: 'outside-only' });
   const messages = []; const window = dom.window;
   window.chrome = { webview: { postMessage: m => messages.push(m), addEventListener() {} } };
-  for (const file of ['src/Forma.WebView2/Web/scripts/data-grid.js', 'src/Forma.WebView2/Web/scripts/forma.js', 'src/Forma.WebView2/Web/scripts/tooltips.js', 'src/Forma.WebView2/Web/scripts/icons.js', 'src/Forma.WebView2/Web/scripts/modern-controls.js', 'src/Forma.Builder/DesignerWeb/designer.js', 'src/Forma.Builder/DesignerWeb/component-customization.js']) window.eval(fs.readFileSync(path.join(base, file), 'utf8'));
+  for (const file of ['src/Forma.WebView2/Web/scripts/data-grid.js', 'src/Forma.WebView2/Web/scripts/forma.js', 'src/Forma.WebView2/Web/scripts/tooltips.js', 'src/Forma.WebView2/Web/scripts/icons.js', 'src/Forma.WebView2/Web/scripts/modern-controls.js', 'src/Forma.Builder/DesignerWeb/designer.js', 'src/Forma.Builder/DesignerWeb/reactivity.js', 'src/Forma.Builder/DesignerWeb/component-customization.js']) window.eval(fs.readFileSync(path.join(base, file), 'utf8'));
   const create = (id, control, parentId, properties = {}) => window.forma.receive({ type: 'create', id, control, parentId, properties });
   create('root', 'form'); window.formaDesigner.receive({ action: 'initialize', id: 'root' });
   return { window, document: window.document, messages, create };
@@ -460,6 +460,37 @@ test('component sources report errors once and clean up timer listeners', () => 
   window.formaCustomization.event('timer', 'tick'); assert.equal(messages.at(-1).event, 'set');
   const count = messages.length;
   window.formaCustomization.clear(); window.formaCustomization.event('timer', 'tick'); assert.equal(messages.length, count);
+});
+test('nonvisual custom CSS styles runtime popups without changing designer tray entries', () => {
+  const { window, document, create } = fixture();
+  create('notice', 'toast', 'root', { text: 'Saved', isOpen: true, duration: 60000 });
+  create('overlay', 'loadingoverlay', 'root', { targetId: 'root', isActive: true });
+  const controls = [
+    { id: 'root', name: 'Form1', kind: 'form', width: 640, height: 440, enabled: true, visible: true },
+    ...[['notice', 'toast'], ['overlay', 'loadingoverlay']].map(([id, kind]) => ({
+      id, kind, name: id, component: true, enabled: true, visible: true,
+      customization: { css: ':host { font-size: 31px; background-color: rgb(12, 34, 56); } :host .toast-message { color: red; }' }
+    }))
+  ];
+  window.formaDesigner.receive({ action: 'state', id: 'root', selectedId: 'notice', controls });
+  for (const id of ['notice', 'overlay']) {
+    const trayItem = document.getElementById(id);
+    assert.equal(trayItem.parentElement.id, 'component-tray');
+    assert.notEqual(window.getComputedStyle(trayItem).fontSize, '31px');
+    assert.notEqual(window.getComputedStyle(trayItem).backgroundColor, 'rgb(12, 34, 56)');
+  }
+  const scoped = [...document.head.querySelectorAll('style')].filter(style => style.textContent.includes('31px'));
+  assert.equal(scoped.length, 2);
+  for (const style of scoped) assert.doesNotMatch(style.textContent, /\[id="(?:notice|overlay)"\]/);
+  window.formaDesigner.preview = true;
+  for (const id of ['notice', 'overlay']) window.formaModern.refresh(document.getElementById(id), { enabled: true, visible: true });
+  for (const selector of ['.forma-toast-popup', '.forma-loading-popup']) {
+    const popup = document.querySelector(selector); assert.ok(popup);
+    assert.equal(window.getComputedStyle(popup).fontSize, '31px');
+    assert.equal(window.getComputedStyle(popup).backgroundColor, 'rgb(12, 34, 56)');
+  }
+  assert.equal(window.getComputedStyle(document.querySelector('.toast-message')).color, 'rgb(255, 0, 0)');
+  window.close();
 });
 
 test('custom properties live in Advanced for nonvisual components and the form', () => {

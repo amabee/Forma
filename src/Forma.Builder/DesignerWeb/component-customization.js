@@ -34,7 +34,7 @@
     selectors.push(source.slice(start).trim()); return selectors;
   }
 
-  function scopedCss(id, source) {
+  function scopedCss(id, source, popupOnly = false) {
     const scratch = document.createElement("style"); scratch.media = "not all";
     scratch.textContent = source; document.head.appendChild(scratch);
     try {
@@ -43,7 +43,10 @@
           const selectors = selectorsOf(rule.selectorText);
           if (selectors.some(selector => !/^:host(?![\w-(])/.test(selector)))
             throw new Error("Every selector must start with :host, such as :host:hover or :host input.");
-          const selector = selectors.flatMap(selector => [selector.replace(/:host\b/g, `[id="${id}"]`), selector.replace(/:host\b/g, `[data-component-source="${id}"]`)]).join(", ");
+          // Nonvisual component IDs belong to designer tray entries, not their visible runtime UI.
+          const hosts = popupOnly ? [`[data-component-source="${id}"]`]
+            : [`[id="${id}"]`, `[data-component-source="${id}"]`];
+          const selector = selectors.flatMap(selector => hosts.map(host => selector.replace(/:host\b/g, host))).join(", ");
           // Overrides must take priority over the inspector's inline appearance.
           const declarations = Array.from({ length: rule.style.length }, (_, index) => {
             const name = rule.style[index];
@@ -68,7 +71,28 @@
   function installBehavior(item, state, source, characteristics) {
     const element = document.getElementById(item.id), cleanups = [];
     const values = JSON.parse(characteristics || "{}");
+    function gridCommand(name, operation, args = {}) {
+      const destination = target(currentState, name);
+      if (destination.kind !== "datagridview") throw new Error("The target must be a DataGridView.");
+      window.forma.send({ type: "custom", id: destination.id, event: "grid", payload: { sourceId: item.id, operation, ...args } });
+    }
+    function cells(value) {
+      if (!Array.isArray(value) || value.some(cell => typeof cell !== "string")) throw new Error("Grid columns and cells must be arrays of strings.");
+      return [...value];
+    }
+    function index(value) {
+      if (!Number.isInteger(value) || value < 0) throw new Error("Grid indices must be non-negative integers.");
+      return value;
+    }
     const api = {
+      addRow(name, row) { gridCommand(name, "addRow", { row: cells(row) }); },
+      updateRow(name, rowIndex, row) { gridCommand(name, "updateRow", { index: index(rowIndex), row: cells(row) }); },
+      removeRow(name, rowIndex) { gridCommand(name, "removeRow", { index: index(rowIndex) }); },
+      clearRows(name) { gridCommand(name, "clearRows"); },
+      setCell(name, rowIndex, columnIndex, value) {
+        if (typeof value !== "string") throw new Error("Grid cells must be strings.");
+        gridCommand(name, "setCell", { rowIndex: index(rowIndex), columnIndex: index(columnIndex), value });
+      },
       on(event, handler) {
         event = eventName(event);
         const listener = e => {
@@ -92,6 +116,11 @@
       find(name) { return document.getElementById(target(currentState, name).id); },
       get(name, property) {
         const item = target(currentState, name), el = document.getElementById(item.id);
+        if (item.kind === "datagridview") {
+          if (property === "columns") return [...(item.columns ?? [])];
+          if (property === "rows") return (item.rows ?? []).map(row => [...row]);
+          if (["readOnly", "sortingEnabled", "filteringEnabled"].includes(property)) return item[property];
+        }
         if (property === "source" && ["image", "picturebox", "avatar"].includes(item.kind)) return item.source ?? "";
         if (property === "selectedPath" && ["filepicker", "folderpicker"].includes(item.kind)) return el.querySelector("input").value;
         if (property === "text") return item.text ?? ("value" in el && el.tagName !== "BUTTON" ? el.value : el.textContent);
@@ -106,6 +135,13 @@
       },
       set(name, property, value) {
         const destination = target(currentState, name);
+        if (destination.kind === "datagridview") {
+          if (property === "columns") value = cells(value);
+          if (property === "rows") {
+            if (!Array.isArray(value)) throw new Error("Grid rows must be an array of string arrays.");
+            value = value.map(cells);
+          }
+        }
         window.forma.send({ type: "custom", id: destination.id, event: "set", payload: { sourceId: item.id, property, value } });
       },
       showToast(name) { window.forma.send({ type: "custom", id: target(currentState, name).id, event: "show-toast", payload: { sourceId: item.id } }); },
@@ -115,6 +151,19 @@
     const component = { id: item.id, name: item.name, element, properties: values, characteristics: values };
     const record = { source, characteristics, element, item, cleanups, snapshot: snapshot(item) };
     behaviors.set(item.id, record);
+    const reactiveScope = window.formaReactivity.createScope({
+      error: error => report(item.id, error),
+      resolve: name => target(currentState, name).id,
+      read: (id, property) => currentState.controls.some(control => control.id === id) ? api.get(id, property) : undefined,
+      write: (id, property, value) => {
+        const destination = target(currentState, id);
+        if (property === "selectedPath") throw new Error("selectedPath is read-only. Use the picker to select a path.");
+        const textInput = ["textbox", "searchbox", "passwordbox", "textarea", "maskedtextbox"].includes(destination.kind);
+        api.set(id, property === "value" && textInput ? "text" : property, value);
+      }
+    });
+    for (const name of ["ref", "reactive", "computed", "effect", "watch", "bind"]) api[name] = reactiveScope[name];
+    cleanups.push(() => reactiveScope.dispose());
     if (window.ResizeObserver) {
       let lastSize;
       const observer = new ResizeObserver(entries => {
@@ -133,7 +182,9 @@
     const onBlur = () => validate(record);
     element.addEventListener("blur", onBlur, true);
     cleanups.push(() => element.removeEventListener("blur", onBlur, true));
-    try { new Function("api", "component", '"use strict";\n' + source)(api, component); }
+    // The script-local forma API is separate from the internal window.forma bridge.
+    // api remains an alias for existing saved projects.
+    try { new Function("forma", "component", "api", '"use strict";\n' + source)(api, component, api); }
     catch (error) { cleanupBehavior(item.id); throw error; }
     return record;
   }
@@ -164,7 +215,8 @@
         if (!css && styles.has(item.id)) { styles.get(item.id).element.remove(); styles.delete(item.id); }
         if (css && styles.get(item.id)?.source !== css && failedStyles.get(item.id) !== css) {
           try {
-            const compiled = scopedCss(item.id, css);
+            const nonvisual = item.component || ["toast", "loadingoverlay", "tooltip", "dialog", "confirmationdialog", "contextmenu", "contextmenustrip", "timer", "backgroundworker"].includes(item.kind);
+            const compiled = scopedCss(item.id, css, nonvisual);
             const element = styles.get(item.id)?.element ?? document.createElement("style");
             element.textContent = compiled; document.head.appendChild(element);
             styles.set(item.id, { source: css, element });
@@ -200,6 +252,7 @@
           failedBehaviors.delete(item.id);
         } catch (error) { failedBehaviors.set(item.id, signature); report(item.id, error); }
       }
+      window.formaReactivity.refresh();
       // All components and their handlers exist before startup callbacks run.
       for (const dispatch of pending) dispatch();
     },

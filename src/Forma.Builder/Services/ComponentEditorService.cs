@@ -46,22 +46,29 @@ public static class ComponentEditorService
                 // JavaScript runs once when Preview starts, never in the designer.
                 // component.element: this control's DOM element
                 // component.properties: your custom JSON values (runtime copy)
-                // api.on(event, handler): listen on this component, cleaned up on exit
-                // api.get(nameOrId, property), api.set(nameOrId, property, value)
+                // forma.on(event, handler): listen on this component, cleaned up on exit
+                // forma.get(nameOrId, property), forma.set(nameOrId, property, value)
+                // forma.bind(nameOrId, property): live reference; use .value inside events.
+                // forma.ref(initial), forma.reactive(object): local reactive state.
+                // forma.computed(() => expression), forma.effect(() => { ... }), forma.watch(ref, callback).
                 // Properties: text, enabled, visible, checked, value, selectedIndex, selectedTab.
-                // api.showDialog(nameOrId): open a Dialog/ConfirmationDialog.
-                // api.showToast(nameOrId), api.closeToast(nameOrId): notification lifecycle.
-                // Spinner/LoadingOverlay: api.set(nameOrId, "isActive", true/false).
-                // api.find(nameOrId): another control's DOM element.
-                // api.cleanup(callback): register cleanup for your own resources.
-                // Timer components can use api.on("tick", ...).
-                // DataGrid: api.on("row-selection", e => { ... e.detail.row ... });
-                // DataGrid properties: selectedRow, filterText, sortColumn, sortDirection.
+                // forma.showDialog(nameOrId): open a Dialog/ConfirmationDialog.
+                // forma.showToast(nameOrId), forma.closeToast(nameOrId): notification lifecycle.
+                // Spinner/LoadingOverlay: forma.set(nameOrId, "isActive", true/false).
+                // forma.find(nameOrId): another control's DOM element.
+                // forma.cleanup(callback): register cleanup for your own resources.
+                // Timer components can use forma.on("tick", ...).
+                // DataGrid: forma.on("row-selection", e => { ... e.detail.row ... });
+                // DataGrid properties: columns, rows, readOnly, sortingEnabled, filteringEnabled,
+                // selectedRow, filterText, sortColumn, sortDirection.
+                // forma.addRow(name, ["Alice", "Engineering"]): append a row.
+                // forma.updateRow(name, index, cells), forma.removeRow(name, index), forma.clearRows(name).
+                // forma.setCell(name, rowIndex, columnIndex, "value"): edit a cell.
 
-                api.on("click", () => {
+                forma.on("click", () => {
                   // Example (uncomment and replace label1 with your label's Name):
                   // component.properties.clicks += 1;
-                  // api.set("label1", "text", `Clicked ${component.properties.clicks} times`);
+                  // forma.set("label1", "text", `Clicked ${component.properties.clicks} times`);
                 });
                 """,
             Characteristics = """

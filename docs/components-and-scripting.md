@@ -33,7 +33,7 @@ Timer, BackgroundWorker, Tooltip, Toast, LoadingOverlay, context menus and dialo
 | Surface | Examples | Where to change |
 | --- | --- | --- |
 | Builder inspector / Appearance | Font size, Foreground, Width, Locked | Inspector; visual overrides in custom CSS |
-| Runtime JavaScript API | `text`, `value`, `checked`, `selectedTab` | Supported `api.get` / `api.set` operations below |
+| Runtime JavaScript API | `text`, `value`, `checked`, `selectedTab` | Supported `forma.get` / `forma.set` operations below |
 | Core C# model | `Items`, `Rows`, `IconName`, `Description` | Object properties in a C# host project |
 
 These overlap but are not interchangeable. NumericUpDown uses inspector `number`, C# `Value`, and JavaScript `value`. A field appearing in the inspector does not automatically make it a runtime API setter.
@@ -67,9 +67,9 @@ Custom JSON must be an object:
 ```
 
 ```js
-api.on("click", () => {
+forma.on("click", () => {
   component.properties.clicks += 1;
-  api.set("greetingLabel", "text", `${component.properties.greeting}: ${component.properties.clicks}`);
+  forma.set("greetingLabel", "text", `${component.properties.greeting}: ${component.properties.clicks}`);
 });
 ```
 
@@ -85,25 +85,32 @@ Every selector must begin with `:host`. Regular rules, `@media` and `@supports` 
 
 ## JavaScript API
 
-Behavior is JavaScript, not C#. It receives `api` and `component`; it does not directly receive Core model objects or the WinForms window.
+Behavior is JavaScript, not C#. It receives `forma` and `component`; `api` remains
+a compatibility alias. It does not directly receive Core model objects or the WinForms window.
+
+For live values declared outside events, use `const name = forma.bind("nameInput", "value")`
+and read `name.value`. `forma.ref`, `forma.reactive`, `forma.computed`,
+`forma.effect`, and `forma.watch` support local reactive state and automatic
+updates. See [reactive state and bindings](component-customization.md#reactive-state-and-bindings)
+for examples, subscriptions, cleanup, and write semantics.
 
 | API | Purpose |
 | --- | --- |
-| `api.on(event, handler)` | Listen on this component DOM element; automatic listener cleanup |
-| `api.get(nameOrId, property)` | Read one of the supported properties below |
-| `api.set(nameOrId, property, value)` | Send a supported update to the cloned Preview model |
-| `api.find(nameOrId)` | Get the matched DOM element for advanced local work |
-| `api.showDialog(nameOrId)` | Open Dialog/ConfirmationDialog |
-| `api.showToast(nameOrId)` / `api.closeToast(nameOrId)` | Notification lifecycle |
-| `api.cleanup(callback)` | Register cleanup for timers, extra listeners or resources |
+| `forma.on(event, handler)` | Listen on this component DOM element; automatic listener cleanup |
+| `forma.get(nameOrId, property)` | Read one of the supported properties below |
+| `forma.set(nameOrId, property, value)` | Send a supported update to the cloned Preview model |
+| `forma.find(nameOrId)` | Get the matched DOM element for advanced local work |
+| `forma.showDialog(nameOrId)` | Open Dialog/ConfirmationDialog |
+| `forma.showToast(nameOrId)` / `forma.closeToast(nameOrId)` | Notification lifecycle |
+| `forma.cleanup(callback)` | Register cleanup for timers, extra listeners or resources |
 
-`component.id`, `component.name`, `component.element`, `component.properties` describe the current component. `api.on` listeners run while the source is Enabled and Visible. Sync/async handler errors are reported in the Preview title. Behavior never runs in Design.
+`component.id`, `component.name`, `component.element`, `component.properties` describe the current component. `forma.on` listeners run while the source is Enabled and Visible. Sync/async handler errors are reported in the Preview title. Behavior never runs in Design.
 
 ### Runtime property operations
 
-Use exact camelCase keys. `api.set` uses the bridge; it is not a synchronous DOM assignment. A getter immediately following a setter in the same callback may see the previous state. Keep the new value in a local variable if you need it immediately.
+Use exact camelCase keys. `forma.set` uses the bridge; it is not a synchronous DOM assignment. A getter immediately following a setter in the same callback may see the previous state. Keep the new value in a local variable if you need it immediately.
 
-| Key | `api.get` support | `api.set` support | Value |
+| Key | `forma.get` support | `forma.set` support | Value |
 | --- | --- | --- | --- |
 | `source` | Image/PictureBox/Avatar image source | Image/PictureBox/Avatar | Absolute local file path, file/http/https URL, image data URI; empty string clears |
 | `selectedPath` | FilePicker/FolderPicker displayed selected path | Not supported | String; read after Browse finishes |
@@ -114,14 +121,24 @@ Use exact camelCase keys. `api.set` uses the bridge; it is not a synchronous DOM
 | `selectedIndex` | ComboBox/ListBox native selects; ListView has no equivalent DOM getter | ComboBox/ListBox/ListView | Zero-based integer; -1 clears |
 | `selectedTab` | TabControl | TabControl | Zero-based integer |
 | `selectedRow` | DataGridView | DataGridView | Original Rows index; -1 clears |
+| `columns` | DataGridView | DataGridView | Array of header strings |
+| `rows` | DataGridView | DataGridView | Array of string-cell arrays |
+| `readOnly`, `sortingEnabled`, `filteringEnabled` | DataGridView | DataGridView | Boolean |
 | `filterText` | DataGridView | DataGridView | String |
 | `sortColumn` | DataGridView | DataGridView | Zero-based column; -1 unsorted |
 | `sortDirection` | DataGridView | DataGridView | `ascending`, `descending` |
 | `isActive` | Spinner, LoadingOverlay | Spinner, LoadingOverlay | Boolean |
 
-For a textbox: **read `value`, write `text`**. `api.set("nameInput", "value", "...")` is not supported. Numeric setters include ProgressBar/CircularProgress. Date/time formats are below.
+For a textbox: **read `value`, write `text`**. `forma.set("nameInput", "value", "...")` is not supported. Numeric setters include ProgressBar/CircularProgress. Date/time formats are below.
 
-Arrays, images, font size, variant, targetId, description, iconName, Skeleton active state, page, nodes and arbitrary model fields are not generic JS setters. Configure them in the inspector or C#. `api.get` is not a universal serializer: CircularProgress/RichTextBox/CheckedListBox do not expose a generic input `.value`. Unsupported operations should not be inferred from inspector labels.
+DataGridView supports `columns` (string array), `rows` (array of string arrays),
+`readOnly`, `sortingEnabled`, and `filteringEnabled` through get/set. Use its row
+helpers to append, update, remove, or clear runtime data. Other collection fields,
+font size, variant, targetId, description, iconName, Skeleton active state, page,
+nodes and arbitrary model fields are not generic JS setters. Configure them in
+the inspector or C#. `forma.get` is not a universal serializer:
+CircularProgress/RichTextBox/CheckedListBox do not expose a generic input `.value`.
+Unsupported operations should not be inferred from inspector labels.
 
 ## JavaScript recipes
 
@@ -130,21 +147,21 @@ Arrays, images, font size, variant, targetId, description, iconName, Skeleton ac
 Name the TextBox `nameInput`, Label `greetingLabel`, and attach this to the **Button**:
 
 ```js
-api.on("click", () => {
-  const name = String(api.get("nameInput", "value") ?? "").trim();
-  api.set("greetingLabel", "text", name ? `Hello, ${name}!` : "Enter your name first.");
+forma.on("click", () => {
+  const name = String(forma.get("nameInput", "value") ?? "").trim();
+  forma.set("greetingLabel", "text", name ? `Hello, ${name}!` : "Enter your name first.");
 });
 ```
 
-[Copyable source](examples/greet-button.js). To fill/reset the TextBox, use `api.set("nameInput", "text", "")`.
+[Copyable source](examples/greet-button.js). To fill/reset the TextBox, use `forma.set("nameInput", "text", "")`.
 
 ### Live update
 
 Attach this to the **TextBox**:
 
 ```js
-api.on("input", () => {
-  api.set("greetingLabel", "text", component.element.value);
+forma.on("input", () => {
+  forma.set("greetingLabel", "text", component.element.value);
 });
 ```
 
@@ -156,15 +173,15 @@ Name tray components `busyOverlay` and `savedToast`. Configure overlay Target (b
 
 ```js
 let pending;
-api.on("click", () => {
+forma.on("click", () => {
   clearTimeout(pending);
-  api.set("busyOverlay", "isActive", true);
+  forma.set("busyOverlay", "isActive", true);
   pending = setTimeout(() => {
-    api.set("busyOverlay", "isActive", false);
-    api.showToast("savedToast");
+    forma.set("busyOverlay", "isActive", false);
+    forma.showToast("savedToast");
   }, 1000);
 });
-api.cleanup(() => clearTimeout(pending));
+forma.cleanup(() => clearTimeout(pending));
 ```
 
 [Copyable source](examples/busy-button.js). The delay demonstrates an indicator; replace it with your operation. Overlay blocks pointer interaction over its target; it is not a full keyboard-focus modal. Showing an already-open Toast does not restart its timeout; close then show for a fresh display.
@@ -172,11 +189,11 @@ api.cleanup(() => clearTimeout(pending));
 ### Selection, visibility, progress
 
 ```js
-api.on("click", () => {
-  api.set("greetingLabel", "visible", !api.get("greetingLabel", "visible"));
-  api.set("notifications", "checked", true);
-  api.set("settingsTabs", "selectedTab", 1); // second page
-  api.set("workProgress", "value", 75);
+forma.on("click", () => {
+  forma.set("greetingLabel", "visible", !forma.get("greetingLabel", "visible"));
+  forma.set("notifications", "checked", true);
+  forma.set("settingsTabs", "selectedTab", 1); // second page
+  forma.set("workProgress", "value", 75);
 });
 ```
 
@@ -187,9 +204,9 @@ Use your actual Names for label, checkbox/toggle, tabs and progress bar.
 Attach to **DataGridView**:
 
 ```js
-api.on("row-selection", event => {
+forma.on("row-selection", event => {
   const row = event.detail.row;
-  api.set("rowLabel", "text", row < 0 ? "No row selected" : `Source row: ${row}`);
+  forma.set("rowLabel", "text", row < 0 ? "No row selected" : `Source row: ${row}`);
 });
 ```
 
@@ -200,12 +217,12 @@ api.on("row-selection", event => {
 Configure a tray Timer Interval and Enabled; put this on the **Timer**:
 
 ```js
-api.on("tick", () => {
-  api.set("clockLabel", "text", new Date().toLocaleTimeString());
+forma.on("tick", () => {
+  forma.set("clockLabel", "text", new Date().toLocaleTimeString());
 });
 ```
 
-Put `api.on("click", () => api.showDialog("confirmDelete"));` on a Button. Configure the named Dialog's message/buttons. A JS promise returning the dialog result is not implemented; C# can subscribe to Closed. The planned event editor is separate future work.
+Put `forma.on("click", () => forma.showDialog("confirmDelete"));` on a Button. Configure the named Dialog's message/buttons. A JS promise returning the dialog result is not implemented; C# can subscribe to Closed. The planned event editor is separate future work.
 
 ## Component families
 
@@ -233,12 +250,12 @@ Spinner: Active and speed (100–5000 ms). Skeleton: Shape text/rectangle/circle
 
 Panel is free-position; GroupBox adds a caption; Card adds Title/Description/Show header. SplitContainer has two panes; TabControl has names/selected tab/orientation/Add tab; FlowLayoutPanel packs/reorders with Gap; TableLayoutPanel uses Columns/Rows/Gap. C# `parent.Add(child)` owns a child; remove it from the old parent before reparenting. Parenting does not imply responsive docking.
 
-Image/PictureBox/Avatar use **Choose image**; Source is read-only in the inspector. Clear image removes it. Contain fits; cover crops to fill; fill stretches. Local images embed on save. C# Source accepts file/data/loadable URL strings. In JavaScript, use `api.set("userAvatar", "source", imagePathValue)` to load an image. `text` changes the name/fallback initials. Local paths are converted to file URLs in Preview; paths must exist and URLs must load. For a TextBox path, read `api.get("imagePathInput", "value")`. For a FilePicker path, read `api.get("inputFile", "selectedPath")` after browsing. Example on a separate Button:
+Image/PictureBox/Avatar use **Choose image**; Source is read-only in the inspector. Clear image removes it. Contain fits; cover crops to fill; fill stretches. Local images embed on save. C# Source accepts file/data/loadable URL strings. In JavaScript, use `forma.set("userAvatar", "source", imagePathValue)` to load an image. `text` changes the name/fallback initials. Local paths are converted to file URLs in Preview; paths must exist and URLs must load. For a TextBox path, read `forma.get("imagePathInput", "value")`. For a FilePicker path, read `forma.get("inputFile", "selectedPath")` after browsing. Example on a separate Button:
 
 ```js
-api.on("click", () => {
-  const imagePathValue = api.get("inputFile", "selectedPath");
-  api.set("userAvatar", "source", imagePathValue);
+forma.on("click", () => {
+  const imagePathValue = forma.get("inputFile", "selectedPath");
+  forma.set("userAvatar", "source", imagePathValue);
 });
 ```
 
@@ -288,14 +305,14 @@ Filter entries alternate a label and a pattern separated by `|`. Separate multip
 Name a FilePicker `inputFile`, a FolderPicker `outputFolder`, and a Label `pathLabel`. In Preview, use each Browse button first, then click a separate Button with this behavior:
 
 ```js
-api.on("click", () => {
-  const file = api.get("inputFile", "selectedPath");
-  const folder = api.get("outputFolder", "selectedPath");
-  api.set("pathLabel", "text", `File: ${file || "None"}\nFolder: ${folder || "None"}`);
+forma.on("click", () => {
+  const file = forma.get("inputFile", "selectedPath");
+  const folder = forma.get("outputFolder", "selectedPath");
+  forma.set("pathLabel", "text", `File: ${file || "None"}\nFolder: ${folder || "None"}`);
 });
 ```
 
-[Copyable source](examples/read-picker-paths.js). `api.get(name, "selectedPath")` reads the displayed path. The setter for selectedPath is not implemented; use inspector/C# to set a path. A native selection does not dispatch a supported JavaScript SelectedPathChanged event yet; read after selection with a separate button. Do not read on the picker's Browse click and expect the new path before the dialog finishes.
+[Copyable source](examples/read-picker-paths.js). `forma.get(name, "selectedPath")` reads the displayed path. The setter for selectedPath is not implemented; use inspector/C# to set a path. A native selection does not dispatch a supported JavaScript SelectedPathChanged event yet; read after selection with a separate button. Do not read on the picker's Browse click and expect the new path before the dialog finishes.
 
 ### C#: read, configure, and respond to selection
 
@@ -329,6 +346,14 @@ Items/Tabs/Grid Columns use one item per line. Grid Rows is JSON arrays of strin
 ```json
 [["Ada", "10"], ["Grace", "2"]]
 ```
+
+In JavaScript, DataGridView `columns` and `rows` are actual arrays rather than
+inspector strings. Use `forma.set("gridName", "columns", ["Name", "Value"])`
+and `forma.set("gridName", "rows", [["Ada", "10"]])` to replace data;
+`forma.get` returns copies. Atomic row helpers are `forma.addRow`,
+`forma.updateRow`, `forma.removeRow`, `forma.clearRows`, and `forma.setCell`.
+See [grid scripting examples](component-customization.md#populate-and-edit-a-datagridview-from-javascript).
+Existing scripts using `api` remain compatible with the preferred `forma` name.
 
 Tree nodes use unique IDs (maximum depth 24, 2000 nodes):
 
@@ -407,7 +432,7 @@ Here `progress` is a host-created ProgressBar. Use the UI synchronization contex
 
 ## Events available today
 
-The planned Events editor is future work. Scripts use DOM events through api.on; C# subscribes to model events.
+The planned Events editor is future work. Scripts use DOM events through forma.on; C# subscribes to model events.
 
 | Source | Current JS event | Current C# result |
 | --- | --- | --- |
@@ -429,7 +454,7 @@ The planned Events editor is future work. Scripts use DOM events through api.on;
 | Dialog response | popup is outside tray source | Closed with Result |
 | Toast dismissal/timeout | popup is outside tray source | Closed |
 
-Popup events do not bubble to their tray source. `api.on("Closed", ...)` is not a C# event subscription. Only tick and row-selection are currently dispatched as the additional component events above. Declarations such as Button.MouseDown/MouseUp and TextBox.EnterPressed/KeyDown are not all wired through WebView2 yet; use the support table, not declarations alone.
+Popup events do not bubble to their tray source. `forma.on("Closed", ...)` is not a C# event subscription. Only tick and row-selection are currently dispatched as the additional component events above. Declarations such as Button.MouseDown/MouseUp and TextBox.EnterPressed/KeyDown are not all wired through WebView2 yet; use the support table, not declarations alone.
 
 ## Troubleshooting and performance
 

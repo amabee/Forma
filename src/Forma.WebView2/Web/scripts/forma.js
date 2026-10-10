@@ -90,6 +90,7 @@ function applyDialog(source, properties) {
   if (!properties.isOpen || window.formaDesigner?.preview === false) { modal?.remove(); return; }
   if (!modal) {
     modal = document.createElement("dialog"); modal.id = id; modal.dataset.dialogSource = source.id;
+    modal.dataset.componentSource = source.id;
     modal.className = "forma-dialog-popup";
     modal.setAttribute("aria-labelledby", `${id}-title`);
     modal.setAttribute("aria-describedby", `${id}-message`);
@@ -740,6 +741,7 @@ document.addEventListener("contextmenu", event => {
   event.preventDefault(); closeContextPopup();
   contextPopup = document.createElement("div"); contextPopup.id = `context-popup-${menu.id}`;
   contextPopup.dataset.formaType = "contextmenu"; contextPopup.dataset.commandSource = menu.id;
+  contextPopup.dataset.componentSource = menu.id;
   contextPopup.className = "forma-context-popup"; document.body.appendChild(contextPopup);
   window.forma.applyData(contextPopup, { commandItems: JSON.parse(menu.dataset.commands ?? "[]") });
   const rect = contextPopup.getBoundingClientRect();

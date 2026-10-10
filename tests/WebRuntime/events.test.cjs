@@ -13,6 +13,7 @@ function fixture(source, observe = false) {
     constructor(callback) { window.observer = this; this.callback = callback; }
     observe() {} disconnect() { this.disconnected = true; }
   };
+  window.eval(fs.readFileSync(path.join(base, 'src/Forma.Builder/DesignerWeb/reactivity.js'), 'utf8'));
   window.eval(fs.readFileSync(path.join(base, 'src/Forma.Builder/DesignerWeb/component-customization.js'), 'utf8'));
   const item = { id: 'control', name: 'control1', enabled: true, visible: true, x: 0, y: 0, width: 100, height: 30,
     customization: { behavior: source, characteristics: '{}' } };
@@ -98,4 +99,35 @@ test('hidden lifecycle still runs, native image load is distinct, errors are rep
   assert.equal(window.messages[0].payload.message, 'handler failed');
   window.formaCustomization.apply({ controls: [] }, true);
   window.formaCustomization.clear(); assert.deepEqual(Array.from(window.log), ['load', 'destroyed']);
+});
+test('forma aliases api without replacing the bridge and sends atomic grid operations', () => {
+  const { window, item } = fixture(`
+    window.scriptForma = forma;
+    window.sameApi = forma === api;
+    forma.on('Load', () => {
+      forma.set('grid1', 'columns', ['Name', 'Department']);
+      forma.set('grid1', 'rows', []);
+      forma.addRow('grid1', ['Angel', 'Engineering']);
+      forma.addRow('grid1', ['Jane', 'Design']);
+      forma.updateRow('grid1', 0, ['Angel', 'HR']);
+      forma.setCell('grid1', 1, 1, 'Operations');
+      forma.removeRow('grid1', 0);
+      forma.clearRows('grid1');
+    });
+  `);
+  const bridge = window.forma;
+  const grid = { id: 'other', name: 'grid1', kind: 'datagridview', columns: ['Name'], rows: [['Initial']], readOnly: true, sortingEnabled: true, filteringEnabled: true };
+  window.formaCustomization.apply({ controls: [item, grid] }, true);
+  assert.equal(window.forma, bridge); assert.ok(window.sameApi);
+  assert.deepEqual(window.messages.map(m => m.event), ['set', 'set', 'grid', 'grid', 'grid', 'grid', 'grid', 'grid']);
+  assert.deepEqual(window.messages.slice(2).map(m => m.payload.operation), ['addRow', 'addRow', 'updateRow', 'setCell', 'removeRow', 'clearRows']);
+  assert.ok(window.messages.every(m => m.id === 'other' && m.payload.sourceId === 'control'));
+  const rows = window.scriptForma.get('grid1', 'rows'); rows[0][0] = 'changed';
+  const columns = window.scriptForma.get('grid1', 'columns'); columns[0] = 'changed';
+  assert.equal(grid.rows[0][0], 'Initial'); assert.equal(grid.columns[0], 'Name');
+  assert.equal(window.scriptForma.get('grid1', 'readOnly'), true);
+  assert.throws(() => window.scriptForma.addRow('grid1', ['Bad', 10]), /strings/);
+  assert.throws(() => window.scriptForma.set('grid1', 'rows', [null]), /strings/);
+  assert.throws(() => window.scriptForma.removeRow('grid1', -1), /indices/);
+  assert.throws(() => window.scriptForma.addRow('control1', ['Bad']), /DataGridView/);
 });

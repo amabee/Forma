@@ -36,3 +36,28 @@ test('diagnostics catch unsupported properties and unknown components without ex
   assert.match(issues[1].message, /does not exist/);
   assert.deepEqual(await diagnose('javascript', 'api.set(dynamicName, dynamicProperty, nextValue);', controls), []);
 });
+test('forma API offers grid methods and properties and validates grid targets', async () => {
+  const { formaCompletions: complete, diagnose } = await load();
+  const all = [...controls, { name: 'employees', kind: 'datagridview' }];
+  const labels = text => complete(context(text), all).options.map(x => x.label);
+  assert.ok(labels('forma.').includes('addRow'));
+  assert.deepEqual(labels('forma.addRow("'), ['employees']);
+  assert.ok(labels('forma.set("employees", "').includes('rows'));
+  assert.ok(labels('forma.get("employees", "').includes('columns'));
+  assert.ok(labels('forma.on("').includes('Load'));
+  assert.deepEqual(await diagnose('javascript', 'forma.addRow("employees", ["Angel"]); forma.set("employees", "rows", []);', all), []);
+  const issues = await diagnose('javascript', 'forma.addRow("nameInput", []); forma.set("employees", "missing", 1);', all);
+  assert.equal(issues.length, 2); assert.match(issues[0].message, /DataGridView/);
+  assert.match(issues[1].message, /forma.set/);
+});
+test('reactive API and binding values are suggested and checked', async () => {
+  const { formaCompletions: complete, diagnose } = await load();
+  const labels = text => complete(context(text), controls).options.map(x => x.label);
+  for (const method of ['ref', 'reactive', 'bind', 'computed', 'watch', 'effect']) assert.ok(labels('forma.').includes(method));
+  assert.ok(labels('forma.bind("nameInput", "').includes('value'));
+  assert.deepEqual(labels('const name = forma.bind("nameInput", "value"); name.'), ['value', 'subscribe']);
+  assert.deepEqual(labels('const total = forma.computed(() => 10); total.'), ['value', 'subscribe']);
+  assert.deepEqual(await diagnose('javascript', 'const name = forma.bind("nameInput", "value"); forma.effect(() => name.value);', controls), []);
+  const issues = await diagnose('javascript', 'forma.bind("nameInput", "unsupported"); forma.bind("missing", "value");', controls);
+  assert.equal(issues.length, 2);
+});

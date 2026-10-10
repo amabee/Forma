@@ -3,6 +3,7 @@ namespace Forma.Builder;
 public sealed class Appearance
 {
     public Appearance() { }
+
     public int Width { get; set; } = 120;
     public int Height { get; set; } = 36;
     public string ForeColor { get; set; } = "#ffffff";

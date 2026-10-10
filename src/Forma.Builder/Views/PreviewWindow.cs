@@ -97,6 +97,8 @@ public sealed class PreviewWindow : System.Windows.Forms.Form
             if (sourceId is null || !_session.Appearance.TryGetValue(sourceId, out var source) || !source.Enabled) return;
             if (message.Event == "set")
                 _session.SetValue(message.Id, payload.GetProperty("property").GetString()!, payload.GetProperty("value"));
+            else if (message.Event == "grid")
+                _session.EditGrid(message.Id, payload.GetProperty("operation").GetString()!, payload);
             else if (message.Event == "show-dialog" && _session.Appearance.TryGetValue(message.Id, out var appearance) && appearance.Enabled
                 && _session.Controls.FirstOrDefault(control => control.Id == message.Id) is Forma.Core.Controls.Dialog dialog)
                 dialog.Show();

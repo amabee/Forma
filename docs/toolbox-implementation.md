@@ -264,8 +264,8 @@ after sorting/filtering. Selection-only updates preserve the active cell and
 filter updates preserve the search input's focus.
 
 Application code subscribes to RowSelectionChanged or reads SelectedRow. In
-Custom Properties, use api.on("row-selection", event => { ...event.detail.row... })
-and api.get/api.set for selectedRow, filterText, sortColumn, and sortDirection.
+Custom Properties, use forma.on("row-selection", event => { ...event.detail.row... })
+and forma.get/forma.set for selectedRow, filterText, sortColumn, and sortDirection.
 These indices always refer to source Rows, not positions in the filtered view.
 Typed editors, grouping, binding and virtualization remain future enhancements.
 
@@ -287,8 +287,8 @@ is a visual loading indicator; application scripts supply the actual work.
 
 Toast lives in the component tray. Configure its text, variant, corner position,
 duration and Allow dismissal. It is shown by `Toast.Show()` in C# or
-`api.showToast("nameOrId")` in a Preview script. It closes on timeout, optional
-close-button dismissal, or `api.closeToast("nameOrId")`. Open state is transient
+`forma.showToast("nameOrId")` in a Preview script. It closes on timeout, optional
+close-button dismissal, or `forma.closeToast("nameOrId")`. Open state is transient
 and is excluded from project persistence. Notifications stack in each corner.
 
 All seven controls support contextual properties, save/open and design Undo/Redo.

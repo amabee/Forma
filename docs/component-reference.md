@@ -5,7 +5,7 @@ This reference covers the 60 implemented toolbox entries plus Form. It was check
 ## Reading the tables
 
 - Inspector IDs are the field names stored in Builder state; C# model properties use PascalCase.
-- A property in the inspector is **not automatically supported by `api.get` or `api.set`**. See the JavaScript API table in the usage guide.
+- A property in the inspector is **not automatically supported by `forma.get` or `forma.set`**. See the JavaScript API table in the usage guide.
 - Shared visual properties are in Builder `Appearance`, not automatically properties on every Core control.
 - C# defaults below are model constructor defaults. Builder may supply different initial geometry, colors, or text when you drop a control.
 - Image source is a read-only field filled by picker actions. File/folder selected paths can be edited or chosen. IDs are immutable.
@@ -1333,7 +1333,7 @@ Uses the shared inspector fields and contextual actions.
 | `dateValue` | `DateTimeInput.DateValue` | `value` |
 | `color` | `ColorPicker.Color` | `value` |
 | `commandItems` | `CommandControl.Items` | Configure in inspector/C# |
-| `gridColumns`, `gridRows` | `DataGridView.Columns`, `Rows` | Configure in inspector/C# |
+| `gridColumns`, `gridRows` | `DataGridView.Columns`, `Rows` | Inspector/C#; JS `forma.get/set` uses array properties `columns`, `rows` |
 | `source` | `Image.Source` | Choose image / configure in C# |
 | `rowCount` | `TableLayoutPanel.RowCount` | Configure in inspector/C# |
 | `checkedIndices` | `CheckedListBox.CheckedIndices` | Configure in inspector/C# |

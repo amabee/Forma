@@ -6,6 +6,48 @@ namespace Forma.Tests;
 
 public class PreviewSessionTests
 {
+    [Fact]
+    public void ScriptGridOperationsUseLatestRowsPreserveSelectionAndLeaveDesignUntouched()
+    {
+        var design = new BuilderViewModel(); design.CreateNew();
+        var original = Assert.IsType<Forma.Core.Controls.DataGridView>(design.ExecuteEdit("drop", design.Form.Id,
+            JsonSerializer.SerializeToElement(new { control = "datagridview", x = 20, y = 30 })).AddedControl!);
+        using var preview = new PreviewSession(design);
+        var grid = Assert.IsType<Forma.Core.Controls.DataGridView>(preview.Controls.Single(c => c.Id == original.Id));
+        JsonElement Payload(object value) => JsonSerializer.SerializeToElement(value);
+        preview.SetValue(grid.Id, "columns", Payload(new[] { "Name", "Department" }));
+        preview.SetValue(grid.Id, "rows", Payload(Array.Empty<string[]>()));
+        preview.EditGrid(grid.Id, "addRow", Payload(new { row = new[] { "Angel", "Engineering" } }));
+        preview.EditGrid(grid.Id, "addRow", Payload(new { row = new[] { "Jane", "Design" } }));
+        preview.EditGrid(grid.Id, "addRow", Payload(new { row = new[] { "John" } }));
+        grid.SelectedRow = 2;
+        preview.EditGrid(grid.Id, "updateRow", Payload(new { index = 1, row = new[] { "Jane", "HR" } }));
+        preview.EditGrid(grid.Id, "setCell", Payload(new { rowIndex = 2, columnIndex = 1, value = "Operations" }));
+        Assert.True(grid.ReadOnly); // Programmatic data changes are allowed in a read-only grid.
+        Assert.Equal("Operations", grid.Rows[2][1]);
+        preview.EditGrid(grid.Id, "removeRow", Payload(new { index = 0 }));
+        Assert.Equal(1, grid.SelectedRow);
+        Assert.Equal("Jane", grid.Rows[0][0]);
+        preview.SetValue(grid.Id, "sortingEnabled", Payload(false));
+        preview.SetValue(grid.Id, "filteringEnabled", Payload(false));
+        preview.SetValue(grid.Id, "readOnly", Payload(false));
+        var state = Payload(preview.State()).GetProperty("controls").EnumerateArray().Single(c => c.GetProperty("id").GetString() == grid.Id);
+        Assert.Equal("Department", state.GetProperty("columns")[1].GetString());
+        Assert.Equal("HR", state.GetProperty("rows")[0][1].GetString());
+        Assert.False(state.GetProperty("sortingEnabled").GetBoolean());
+        Assert.False(state.GetProperty("filteringEnabled").GetBoolean());
+        Assert.False(state.GetProperty("readOnly").GetBoolean());
+        Assert.Throws<ArgumentException>(() => preview.SetValue(grid.Id, "rows", Payload(new object[] { new object[] { "Valid", 1 } })));
+        Assert.Throws<ArgumentException>(() => preview.EditGrid(grid.Id, "removeRow", Payload(new { index = 99 })));
+        Assert.Throws<ArgumentException>(() => preview.EditGrid(grid.Id, "setCell", Payload(new { rowIndex = 0, columnIndex = -1, value = "Bad" })));
+        Assert.Throws<ArgumentException>(() => preview.EditGrid(grid.Id, "updateRow", Payload(new { index = 0, row = new object[] { "Bad", null! } })));
+        Assert.Equal("HR", grid.Rows[0][1]);
+        preview.EditGrid(grid.Id, "removeRow", Payload(new { index = 1 })); Assert.Equal(-1, grid.SelectedRow);
+        preview.EditGrid(grid.Id, "clearRows", Payload(new { })); Assert.Empty(grid.Rows);
+        Assert.Equal(new[] { "Name", "Value" }, original.Columns);
+        Assert.Equal(2, original.Rows.Length);
+    }
+
     [Theory]
     [InlineData("avatar")]
     [InlineData("image")]
