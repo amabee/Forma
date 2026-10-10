@@ -318,7 +318,7 @@ public static class InspectorCatalog
             "Items (one per line)",
             "General",
             "textarea",
-            Kind: "combobox,listbox,listview,checkedlistbox,radiogroup,checkboxgroup,segmentedcontrol,chipgroup,buttongroup"
+            Kind: "combobox,listbox,listview,checkedlistbox,radiogroup,checkboxgroup,segmentedcontrol,chipgroup,buttongroup,breadcrumb,sidenavigation"
         ),
         new(
             "selectedIndex",
@@ -327,7 +327,7 @@ public static class InspectorCatalog
             "number",
             -1,
             10000,
-            Kind: "combobox,listbox,listview,radiogroup,segmentedcontrol,buttongroup"
+            Kind: "combobox,listbox,listview,radiogroup,segmentedcontrol,buttongroup,breadcrumb,sidenavigation"
         ),
         new("source", "Image source", "General", Kind: "image,picturebox,avatar", ReadOnly: true),
         new(
@@ -344,7 +344,7 @@ public static class InspectorCatalog
             "Layout",
             "select",
             Options: ["horizontal", "vertical"],
-            Kind: "splitcontainer,flowlayoutpanel,tabcontrol,toolbar,toolstrip,divider,radiogroup,checkboxgroup,segmentedcontrol,chipgroup,buttongroup"
+            Kind: "splitcontainer,flowlayoutpanel,tabcontrol,toolbar,toolstrip,divider,radiogroup,checkboxgroup,segmentedcontrol,chipgroup,buttongroup,stackpanel,hstack,vstack,wrappanel,centerpanel,sidenavigation"
         ),
         new(
             "gap",
@@ -353,8 +353,9 @@ public static class InspectorCatalog
             "number",
             0,
             64,
-            Kind: "splitcontainer,flowlayoutpanel,tablelayoutpanel"
+            Kind: "splitcontainer,flowlayoutpanel,tablelayoutpanel,stackpanel,hstack,vstack,wrappanel,centerpanel"
         ),
+        new("scrollDirection", "Scroll direction", "Layout", "select", Options: ["both", "horizontal", "vertical"], Kind: "scrollablepanel"),
         new("columns", "Columns", "Layout", "number", 1, 12, Kind: "tablelayoutpanel"),
         new("rowCount", "Rows", "Layout", "number", 1, 100, Kind: "tablelayoutpanel"),
         new("tabs", "Tabs (one per line)", "General", "textarea", Kind: "tabcontrol"),

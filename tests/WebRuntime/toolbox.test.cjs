@@ -459,6 +459,45 @@ test('every toolbox kind creates a real DOM control and all icons exist locally'
   }
   for (const icon of document.querySelectorAll('img.icon-svg')) assert.ok(fs.existsSync(path.join(base, 'src/Forma.Builder/DesignerWeb', icon.getAttribute('src'))));
 });
+test('every toolbox entry can start a drag including new controls and layout containers', () => {
+  const { window, document } = fixture();
+  for (const tool of document.querySelectorAll('[data-kind]')) {
+    const transferred = {}; const event = new window.Event('dragstart', { bubbles: true });
+    event.dataTransfer = { setData: (key, value) => transferred[key] = value };
+    tool.dispatchEvent(event); assert.equal(transferred['text/plain'], `forma:${tool.dataset.kind}`, tool.dataset.kind);
+  }
+  window.close();
+});
+test('modern layouts preserve children and axis during partial updates and navigation exposes selection callbacks', () => {
+  const { window, document, create, messages } = fixture();
+  for (const kind of ['stackpanel', 'hstack', 'vstack', 'wrappanel', 'centerpanel', 'scrollablepanel']) {
+    create(kind, kind, 'root', { orientation: kind === 'hstack' ? 'horizontal' : 'vertical', gap: 8, scrollDirection: 'vertical' });
+    create(`${kind}-child`, 'button', kind, { x: 20, y: 30, text: 'Child' });
+    const parent = document.getElementById(kind), host = parent.querySelector('.layout-content'), child = document.getElementById(`${kind}-child`);
+    assert.ok(parent.querySelector('.layout-header').hidden); assert.equal(child.parentElement, host);
+    if (kind !== 'scrollablepanel') {
+      assert.equal(child.style.position, 'relative'); window.forma.update({ id: kind, properties: { gap: 16 } });
+      assert.equal(host.style.flexDirection, kind === 'hstack' ? 'row' : 'column'); assert.equal(host.style.gap, '16px');
+      assert.equal(host.style.flexWrap, kind === 'wrappanel' ? 'wrap' : 'nowrap');
+    } else { assert.equal(child.style.position, 'absolute'); assert.equal(host.style.overflowY, 'auto'); assert.equal(host.style.overflowX, 'hidden'); }
+    if (kind === 'centerpanel') { assert.equal(host.style.justifyContent, 'center'); assert.equal(host.style.alignItems, 'center'); }
+  }
+  window.formaDesigner.preview = true;
+  create('nav', 'sidenavigation', 'root', { items: ['Home', 'Reports'], selectedIndex: 0, orientation: 'vertical' });
+  create('crumb', 'breadcrumb', 'root', { items: ['Home', 'Projects', '<b>Details</b>'], selectedIndex: 2 });
+  const nav = document.getElementById('nav'), crumb = document.getElementById('crumb'); let navigation;
+  window.formaCustomization.apply({ controls: [
+    { id: 'nav', name: 'nav', kind: 'sidenavigation', items: ['Home', 'Reports'], enabled: true, visible: true, orientation: 'vertical', customization: { behavior: 'window.navApi = forma; const index = forma.bind("nav", "selectedIndex"); index.subscribe(value => forma.set("crumb", "text", String(value)));' } },
+    { id: 'crumb', name: 'crumb', kind: 'breadcrumb', items: ['Home', 'Projects', 'Details'] }
+  ] }, true);
+  nav.addEventListener('navigate', event => navigation = event.detail);
+  nav.children[1].click(); assert.equal(nav.selectedIndex, 1); assert.equal(navigation.text, 'Reports'); assert.equal(nav.children[1].getAttribute('aria-current'), 'page');
+  assert.ok(messages.some(message => message.event === 'selection'));
+  assert.equal(window.navApi.get('nav', 'selectedIndex'), 1); assert.equal(window.navApi.get('nav', 'items')[1], 'Reports');
+  assert.ok(messages.some(message => message.payload?.property === 'text' && message.payload.value === '1')); assert.equal(crumb.querySelector('b'), null);
+  crumb.children[0].click(); assert.equal(crumb.selectedIndex, 0);
+  window.close();
+});
 test('managed layouts keep children in flow and tabs show the assigned page', () => {
   const { document, create, window } = fixture();
   create('flow', 'flowlayoutpanel', 'root', { gap: 12 });

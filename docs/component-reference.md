@@ -1,6 +1,6 @@
 # Component and property reference
 
-This reference covers the 72 implemented toolbox entries plus Form. It was checked against the compiled Core models and InspectorCatalog. The larger roadmap is separate. Start with [the usage guide](components-and-scripting.md) for setup, JavaScript recipes, and C# integration.
+This reference covers the 80 implemented toolbox entries plus Form. It was checked against the compiled Core models and InspectorCatalog. The larger roadmap is separate. Start with [the usage guide](components-and-scripting.md) for setup, JavaScript recipes, and C# integration.
 
 ## Reading the tables
 
@@ -1398,7 +1398,38 @@ ShowText=true, Description=Perform an action. Inspector includes Description,
 Icon, Show text, and common properties. JS get/set/bind supports description,
 iconName, showText, and common properties. Click/OnClick retain Button behavior.
 
-## Inspector/model aliases
+## Modern layouts and navigation
+
+### StackPanel, HStack, VStack, WrapPanel and CenterPanel
+
+Inherit LinearLayout/LayoutContainer. StackPanel and VStack default to vertical;
+HStack defaults to horizontal. Orientation is editable; these are presets.
+Stack layouts do not wrap. WrapPanel wraps onto additional rows/columns.
+CenterPanel centers the child group along both axes. All use Gap (0–64, default
+8) and child order. Inspector: Orientation, Gap, common fields. JS get/set/bind:
+orientation, gap. Children are grouped and saved with their parent; moving a
+container moves the entire group. X/Y fields are disabled for managed children;
+dragging reorders instead. Width/height still control each child's dimensions.
+
+### ScrollablePanel
+
+Inherits LayoutContainer. Children use free X/Y positioning and may be larger
+than the visible panel. Set child size/position in the inspector for overflowing
+content. ScrollDirection defaults both; horizontal hides vertical overflow and
+vertical hides horizontal overflow. Inspector and JS get/set/bind use
+scrollDirection. The runtime's content area provides native browser scrolling.
+
+### Breadcrumb and SideNavigation
+
+Both inherit ChoiceControl; SideNavigation also inherits SelectionGroup.
+Breadcrumb defaults to Home/Projects/Details with SelectedIndex=2.
+SideNavigation defaults to Dashboard/Projects/Settings, SelectedIndex=0,
+Orientation=vertical. Inspector: Items, Selected index, plus Orientation for
+SideNavigation. JS get/set/bind: items, selectedIndex, and SideNavigation
+orientation. SelectedIndexChanged is the Core event. JS navigate supplies
+event.detail.index/text; application code decides what page/content to display.
+
+## Inspector/model property aliases
 
 | Inspector ID | C# model property | JavaScript API when supported |
 | --- | --- | --- |

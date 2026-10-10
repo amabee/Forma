@@ -5,6 +5,14 @@
 //   "value"   - written to the value property (form fields)
 //   "none"    - ignored, so containers never overwrite their own children
 const CONTROL_TYPES = {
+  stackpanel: { tag: "div", text: "none", init: initContainer },
+  hstack: { tag: "div", text: "none", init: initContainer },
+  vstack: { tag: "div", text: "none", init: initContainer },
+  wrappanel: { tag: "div", text: "none", init: initContainer },
+  centerpanel: { tag: "div", text: "none", init: initContainer },
+  scrollablepanel: { tag: "div", text: "none", init: initContainer },
+  breadcrumb: { tag: "nav", text: "none" },
+  sidenavigation: { tag: "nav", text: "none" },
   dropdownbutton: { tag: "div", text: "none" },
   splitbutton: { tag: "div", text: "none" },
   commandbutton: { tag: "button", text: "none" },
@@ -189,6 +197,7 @@ window.formaChildHost = childHost;
 function initContainer(el) {
   const header = document.createElement("div"); header.className = "layout-header";
   const content = document.createElement("div"); content.className = "layout-content";
+  if (["stackpanel", "hstack", "vstack", "wrappanel", "centerpanel", "scrollablepanel"].includes(el.dataset.formaType)) header.hidden = true;
   el.append(header, content);
 }
 
@@ -608,11 +617,21 @@ window.forma = {
       if (properties.source) element.src = properties.source; else element.removeAttribute("src");
       element.style.objectFit = properties.sizeMode ?? "contain";
     }
-    if (["splitcontainer", "flowlayoutpanel", "tablelayoutpanel", "tabcontrol", "groupbox"].includes(kind)) {
+    if (["splitcontainer", "flowlayoutpanel", "tablelayoutpanel", "tabcontrol", "groupbox", "stackpanel", "hstack", "vstack", "wrappanel", "centerpanel", "scrollablepanel"].includes(kind)) {
+      properties = element._layoutProperties = { ...element._layoutProperties, ...properties };
       const host = element.querySelector(".layout-content");
       element.dataset.orientation = properties.orientation ?? "horizontal";
       host.style.gap = `${properties.gap ?? 8}px`;
-      if (kind === "flowlayoutpanel") { host.style.display = "flex"; host.style.flexDirection = properties.orientation === "vertical" ? "column" : "row"; host.style.flexWrap = "wrap"; host.style.alignContent = "flex-start"; host.style.alignItems = "flex-start"; }
+      if (["flowlayoutpanel", "stackpanel", "hstack", "vstack", "wrappanel", "centerpanel"].includes(kind)) {
+        host.style.display = "flex"; host.style.flexDirection = properties.orientation === "vertical" ? "column" : "row";
+        host.style.flexWrap = ["flowlayoutpanel", "wrappanel"].includes(kind) ? "wrap" : "nowrap";
+        host.style.justifyContent = kind === "centerpanel" ? "center" : "flex-start";
+        host.style.alignItems = kind === "centerpanel" ? "center" : "flex-start"; host.style.alignContent = "flex-start";
+      }
+      if (kind === "scrollablepanel") {
+        host.style.overflowX = properties.scrollDirection === "vertical" ? "hidden" : "auto";
+        host.style.overflowY = properties.scrollDirection === "horizontal" ? "hidden" : "auto";
+      }
       if (kind === "splitcontainer" || kind === "tablelayoutpanel") {
         element.dataset.orientation = properties.orientation ?? "horizontal";
         element.dataset.columns = properties.columns ?? 2;
@@ -651,9 +670,9 @@ window.forma = {
     element.style.left = Number.isFinite(properties.x) ? `${properties.x}px` : "";
     element.style.top = Number.isFinite(properties.y) ? `${properties.y}px` : "";
     const parent = element.parentElement?.closest("[data-forma-type]");
-    if (["flowlayoutpanel", "tablelayoutpanel"].includes(parent?.dataset.formaType))
+    if (["flowlayoutpanel", "tablelayoutpanel", "stackpanel", "hstack", "vstack", "wrappanel", "centerpanel"].includes(parent?.dataset.formaType))
       Object.assign(element.style, { position: "relative", left: "", top: "" });
-    if (parent?.dataset.formaType === "flowlayoutpanel") element.style.flexShrink = "0";
+    if (["flowlayoutpanel", "stackpanel", "hstack", "vstack", "wrappanel", "centerpanel"].includes(parent?.dataset.formaType)) element.style.flexShrink = "0";
   },
 
   create(message) {

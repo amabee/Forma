@@ -1,6 +1,6 @@
 # Using Forma components, properties, and code
 
-This guide describes the current Builder and its 72 toolbox entries. The [component reference](component-reference.md) lists every implemented control, contextual inspector property, range, C# property, constructor default, and declared method/event. The [roadmap](roadmap-stages.md) tracks features still pending.
+This guide describes the current Builder and its 80 toolbox entries. The [component reference](component-reference.md) lists every implemented control, contextual inspector property, range, C# property, constructor default, and declared method/event. The [roadmap](roadmap-stages.md) tracks features still pending.
 
 ## Contents
 
@@ -233,6 +233,24 @@ Put `forma.on("click", () => forma.showDialog("confirmDelete"));` on a Button. C
 ## Component families
 
 ### Text, buttons, links and choices
+
+**Breadcrumb** displays a selectable path; **SideNavigation** displays a single
+selected navigation option, vertically by default. Both use newline-separated
+Items and zero-based Selected index (-1 clears). SideNavigation also exposes
+Orientation. They support keyboard navigation and mark the selected item with
+`aria-current="page"`. Their navigation event is an application hook, not an
+automatic URL change or page loader:
+
+```javascript
+forma.on("navigate", event => {
+  forma.set("pageTitle", "text", event.detail.text);
+  console.log("Selected index:", event.detail.index);
+});
+```
+
+Use `forma.bind("sidebar", "selectedIndex")` for a live selection and
+`forma.set("sidebar", "items", ["Home", "Reports"])` for dynamic navigation data.
+The generated JavaScript template for these controls starts with navigate.
 
 **DropdownButton** opens a command menu. **SplitButton** adds a separate main
 action with Primary enabled, leaving the dropdown available when that action is

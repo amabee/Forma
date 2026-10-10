@@ -3,6 +3,16 @@
 @source "../DesignerWeb/designer.js";
 @source "../DesignerWeb/workspace.js";
 @layer components {
+  [data-forma-type="breadcrumb"], [data-forma-type="sidenavigation"] { @apply flex gap-2 overflow-auto; }
+  [data-forma-type="breadcrumb"] { @apply flex-wrap items-center; }
+  [data-forma-type="breadcrumb"] button { @apply bg-transparent border-0 text-blue-700; }
+  [data-forma-type="breadcrumb"] button:not(:last-child)::after { content: "/"; @apply ml-3 text-slate-400; }
+  [data-forma-type="breadcrumb"] button[aria-current="page"] { @apply text-slate-700 font-semibold; }
+  [data-forma-type="sidenavigation"] { @apply flex-col; }
+  [data-forma-type="sidenavigation"][data-orientation="horizontal"] { @apply flex-row; }
+  [data-forma-type="sidenavigation"] button { @apply rounded px-3 py-2 border-0 bg-transparent text-inherit text-left; }
+  [data-forma-type="sidenavigation"] button.selected { @apply bg-blue-600 text-white; }
+  [data-forma-type="sidenavigation"] button:focus-visible, [data-forma-type="breadcrumb"] button:focus-visible { @apply outline-2 outline-blue-600 outline-offset-2; }
   [data-forma-type="dropdownbutton"], [data-forma-type="splitbutton"] { @apply inline-flex items-stretch overflow-visible; }
   [data-forma-type="dropdownbutton"] > .action-menu { @apply w-full; }
   [data-forma-type="dropdownbutton"] > .action-menu > summary, [data-forma-type="splitbutton"] > .action-menu > summary { @apply flex h-full items-center justify-center text-inherit; }

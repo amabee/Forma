@@ -442,6 +442,7 @@ public sealed class BuilderWindow : System.Windows.Forms.Form
                         toolTip = _viewModel.Appearance[c.Id].ToolTip,
                         cssClass = _viewModel.Appearance[c.Id].CssClass,
                         customCss = _viewModel.Appearance[c.Id].CustomCss,
+                        scrollDirection = (c as Forma.Core.Controls.ScrollablePanel)?.ScrollDirection ?? "both",
                         primaryEnabled = (c as Forma.Core.Controls.SplitButton)?.PrimaryEnabled ?? true,
                         description = (c as Forma.Core.Controls.CommandButton)?.Description ?? (c as Forma.Core.Controls.Card)?.Description ?? (c as Forma.Core.Controls.EmptyState)?.Description ?? "",
                         showText = (c as Forma.Core.Controls.IconButton)?.ShowText ?? false,

@@ -71,6 +71,7 @@ public static class ProjectFile
         typeof(C.RadioGroup), typeof(C.CheckBoxGroup), typeof(C.SegmentedControl), typeof(C.Rating),
         typeof(C.Chip), typeof(C.ChipGroup), typeof(C.ButtonGroup), typeof(C.IconButton), typeof(C.FloatingActionButton),
         typeof(C.DropdownButton), typeof(C.SplitButton), typeof(C.CommandButton),
+        typeof(C.StackPanel), typeof(C.HStack), typeof(C.VStack), typeof(C.WrapPanel), typeof(C.CenterPanel), typeof(C.ScrollablePanel), typeof(C.Breadcrumb), typeof(C.SideNavigation),
         typeof(C.RichTextBox),
         typeof(C.PictureBox),
         typeof(C.ListView),
@@ -135,6 +136,7 @@ public static class ProjectFile
         "Stars",
         "Removable", "ShowText",
         "PrimaryEnabled",
+        "ScrollDirection",
         "WorkerReportsProgress",
         "WorkerSupportsCancellation",
         "Minimum",
@@ -268,6 +270,7 @@ public static class ProjectFile
                         or "splitcontainer"
                         or "tabcontrol"
                         or "flowlayoutpanel"
+                        or "stackpanel" or "hstack" or "vstack" or "wrappanel" or "centerpanel" or "scrollablepanel"
                         or "tablelayoutpanel"
                     )
             )

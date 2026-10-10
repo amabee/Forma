@@ -112,7 +112,7 @@ public sealed class DesignerEditingService(BuilderViewModel viewModel)
                     control.LayoutSlot = control.Parent is Forma.Core.Controls.SplitContainer ? Math.Clamp(slot, 1, 2) : Math.Clamp(slot, 1, 1200);
                     ResizeControl(control, bounds.Width, bounds.Height);
                 }
-                if (Number(payload, "index") is int insertionIndex && control.Parent is Forma.Core.Controls.FlowLayoutPanel flow)
+                if (Number(payload, "index") is int insertionIndex && control.Parent is Forma.Core.Controls.LinearLayout flow)
                     flow.MoveChild(control, insertionIndex);
                 _viewModel.SelectedControl = control;
                 return new("Control moved");
@@ -212,6 +212,14 @@ public sealed class DesignerEditingService(BuilderViewModel viewModel)
             "tabcontrol" => new Forma.Core.Controls.TabControl(),
             "flowlayoutpanel" => new Forma.Core.Controls.FlowLayoutPanel(),
             "tablelayoutpanel" => new Forma.Core.Controls.TableLayoutPanel(),
+            "stackpanel" => new Forma.Core.Controls.StackPanel(),
+            "hstack" => new Forma.Core.Controls.HStack(),
+            "vstack" => new Forma.Core.Controls.VStack(),
+            "wrappanel" => new Forma.Core.Controls.WrapPanel(),
+            "centerpanel" => new Forma.Core.Controls.CenterPanel(),
+            "scrollablepanel" => new Forma.Core.Controls.ScrollablePanel(),
+            "breadcrumb" => new Forma.Core.Controls.Breadcrumb(),
+            "sidenavigation" => new Forma.Core.Controls.SideNavigation(),
             "checkbox" => new Forma.Core.Controls.CheckBox { Text = "CheckBox" },
             "radiobutton" => new Forma.Core.Controls.RadioButton { Text = "RadioButton" },
             "combobox" => new Forma.Core.Controls.ComboBox(),
@@ -261,7 +269,7 @@ public sealed class DesignerEditingService(BuilderViewModel viewModel)
             or "splitcontainer"
             or "tabcontrol"
             or "flowlayoutpanel"
-            or "tablelayoutpanel" => new Appearance
+            or "tablelayoutpanel" or "stackpanel" or "hstack" or "vstack" or "wrappanel" or "centerpanel" or "scrollablepanel" => new Appearance
             {
                 Width = 300,
                 Height = 200,
@@ -293,6 +301,8 @@ public sealed class DesignerEditingService(BuilderViewModel viewModel)
             "chip" => new Appearance { Width = 120, Height = 36, BorderRadius = 18, BackColor = "#ffffff", ForeColor = "#1f2937" },
             "iconbutton" => new Appearance { Width = 44, Height = 44 },
             "dropdownbutton" or "splitbutton" => new Appearance { Width = 160, Height = 40, PaddingTop = 0, PaddingBottom = 0, PaddingLeft = 0, PaddingRight = 0 },
+            "breadcrumb" => new Appearance { Width = 320, Height = 40, ForeColor = "#1f2937", BackColor = "#ffffff", PaddingTop = 0, PaddingBottom = 0 },
+            "sidenavigation" => new Appearance { Width = 200, Height = 220, ForeColor = "#1f2937", BackColor = "#ffffff" },
             "commandbutton" => new Appearance { Width = 240, Height = 64 },
             "floatingactionbutton" => new Appearance { Width = 56, Height = 56, BorderRadius = 28 },
             "listbox" or "listview" or "treeview" or "checkedlistbox" or "richtextbox" or "textarea" or "circularprogress" => new Appearance
@@ -370,7 +380,7 @@ public sealed class DesignerEditingService(BuilderViewModel viewModel)
             control.LayoutSlot = parent.Children.Count + 1;
         if (layoutSlot is int slot && parent is Forma.Core.Controls.SplitContainer or Forma.Core.Controls.TableLayoutPanel)
             control.LayoutSlot = parent is Forma.Core.Controls.SplitContainer ? Math.Clamp(slot, 1, 2) : Math.Clamp(slot, 1, 1200);
-        if (parent is Forma.Core.Controls.FlowLayoutPanel && index is int insertionIndex)
+        if (parent is Forma.Core.Controls.LinearLayout && index is int insertionIndex)
             parent.Insert(Math.Clamp(insertionIndex, 0, parent.Children.Count), control);
         else parent.Add(control);
         if (control is not Forma.Core.Controls.INonvisualControl)
@@ -382,6 +392,7 @@ public sealed class DesignerEditingService(BuilderViewModel viewModel)
     private (int Width, int Height) AvailableBounds(FControl parent)
     {
         var a = _viewModel.Appearance[parent.Id];
+        if (parent is Forma.Core.Controls.ScrollablePanel) return (1600, 1600);
         if (parent == _viewModel.Form)
             return (a.Width, a.Height);
         var header =
@@ -571,6 +582,7 @@ public sealed class DesignerEditingService(BuilderViewModel viewModel)
             if (property == "stars" && number is int stars) rating.Stars = stars;
             if (property == "readOnly") rating.ReadOnly = Boolean(payload, "value", rating.ReadOnly);
         }
+        if (control is Forma.Core.Controls.ScrollablePanel scroll && property == "scrollDirection" && text is not null) scroll.ScrollDirection = text;
         if (control is Forma.Core.Controls.RichTextBox rich) {
             if (property == "text" && text is not null) rich.SetPlainText(text);
             if (property == "document" && text is not null) rich.Document = JsonSerializer.Deserialize<Forma.Core.Controls.RichBlock[]>(text, new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? [];

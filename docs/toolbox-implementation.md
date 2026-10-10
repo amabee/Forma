@@ -272,6 +272,14 @@ Typed editors, grouping, binding and virtualization remain future enhancements.
 
 ## Modern UI batch
 
+The next layout/navigation batches add StackPanel, HStack, VStack, WrapPanel,
+CenterPanel, ScrollablePanel, Breadcrumb and SideNavigation. Linear containers
+support managed child ordering and grouping; ScrollablePanel retains free
+positioning and configurable scroll direction. Navigation selections are exposed
+to scripts through selectedIndex and navigate callbacks. All eight support
+properties, persistence and design history. Toolbox drag acceptance now follows
+the displayed catalog, with a regression check for every entry.
+
 Card is a free-position container with Title, Description and Show header. Drop
 children into its content area; moving the Card moves the entire group. Badge
 supports neutral/info/success/warning/danger variants. Avatar uses the existing

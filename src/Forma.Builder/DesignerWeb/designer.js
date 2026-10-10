@@ -72,7 +72,10 @@ const containerKinds = new Set([
   "flowlayoutpanel",
   "tablelayoutpanel",
 ]);
-const managedKinds = new Set(["flowlayoutpanel", "tablelayoutpanel"]);
+const linearKinds = new Set(["flowlayoutpanel", "stackpanel", "hstack", "vstack", "wrappanel", "centerpanel"]);
+const managedKinds = new Set([...linearKinds, "tablelayoutpanel"]);
+for (const kind of [...linearKinds, "scrollablepanel"]) containerKinds.add(kind);
+document.querySelectorAll("[data-kind]").forEach(tool => supportedKinds.add(tool.dataset.kind));
 const byId = (id) => document.getElementById(id);
 const send = (event, id, payload = {}) =>
   window.forma.send({ type: "designer", id, event, payload });
@@ -633,7 +636,7 @@ window.formaDesigner = {
       }
       // Hidden and disabled controls stay selectable in design mode.
       if (
-        ["radiogroup", "checkboxgroup", "segmentedcontrol", "rating", "chipgroup", "buttongroup"].includes(
+        ["radiogroup", "checkboxgroup", "segmentedcontrol", "rating", "chipgroup", "buttongroup", "breadcrumb", "sidenavigation"].includes(
           item.kind,
         )
       ) {
@@ -1133,7 +1136,7 @@ document.addEventListener("drop", (event) => {
       ...(host.dataset.layoutSlot
         ? { layoutSlot: Number(host.dataset.layoutSlot) }
         : {}),
-      ...(parent.dataset.formaType === "flowlayoutpanel"
+      ...(linearKinds.has(parent.dataset.formaType)
         ? {
             index: flowInsertion(parent, null, event.clientX, event.clientY)
               .index,
@@ -1308,7 +1311,7 @@ document.addEventListener("pointermove", (event) => {
           ? { layoutSlot: Number(parent.dataset.layoutSlot) }
           : {}),
       };
-      if (target.dataset.formaType === "flowlayoutpanel") {
+      if (linearKinds.has(target.dataset.formaType)) {
         const insertion = flowInsertion(
           target,
           drag.id,

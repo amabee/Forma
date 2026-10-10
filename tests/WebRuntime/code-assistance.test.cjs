@@ -87,3 +87,11 @@ test('command buttons offer menu and primary properties in scripting assistance'
   assert.ok(propertiesFor('commandbutton', 'set').includes('description'));
   assert.deepEqual(await diagnose('javascript', 'forma.set("actions", "commandItems", []); forma.bind("split", "primaryEnabled");', [{ name: 'actions', kind: 'dropdownbutton' }, { name: 'split', kind: 'splitbutton' }]), []);
 });
+test('navigation and layout properties are offered to scripts', async () => {
+  const { propertiesFor, diagnose } = await load();
+  assert.ok(propertiesFor('breadcrumb', 'get').includes('selectedIndex'));
+  assert.ok(propertiesFor('sidenavigation', 'set').includes('items'));
+  assert.ok(propertiesFor('stackpanel', 'set').includes('gap'));
+  assert.ok(propertiesFor('scrollablepanel', 'set').includes('scrollDirection'));
+  assert.deepEqual(await diagnose('javascript', 'forma.set("stack", "orientation", "vertical"); forma.bind("nav", "selectedIndex");', [{ name: 'stack', kind: 'stackpanel' }, { name: 'nav', kind: 'sidenavigation' }]), []);
+});

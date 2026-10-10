@@ -244,12 +244,15 @@
       get(name, property) {
         const item = target(currentState, name),
           el = document.getElementById(item.id);
-        if (property === "items" && ["combobox", "listbox", "listview", "checkedlistbox", "radiogroup", "checkboxgroup", "segmentedcontrol", "chipgroup", "buttongroup"].includes(item.kind)) return [...(item.items ?? [])];
+        if (property === "items" && ["combobox", "listbox", "listview", "checkedlistbox", "radiogroup", "checkboxgroup", "segmentedcontrol", "chipgroup", "buttongroup", "breadcrumb", "sidenavigation"].includes(item.kind)) return [...(item.items ?? [])];
         if (property === "checkedIndices" && item.kind === "chipgroup") return [...el.querySelectorAll('[aria-checked="true"]')].map(button => Number(button.dataset.itemIndex));
         if (item.kind === "chip" && property === "checked") return el.querySelector(".chip-toggle").getAttribute("aria-pressed") === "true";
         if (item.kind === "chip" && ["variant", "removable", "isRemoved"].includes(property)) return property === "isRemoved" ? !!el._modernProperties.isRemoved : item[property];
         if (["iconbutton", "floatingactionbutton"].includes(item.kind) && ["iconName", "showText"].includes(property)) return item[property];
         if (property === "commandItems" && ["menustrip", "toolbar", "toolstrip", "contextmenu", "contextmenustrip", "dropdownbutton", "splitbutton"].includes(item.kind)) return JSON.parse(JSON.stringify(item.commandItems ?? []));
+        if (property === "orientation" && ["stackpanel", "hstack", "vstack", "wrappanel", "centerpanel", "flowlayoutpanel", "tablelayoutpanel", "tabcontrol", "splitcontainer", "scrollablepanel", "sidenavigation", "radiogroup", "segmentedcontrol", "buttongroup"].includes(item.kind)) return item.orientation;
+        if (property === "gap" && ["stackpanel", "hstack", "vstack", "wrappanel", "centerpanel", "flowlayoutpanel", "tablelayoutpanel", "tabcontrol", "splitcontainer", "scrollablepanel"].includes(item.kind)) return item.gap;
+        if (item.kind === "scrollablepanel" && property === "scrollDirection") return item.scrollDirection;
         if (item.kind === "splitbutton" && property === "primaryEnabled") return item.primaryEnabled;
         if (item.kind === "commandbutton" && ["description", "iconName", "showText"].includes(property)) return item[property];
         if (property === "checkedIndices" && ["checkboxgroup", "checkedlistbox"].includes(item.kind)) return [...el.querySelectorAll("input:checked")].map(input => Number(input.dataset.itemIndex));

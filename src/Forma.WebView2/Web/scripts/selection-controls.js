@@ -1,5 +1,5 @@
 (() => {
-  const kinds = new Set(["radiogroup", "checkboxgroup", "segmentedcontrol", "rating", "chipgroup", "buttongroup"]);
+  const kinds = new Set(["radiogroup", "checkboxgroup", "segmentedcontrol", "rating", "chipgroup", "buttongroup", "breadcrumb", "sidenavigation"]);
   const enabled = el => window.formaDesigner?.preview !== false && el.dataset.disabled !== "true" && !el._selectionProperties.readOnly;
   function notify(el, event, payload, change = true) {
     window.forma.send({ type: "event", id: el.id, event, payload });
@@ -19,6 +19,7 @@
       if (el._selectionProperties.selectedIndex === index) return;
       el._selectionProperties.selectedIndex = index;
       update(el, {}); notify(el, "selection", { selectedIndex: index }, change);
+      if (["breadcrumb", "sidenavigation"].includes(el.dataset.formaType)) el.dispatchEvent(new CustomEvent("navigate", { detail: { index, text: el._selectionProperties.items[index] } }));
     }
   }
   function update(el, next) {
@@ -28,9 +29,10 @@
     const rating = kind === "rating", multi = ["checkboxgroup", "chipgroup"].includes(kind), radio = kind === "radiogroup";
     const items = rating ? Array.from({ length: Math.max(1, Math.min(10, p.stars ?? 5)) }, (_, i) => `${i + 1} stars`) : p.items ?? [];
     el.dataset.orientation = p.orientation ?? "horizontal";
-    el.setAttribute("role", multi ? "group" : "radiogroup");
-    if (!multi) el.setAttribute("aria-orientation", el.dataset.orientation);
-    el.setAttribute("aria-label", p.text || ({ radiogroup: "Options", checkboxgroup: "Choices", segmentedcontrol: "Segments", rating: "Rating", chipgroup: "Tags", buttongroup: "Button choices" })[kind]);
+    const navigation = ["breadcrumb", "sidenavigation"].includes(kind);
+    el.setAttribute("role", navigation ? "navigation" : multi ? "group" : "radiogroup");
+    if (!multi && !navigation) el.setAttribute("aria-orientation", el.dataset.orientation);
+    el.setAttribute("aria-label", p.text || ({ radiogroup: "Options", checkboxgroup: "Choices", segmentedcontrol: "Segments", rating: "Rating", chipgroup: "Tags", buttongroup: "Button choices", breadcrumb: "Breadcrumb", sidenavigation: "Side navigation" })[kind]);
     const schema = JSON.stringify(items);
     if (el.dataset.selectionSchema !== schema) {
       el.dataset.selectionSchema = schema;
@@ -50,7 +52,7 @@
         }
         const button = document.createElement("button"); button.type = "button";
         button.dataset.itemIndex = index;
-        button.textContent = rating ? "★" : text; button.setAttribute("role", multi ? "checkbox" : "radio"); button.setAttribute("aria-label", text);
+        button.textContent = rating ? "★" : text; if (!navigation) button.setAttribute("role", multi ? "checkbox" : "radio"); button.setAttribute("aria-label", text);
         button.addEventListener("click", () => choose(el, index));
         button.addEventListener("keydown", event => {
           if (!enabled(el)) return;
@@ -76,8 +78,10 @@
       if (input) { input.checked = multi ? (p.checkedIndices ?? []).includes(index) : index === selected; input.disabled = disabled; }
       else {
         const checked = multi ? (p.checkedIndices ?? []).includes(index) : index === selected;
-        child.disabled = disabled; child.setAttribute("aria-checked", String(checked));
-        child.tabIndex = index === (selected >= 0 ? Math.floor(selected) : 0) ? 0 : -1;
+        child.disabled = disabled;
+        if (navigation) { if (checked) child.setAttribute("aria-current", "page"); else child.removeAttribute("aria-current"); }
+        else child.setAttribute("aria-checked", String(checked));
+        child.tabIndex = kind === "breadcrumb" || index === (selected >= 0 ? Math.floor(selected) : 0) ? 0 : -1;
         child.classList.toggle("selected", checked);
         if (rating) child.classList.toggle("filled", index < (p.number ?? 0));
       }

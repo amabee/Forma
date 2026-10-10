@@ -10,15 +10,15 @@ export const eventNames = [
   "KeyDown", "KeyUp", "KeyPress", "Input", "Change", "BeforeInput", "Focus", "Blur", "FocusIn", "FocusOut",
   "Load", "Ready", "Created", "Mounted", "Updated", "Destroyed", "Resize", "Move", "Layout",
   "DragStart", "Drag", "DragEnd", "DragEnter", "DragOver", "DragLeave", "Drop", "Copy", "Cut", "Paste",
-  "Validating", "Validated", "Submit", "Reset", "tick", "row-selection", "chip-remove", "command-item", "primary-click"
+  "Validating", "Validated", "Submit", "Reset", "tick", "row-selection", "chip-remove", "command-item", "primary-click", "navigate"
 ];
 export function propertiesFor(kind, method) {
   const keys = [...common];
   if (images.includes(kind)) keys.push("source");
   if (["checkbox", "radiobutton", "toggleswitch", "togglebutton", "chip"].includes(kind)) keys.push("checked");
   if (numeric.includes(kind) || dates.includes(kind) || method === "get" && ["textbox", "searchbox", "passwordbox", "textarea", "maskedtextbox"].includes(kind)) keys.push("value");
-  if (["combobox", "listbox", "radiogroup", "segmentedcontrol", "buttongroup"].includes(kind) || method === "set" && kind === "listview") keys.push("selectedIndex");
-  if (["combobox", "listbox", "listview", "checkedlistbox", "radiogroup", "checkboxgroup", "segmentedcontrol", "chipgroup", "buttongroup"].includes(kind)) keys.push("items");
+  if (["combobox", "listbox", "radiogroup", "segmentedcontrol", "buttongroup", "breadcrumb", "sidenavigation"].includes(kind) || method === "set" && kind === "listview") keys.push("selectedIndex");
+  if (["combobox", "listbox", "listview", "checkedlistbox", "radiogroup", "checkboxgroup", "segmentedcontrol", "chipgroup", "buttongroup", "breadcrumb", "sidenavigation"].includes(kind)) keys.push("items");
   if (["checkedlistbox", "checkboxgroup", "chipgroup"].includes(kind)) keys.push("checkedIndices");
   if (kind === "rating") keys.push("readOnly");
   if (kind === "chip") keys.push("variant", "removable", "isRemoved");
@@ -26,6 +26,9 @@ export function propertiesFor(kind, method) {
   if (["menustrip", "toolbar", "toolstrip", "contextmenu", "contextmenustrip", "dropdownbutton", "splitbutton"].includes(kind)) keys.push("commandItems");
   if (kind === "splitbutton") keys.push("primaryEnabled");
   if (kind === "commandbutton") keys.push("description");
+  if (["stackpanel", "hstack", "vstack", "wrappanel", "centerpanel", "scrollablepanel", "flowlayoutpanel", "tablelayoutpanel", "tabcontrol", "splitcontainer"].includes(kind)) keys.push("orientation", "gap");
+  if (["sidenavigation", "radiogroup", "segmentedcontrol", "buttongroup"].includes(kind)) keys.push("orientation");
+  if (kind === "scrollablepanel") keys.push("scrollDirection");
   if (kind === "tabcontrol") keys.push("selectedTab");
   if (kind === "datagridview") keys.push("columns", "rows", "readOnly", "sortingEnabled", "filteringEnabled", "selectedRow", "filterText", "sortColumn", "sortDirection");
   if (kind === "toast") { keys.push("variant", "position", "duration", "dismissible"); if (method === "get") keys.push("isOpen"); }

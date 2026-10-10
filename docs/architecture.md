@@ -4,6 +4,12 @@ Forma uses a layered architecture with an incremental MVVM implementation in the
 
 ## Existing layers
 
+Linear layout containers share `LinearLayout : LayoutContainer` so the editing
+service and designer use the same child ordering rules. StackPanel/HStack/VStack,
+WrapPanel/FlowLayoutPanel, and CenterPanel keep children in managed flow; free
+positions are retained for ScrollablePanel. Navigation controls reuse ChoiceControl
+and the selection renderer, with application scripts handling navigation events.
+
 | Layer | Responsibility | Examples |
 | --- | --- | --- |
 | Core | Control state, validation, parent/child relationships, events, rendering contracts | `Control`, `NumericControl`, `IRenderer`, `IBridge` |

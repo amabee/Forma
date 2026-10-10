@@ -106,6 +106,7 @@ public sealed class WebView2Renderer : IRenderer
         if (control is IconButton iconButton) { properties["iconName"] = iconButton.IconName; properties["showText"] = iconButton.ShowText; }
         if (control is SplitButton splitButton) properties["primaryEnabled"] = splitButton.PrimaryEnabled;
         if (control is CommandButton commandButton) properties["description"] = commandButton.Description;
+        if (control is ScrollablePanel scroll) properties["scrollDirection"] = scroll.ScrollDirection;
         if (control is Chip chip) { properties["variant"] = chip.Variant; properties["removable"] = chip.Removable; properties["isRemoved"] = chip.IsRemoved; }
         if (control is Rating rating) { properties["stars"] = rating.Stars; properties["readOnly"] = rating.ReadOnly; }
         if (control is TreeView tree) { properties["nodes"] = tree.Nodes; properties["selectedNode"] = tree.SelectedNode; properties["expandedNodes"] = tree.ExpandedNodes; }

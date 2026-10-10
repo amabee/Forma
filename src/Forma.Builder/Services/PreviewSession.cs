@@ -66,6 +66,9 @@ public sealed class PreviewSession : IDisposable
             if (control is CommandButton commandButton) item["description"] = commandButton.Description;
             if (control is SplitButton split) item["primaryEnabled"] = split.PrimaryEnabled;
             if (control is CommandControl commands) item["commandItems"] = commands.Items;
+            if (control is LayoutContainer layout) { item["orientation"] = layout.Orientation; item["gap"] = layout.Gap; }
+            if (control is SelectionGroup group) item["orientation"] = group.Orientation;
+            if (control is ScrollablePanel scroll) item["scrollDirection"] = scroll.ScrollDirection;
             if (control is PathPicker picker) item["selectedPath"] = picker.SelectedPath;
             if (control is Spinner spinner) item["isActive"] = spinner.IsActive;
             if (control is LoadingOverlay overlay) item["isActive"] = overlay.IsActive;
@@ -89,6 +92,10 @@ public sealed class PreviewSession : IDisposable
             ?? throw new ArgumentException("The target control no longer exists.");
         switch (property)
         {
+            case "orientation" when control is LayoutContainer layout && value.ValueKind == JsonValueKind.String && value.GetString() is "horizontal" or "vertical": layout.Orientation = value.GetString()!; return;
+            case "orientation" when control is SelectionGroup group && value.ValueKind == JsonValueKind.String && value.GetString() is "horizontal" or "vertical": group.Orientation = value.GetString()!; return;
+            case "gap" when control is LayoutContainer layout && value.ValueKind == JsonValueKind.Number && value.TryGetInt32(out var gap): layout.Gap = gap; return;
+            case "scrollDirection" when control is ScrollablePanel scroll && value.ValueKind == JsonValueKind.String && value.GetString() is "both" or "horizontal" or "vertical": scroll.ScrollDirection = value.GetString()!; return;
             case "commandItems" when control is CommandControl commands:
                 if (value.ValueKind != JsonValueKind.Array) throw new ArgumentException("Commands must be an array.");
                 commands.Items = value.Deserialize<CommandItem[]>(new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? []; return;
