@@ -78,11 +78,13 @@
     return selectors;
   }
 
-  function scopedCss(id, source, popupOnly = false) {
+  function scopedCss(id, source, popupOnly = false, appearance = {}) {
     const scratch = document.createElement("style");
     scratch.media = "not all";
     scratch.textContent = source;
     document.head.appendChild(scratch);
+    const oldToastDefaults = appearance.kind === "toast" && source.includes("These are your current appearance defaults; edit them as needed.");
+    const color = value => { const probe = document.createElement("span"); probe.style.color = value ?? ""; return probe.style.color; };
     try {
       const compile = (rules) =>
         Array.from(rules)
@@ -109,6 +111,15 @@
                 { length: rule.style.length },
                 (_, index) => {
                   const name = rule.style[index];
+                  // Older generated toast templates copied blue button colors. Keep genuine custom overrides.
+                  if (oldToastDefaults && selectors.every(selector => selector === ":host")) {
+                    const value = rule.style.getPropertyValue(name);
+                    const expected = name === "color" ? appearance.foreColor : name === "background-color" ? appearance.backColor : null;
+                    if (expected && color(value) === color(expected)) return "";
+                    if (name === "border" && appearance.borderColor && color(rule.style.borderColor) === color(appearance.borderColor))
+                      return `border-width: ${rule.style.borderWidth} !important; border-style: ${rule.style.borderStyle} !important;`;
+                    if (name === "border-color" && appearance.borderColor && color(value) === color(appearance.borderColor)) return "";
+                  }
                   return `${name}: ${rule.style.getPropertyValue(name)} !important;`;
                 },
               ).join("\n");
@@ -233,6 +244,19 @@
       get(name, property) {
         const item = target(currentState, name),
           el = document.getElementById(item.id);
+        if (property === "items" && ["combobox", "listbox", "listview", "checkedlistbox", "radiogroup", "checkboxgroup", "segmentedcontrol", "chipgroup", "buttongroup"].includes(item.kind)) return [...(item.items ?? [])];
+        if (property === "checkedIndices" && item.kind === "chipgroup") return [...el.querySelectorAll('[aria-checked="true"]')].map(button => Number(button.dataset.itemIndex));
+        if (item.kind === "chip" && property === "checked") return el.querySelector(".chip-toggle").getAttribute("aria-pressed") === "true";
+        if (item.kind === "chip" && ["variant", "removable", "isRemoved"].includes(property)) return property === "isRemoved" ? !!el._modernProperties.isRemoved : item[property];
+        if (["iconbutton", "floatingactionbutton"].includes(item.kind) && ["iconName", "showText"].includes(property)) return item[property];
+        if (property === "commandItems" && ["menustrip", "toolbar", "toolstrip", "contextmenu", "contextmenustrip", "dropdownbutton", "splitbutton"].includes(item.kind)) return JSON.parse(JSON.stringify(item.commandItems ?? []));
+        if (item.kind === "splitbutton" && property === "primaryEnabled") return item.primaryEnabled;
+        if (item.kind === "commandbutton" && ["description", "iconName", "showText"].includes(property)) return item[property];
+        if (property === "checkedIndices" && ["checkboxgroup", "checkedlistbox"].includes(item.kind)) return [...el.querySelectorAll("input:checked")].map(input => Number(input.dataset.itemIndex));
+        if (property === "selectedIndex" && item.kind === "radiogroup") return Number(el.querySelector("input:checked")?.dataset.itemIndex ?? -1);
+        if (item.kind === "rating" && property === "value") return Number(el.dataset.rating ?? 0);
+        if (item.kind === "rating" && property === "readOnly") return item.readOnly;
+        if (item.kind === "toast" && ["variant", "position", "duration", "dismissible", "isOpen"].includes(property)) return item[property];
         if (item.kind === "datagridview") {
           if (property === "columns") return [...(item.columns ?? [])];
           if (property === "rows")
@@ -294,6 +318,7 @@
       },
       set(name, property, value) {
         const destination = target(currentState, name);
+        if (property === "commandItems" && !Array.isArray(value)) throw new Error("Commands must be an array.");
         if (destination.kind === "datagridview") {
           if (property === "columns") value = cells(value);
           if (property === "rows") {
@@ -309,12 +334,23 @@
           payload: { sourceId: item.id, property, value },
         });
       },
-      showToast(name) {
+      showToast(name, options = {}) {
+        const destination = target(currentState, name);
+        if (destination.kind !== "toast") throw new Error("The target must be a Toast.");
+        if (!options || Array.isArray(options) || typeof options !== "object") throw new Error("Toast options must be an object.");
+        for (const [property, value] of Object.entries(options)) {
+          const valid = property === "text" ? typeof value === "string" && value.length <= 32767
+            : property === "variant" ? ["neutral", "info", "success", "warning", "caution", "error", "danger"].includes(value)
+            : property === "position" ? ["top-right", "top-left", "bottom-right", "bottom-left"].includes(value)
+            : property === "duration" ? Number.isInteger(value)
+            : property === "dismissible" ? typeof value === "boolean" : false;
+          if (!valid) throw new Error(`Invalid toast option '${property}'.`);
+        }
         window.forma.send({
           type: "custom",
-          id: target(currentState, name).id,
+          id: destination.id,
           event: "show-toast",
-          payload: { sourceId: item.id },
+          payload: { sourceId: item.id, options },
         });
       },
       closeToast(name) {
@@ -479,7 +515,7 @@
                 "timer",
                 "backgroundworker",
               ].includes(item.kind);
-            const compiled = scopedCss(item.id, css, nonvisual);
+            const compiled = scopedCss(item.id, css, nonvisual, item);
             const element =
               styles.get(item.id)?.element ?? document.createElement("style");
             element.textContent = compiled;
@@ -551,10 +587,10 @@
       // All components and their handlers exist before startup callbacks run.
       for (const dispatch of pending) dispatch();
     },
-    event(id, event) {
+    event(id, event, detail = {}) {
       document
         .getElementById(id)
-        ?.dispatchEvent(new CustomEvent(eventName(event)));
+        ?.dispatchEvent(new CustomEvent(eventName(event), { detail }));
     },
     clear() {
       for (const id of behaviors.keys()) cleanupBehavior(id);

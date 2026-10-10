@@ -380,6 +380,52 @@ separate future features. Runtime changes do not edit the source design.
 
 ## Toast and loading indicators
 
+Toast variants are `neutral`, `info`, `success`, `warning`, `caution`, `error`,
+and `danger` (the existing red danger style remains supported). Select a Variant
+in the inspector for a default, or choose it dynamically when showing a toast:
+
+```javascript
+forma.showToast("savedToast", {
+  text: "Employee added successfully!",
+  variant: "success",
+  duration: 3000,
+  position: "top-right",
+  dismissible: true
+});
+
+forma.showToast("savedToast", {
+  text: "Please enter a valid age.",
+  variant: "warning"
+});
+```
+
+Success has a solid green background, info blue, warning amber, caution orange,
+and error/danger red, all with white text. Neutral uses the standard surface. Warning, caution, error, and
+danger popups use the accessible alert role. Explicit custom CSS colors override
+the variant styling. New toast starter CSS leaves palette colors to the Variant.
+In older generated templates, unchanged generic color defaults matching the
+inspector appearance are ignored for Toast, so a copied blue background does not
+mask error/success styles. Typography and spacing still apply. To deliberately
+override a variant, use `:host[data-variant="error"] { background-color: ...; }`.
+`showToast(name)` still uses the component's current settings.
+Options persist in the Preview instance; omitted options retain their current
+values. Unknown options and invalid values are rejected before any changes apply.
+Duration is clamped to 500–60000 milliseconds, matching the inspector.
+
+Use `forma.get`/`forma.set` with `variant`, `position`, `duration`, and `dismissible`
+for separate updates; `isOpen` is readable. Preview changes do not modify the
+saved design. The message's `text` can come from a binding or fetched data:
+
+```javascript
+const name = forma.bind("firstName", "value");
+forma.on("Click", () => {
+  forma.showToast("savedToast", {
+    text: `Welcome, ${name.value}!`,
+    variant: "success"
+  });
+});
+```
+
 Give a Toast the Name `savedToast` and a LoadingOverlay the Name `busyOverlay`.
 Choose the overlay's Target (blank covers its parent). In a Button's Custom
 Properties behavior, this example starts a visual loading state and ends it with

@@ -3,23 +3,32 @@ import { formatCode } from "./code-format.mjs";
 
 const common = ["text", "enabled", "visible"];
 const images = ["image", "picturebox", "avatar"];
-const numeric = ["numericupdown", "slider", "progressbar", "circularprogress"];
+const numeric = ["numericupdown", "slider", "progressbar", "circularprogress", "rating"];
 const dates = ["datepicker", "timepicker", "datetimepicker", "colorpicker"];
 export const eventNames = [
   "Click", "DoubleClick", "MouseDown", "MouseUp", "MouseMove", "MouseEnter", "MouseLeave", "MouseOver", "MouseOut", "MouseWheel",
   "KeyDown", "KeyUp", "KeyPress", "Input", "Change", "BeforeInput", "Focus", "Blur", "FocusIn", "FocusOut",
   "Load", "Ready", "Created", "Mounted", "Updated", "Destroyed", "Resize", "Move", "Layout",
   "DragStart", "Drag", "DragEnd", "DragEnter", "DragOver", "DragLeave", "Drop", "Copy", "Cut", "Paste",
-  "Validating", "Validated", "Submit", "Reset", "tick", "row-selection"
+  "Validating", "Validated", "Submit", "Reset", "tick", "row-selection", "chip-remove", "command-item", "primary-click"
 ];
 export function propertiesFor(kind, method) {
   const keys = [...common];
   if (images.includes(kind)) keys.push("source");
-  if (["checkbox", "radiobutton", "toggleswitch", "togglebutton"].includes(kind)) keys.push("checked");
+  if (["checkbox", "radiobutton", "toggleswitch", "togglebutton", "chip"].includes(kind)) keys.push("checked");
   if (numeric.includes(kind) || dates.includes(kind) || method === "get" && ["textbox", "searchbox", "passwordbox", "textarea", "maskedtextbox"].includes(kind)) keys.push("value");
-  if (["combobox", "listbox"].includes(kind) || method === "set" && kind === "listview") keys.push("selectedIndex");
+  if (["combobox", "listbox", "radiogroup", "segmentedcontrol", "buttongroup"].includes(kind) || method === "set" && kind === "listview") keys.push("selectedIndex");
+  if (["combobox", "listbox", "listview", "checkedlistbox", "radiogroup", "checkboxgroup", "segmentedcontrol", "chipgroup", "buttongroup"].includes(kind)) keys.push("items");
+  if (["checkedlistbox", "checkboxgroup", "chipgroup"].includes(kind)) keys.push("checkedIndices");
+  if (kind === "rating") keys.push("readOnly");
+  if (kind === "chip") keys.push("variant", "removable", "isRemoved");
+  if (["iconbutton", "floatingactionbutton", "commandbutton"].includes(kind)) keys.push("iconName", "showText");
+  if (["menustrip", "toolbar", "toolstrip", "contextmenu", "contextmenustrip", "dropdownbutton", "splitbutton"].includes(kind)) keys.push("commandItems");
+  if (kind === "splitbutton") keys.push("primaryEnabled");
+  if (kind === "commandbutton") keys.push("description");
   if (kind === "tabcontrol") keys.push("selectedTab");
   if (kind === "datagridview") keys.push("columns", "rows", "readOnly", "sortingEnabled", "filteringEnabled", "selectedRow", "filterText", "sortColumn", "sortDirection");
+  if (kind === "toast") { keys.push("variant", "position", "duration", "dismissible"); if (method === "get") keys.push("isOpen"); }
   if (["spinner", "loadingoverlay"].includes(kind)) keys.push("isActive");
   if (method === "get" && ["filepicker", "folderpicker"].includes(kind)) keys.push("selectedPath");
   return keys;
@@ -33,7 +42,7 @@ const methods = {
   validate: "validate() — run cancellable validation and check HTML input constraints",
   submit: "submit() — validate and raise Submit; returns whether it was accepted",
   reset: "reset() — raise cancellable Reset for your reset handler",
-  showToast: "showToast(name)", closeToast: "closeToast(name)", showDialog: "showDialog(name)",
+  showToast: "showToast(name, { text, variant, position, duration, dismissible })", closeToast: "closeToast(name)", showDialog: "showDialog(name)",
   addRow: "addRow(gridName, stringCells) — append a row",
   updateRow: "updateRow(gridName, rowIndex, stringCells) — replace a source row",
   removeRow: "removeRow(gridName, rowIndex) — remove a source row",
@@ -50,6 +59,9 @@ const gridMethods = ["addRow", "updateRow", "removeRow", "clearRows", "setCell"]
 export function formaCompletions(context, controls = [], customValues = {}) {
   const prefix = context.state.doc.sliceString(0, context.pos);
   const result = (from, options) => ({ from, options, validFor: /^[\w$-]*$/ });
+  const variant = /(?:forma|api)\.set\(\s*["'][^"']+["']\s*,\s*["']variant["']\s*,\s*["']([^"']*)$/.exec(prefix)
+    ?? /(?:forma|api)\.showToast\(\s*["'][^"']+["']\s*,\s*\{[^}]*?\bvariant\s*:\s*["']([^"']*)$/.exec(prefix);
+  if (variant) return result(context.pos - variant[1].length, ["neutral", "info", "success", "warning", "caution", "error", "danger"].map(label => ({ label, type: "text" })));
   const call = /(?:forma|api)\.(get|set|bind|find|showToast|closeToast|showDialog|addRow|updateRow|removeRow|clearRows|setCell)\(\s*(["'])([^"']*)$/.exec(prefix);
   if (call) {
     const kind = gridMethods.includes(call[1]) ? "datagridview" : call[1].includes("Toast") ? "toast" : call[1] === "showDialog" ? "dialog" : null;

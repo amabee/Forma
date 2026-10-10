@@ -321,11 +321,131 @@ test('toggle buttons carry checked state and circular progress exposes its value
   assert.equal(document.getElementById('circle').textContent, '25%');
   assert.equal(document.getElementById('circle').getAttribute('aria-valuenow'), '50');
 });
+test('selection groups and rating support input, keyboard navigation and focused update reuse', () => {
+  const { window, document, create, messages } = fixture(); window.formaDesigner.preview = true;
+  create('radio', 'radiogroup', 'root', { items: ['A', '<b>B</b>'], selectedIndex: 0, orientation: 'vertical' });
+  const radio = document.getElementById('radio'); assert.equal(radio.dataset.orientation, 'vertical'); assert.equal(radio.querySelector('b'), null);
+  let changes = 0; radio.addEventListener('change', () => changes++);
+  radio.querySelectorAll('input')[1].click(); assert.equal(messages.filter(m => m.event === 'selection').at(-1).payload.selectedIndex, 1); assert.equal(changes, 1);
+  create('checks', 'checkboxgroup', 'root', { items: ['A', 'B'], checkedIndices: [] });
+  const checks = document.getElementById('checks'); checks.querySelectorAll('input')[1].click();
+  assert.equal(messages.filter(m => m.event === 'item-check').at(-1).payload.index, 1);
+  create('segments', 'segmentedcontrol', 'root', { items: ['One', 'Two', 'Three'], selectedIndex: 0 });
+  const segments = document.getElementById('segments'); const first = segments.firstElementChild;
+  first.dispatchEvent(new window.KeyboardEvent('keydown', { key: 'End', bubbles: true }));
+  assert.equal(segments.selectedIndex, 2); assert.equal(document.activeElement, segments.lastElementChild);
+  window.forma.update({ id: 'segments', properties: { selectedIndex: 1 } });
+  assert.equal(segments.firstElementChild, first); assert.equal(segments.children[1].getAttribute('aria-checked'), 'true');
+  create('rating', 'rating', 'root', { stars: 5, number: 2 }); const rating = document.getElementById('rating');
+  assert.equal(rating.querySelectorAll('.filled').length, 2); rating.children[3].click(); assert.equal(rating.dataset.rating, '4');
+  assert.equal(messages.filter(m => m.event === 'value').at(-1).payload.value, 4);
+  rating.children[3].dispatchEvent(new window.KeyboardEvent('keydown', { key: 'Delete', bubbles: true })); assert.equal(rating.dataset.rating, '0');
+  window.forma.update({ id: 'rating', properties: { readOnly: true, number: 3 } });
+  const count = messages.length; rating.children[0].click(); assert.equal(messages.length, count); assert.equal(rating.dataset.rating, '3');
+  window.formaDesigner.preview = false; segments.children[0].click(); assert.equal(segments.selectedIndex, 1);
+  window.close();
+});
+test('new selection controls expose their values to bindings and ignore disabled interactions', () => {
+  const { window, document, create, messages } = fixture();
+  for (const [id, kind] of [['radio', 'radiogroup'], ['checks', 'checkboxgroup'], ['rating', 'rating']]) create(id, kind, 'root', { items: ['A', 'B'], selectedIndex: 0, number: 1, stars: 5 });
+  create('button', 'button', 'root'); window.formaDesigner.preview = true;
+  window.formaCustomization.apply({ controls: [
+    { id: 'button', kind: 'button', name: 'button1', enabled: true, visible: true, customization: { behavior: 'window.groupApi = forma; const selected = forma.bind("radio", "selectedIndex"); selected.subscribe(value => forma.set("button1", "text", String(value)));' } },
+    { id: 'radio', kind: 'radiogroup', name: 'radio', items: ['A', 'B'] },
+    { id: 'checks', kind: 'checkboxgroup', name: 'checks', items: ['A', 'B'] },
+    { id: 'rating', kind: 'rating', name: 'rating', readOnly: false }
+  ] }, true);
+  document.getElementById('radio').querySelectorAll('input')[1].click();
+  assert.equal(window.groupApi.get('radio', 'selectedIndex'), 1); assert.ok(messages.some(m => m.payload?.property === 'text' && m.payload.value === '1'));
+  document.getElementById('checks').querySelectorAll('input')[1].click(); assert.deepEqual(Array.from(window.groupApi.get('checks', 'checkedIndices')), [1]);
+  assert.equal(window.groupApi.get('rating', 'value'), 1);
+  const items = window.groupApi.get('radio', 'items'); items[0] = 'Changed'; assert.equal(window.groupApi.get('radio', 'items')[0], 'A');
+  const radio = document.getElementById('radio'); radio.dataset.disabled = 'true'; window.formaSelections.refresh(radio);
+  const count = messages.length; radio.querySelector('input').click(); assert.equal(messages.length, count);
+  window.close();
+});
+test('chips select and remove without nested button clicks, and group selection preserves keyboard focus', () => {
+  const { window, document, create, messages } = fixture(); window.formaDesigner.preview = true;
+  create('chip', 'chip', 'root', { text: '<b>Tag</b>', checked: false, removable: true, variant: 'success' });
+  const chip = document.getElementById('chip'); const toggle = chip.querySelector('.chip-toggle');
+  assert.equal(chip.querySelector('b'), null); toggle.click(); assert.equal(toggle.getAttribute('aria-pressed'), 'true');
+  assert.equal(messages.at(-1).event, 'checked'); const count = messages.filter(m => m.event === 'checked').length;
+  chip.querySelector('.chip-remove').click(); assert.equal(messages.at(-1).event, 'chip-remove'); assert.ok(chip.hidden);
+  assert.equal(messages.filter(m => m.event === 'checked').length, count);
+  window.forma.update({ id: 'chip', properties: { isRemoved: false, removable: false } }); assert.equal(chip.hidden, false); assert.ok(chip.querySelector('.chip-remove').hidden);
+  create('chips', 'chipgroup', 'root', { items: ['A', 'B', 'C'], checkedIndices: [0] }); const chips = document.getElementById('chips');
+  chips.children[1].click(); assert.equal(chips.children[1].getAttribute('aria-checked'), 'true'); assert.equal(chips.children[0].getAttribute('aria-checked'), 'true');
+  chips.children[1].dispatchEvent(new window.KeyboardEvent('keydown', { key: 'End', bubbles: true }));
+  assert.equal(document.activeElement, chips.children[2]); assert.equal(chips.children[2].getAttribute('aria-checked'), 'false');
+  create('buttons', 'buttongroup', 'root', { items: ['A', 'B'], selectedIndex: 0 }); const buttons = document.getElementById('buttons');
+  buttons.children[1].click(); assert.equal(buttons.selectedIndex, 1);
+  const first = buttons.children[0]; window.forma.update({ id: 'buttons', properties: { selectedIndex: 0 } }); assert.equal(buttons.children[0], first);
+  window.close();
+});
+test('icon action buttons render bundled SVGs and expose accessible text and chip values to scripting', () => {
+  const { window, document, create, messages } = fixture(); window.formaDesigner.preview = true;
+  create('action', 'iconbutton', 'root', { text: 'Find', iconName: 'search', showText: false });
+  create('fab', 'floatingactionbutton', 'root', { text: 'Add', iconName: 'file-plus', showText: true });
+  const action = document.getElementById('action'); assert.ok(action.querySelector('svg path')); assert.equal(action.getAttribute('aria-label'), 'Find');
+  assert.equal(action.dataset.showText, 'false'); action.click(); assert.equal(messages.at(-1).event, 'click');
+  window.forma.update({ id: 'action', properties: { text: 'Settings', iconName: 'settings', showText: true } }); assert.equal(action.getAttribute('aria-label'), 'Settings'); assert.equal(action.dataset.showText, 'true');
+  create('chip', 'chip', 'root', { checked: false, removable: true }); create('chips', 'chipgroup', 'root', { items: ['A', 'B'], checkedIndices: [1] });
+  window.formaCustomization.apply({ controls: [
+    { id: 'action', kind: 'iconbutton', name: 'action', iconName: 'settings', showText: true, enabled: true, visible: true, customization: { behavior: 'window.chipApi = forma; const tags = forma.bind("chips", "checkedIndices"); tags.subscribe(value => forma.set("action", "text", value.join(",")));' } },
+    { id: 'chip', kind: 'chip', name: 'chip', removable: true, variant: 'neutral' },
+    { id: 'chips', kind: 'chipgroup', name: 'chips', items: ['A', 'B'] }
+  ] }, true);
+  assert.equal(window.chipApi.get('action', 'showText'), true);
+  document.getElementById('chip').querySelector('.chip-toggle').click(); assert.equal(window.chipApi.get('chip', 'checked'), true);
+  document.getElementById('chips').children[0].click(); assert.deepEqual(Array.from(window.chipApi.get('chips', 'checkedIndices')), [0, 1]);
+  assert.ok(messages.some(m => m.payload?.property === 'text' && m.payload.value === '0,1'));
+  action.disabled = true; const count = messages.length; action.click(); assert.equal(messages.length, count);
+  window.close();
+});
+test('split and dropdown buttons preserve commands across updates and separate primary/menu activation', () => {
+  const { window, document, create, messages } = fixture(); window.formaDesigner.preview = true;
+  const commands = [{ id: 'save', text: 'Save' }, { id: 'disabled', text: 'Disabled', enabled: false }, { id: 'open', text: 'Open' }];
+  create('split', 'splitbutton', 'root', { text: 'Run', primaryEnabled: true, commandItems: commands });
+  const split = document.getElementById('split'); let primary = 0; split.addEventListener('primary-click', () => primary++);
+  split.querySelector('.split-primary').click(); assert.equal(messages.at(-1).event, 'primary-click'); assert.equal(primary, 1);
+  const trigger = split.querySelector('summary'); trigger.dispatchEvent(new window.KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
+  assert.ok(split.querySelector('details').open); assert.equal(document.activeElement.dataset.commandItem, 'save');
+  document.activeElement.dispatchEvent(new window.KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true })); assert.equal(document.activeElement.dataset.commandItem, 'open');
+  document.activeElement.click(); assert.equal(messages.at(-1).event, 'command-item'); assert.equal(messages.at(-1).payload.itemId, 'open'); assert.equal(primary, 1);
+  assert.equal(split.querySelector('details').open, false);
+  window.forma.update({ id: 'split', properties: { text: 'Execute', primaryEnabled: false } });
+  assert.equal(split.querySelectorAll('[data-command-item]').length, 3); assert.ok(split.querySelector('.split-primary').disabled);
+  split.querySelector('summary').dispatchEvent(new window.KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true })); assert.ok(split.querySelector('details').open);
+  document.body.dispatchEvent(new window.Event('pointerdown', { bubbles: true })); assert.equal(split.querySelector('details').open, false);
+  create('drop', 'dropdownbutton', 'root', { text: '<b>Actions</b>', commandItems: commands }); const dropdown = document.getElementById('drop');
+  assert.equal(dropdown.querySelector('b'), null); assert.equal(dropdown.querySelector('.split-primary'), null);
+  window.formaDesigner.preview = false; const click = new window.MouseEvent('click', { bubbles: true, cancelable: true });
+  assert.equal(dropdown.querySelector('summary').dispatchEvent(click), false);
+  window.close();
+});
+test('command button renders description and scripts receive confirmed command details', () => {
+  const { window, document, create, messages } = fixture(); window.formaDesigner.preview = true;
+  create('action', 'commandbutton', 'root', { text: 'Save', description: '<b>Current document</b>', iconName: 'file-plus', showText: true });
+  const action = document.getElementById('action'); assert.ok(action.querySelector('svg')); assert.equal(action.querySelector('b'), null);
+  assert.equal(action.querySelector('.command-button-description').textContent, '<b>Current document</b>');
+  action.click(); assert.equal(messages.at(-1).event, 'click');
+  create('drop', 'dropdownbutton', 'root', { text: 'Actions', commandItems: [{ id: 'save', text: 'Save' }] });
+  window.formaCustomization.apply({ controls: [
+    { id: 'drop', kind: 'dropdownbutton', name: 'actions', enabled: true, visible: true, commandItems: [{ id: 'save', text: 'Save', checked: true }],
+      customization: { behavior: 'window.menuApi = forma; forma.on("command-item", event => forma.set("action", "text", `${event.detail.itemId}:${event.detail.checked}`));' } },
+    { id: 'action', kind: 'commandbutton', name: 'action', iconName: 'file-plus', showText: true, description: 'Current document' }
+  ] }, true);
+  window.formaDesigner.receive({ action: 'component-event', id: 'drop', event: 'command-item', detail: { itemId: 'save', text: 'Save', checked: true } });
+  assert.equal(messages.at(-1).payload.value, 'save:true');
+  const copy = window.menuApi.get('actions', 'commandItems'); copy[0].text = 'Changed'; assert.equal(window.menuApi.get('actions', 'commandItems')[0].text, 'Save');
+  assert.equal(window.menuApi.get('action', 'description'), 'Current document');
+  window.close();
+});
 function fixture(page = 'index.html') {
   const dom = new JSDOM(fs.readFileSync(path.join(base, 'src/Forma.Builder/DesignerWeb', page), 'utf8'), { runScripts: 'outside-only' });
   const messages = []; const window = dom.window;
   window.chrome = { webview: { postMessage: m => messages.push(m), addEventListener() {} } };
-  for (const file of ['src/Forma.WebView2/Web/scripts/data-grid.js', 'src/Forma.WebView2/Web/scripts/forma.js', 'src/Forma.WebView2/Web/scripts/tooltips.js', 'src/Forma.WebView2/Web/scripts/icons.js', 'src/Forma.WebView2/Web/scripts/modern-controls.js', 'src/Forma.Builder/DesignerWeb/designer.js', 'src/Forma.Builder/DesignerWeb/reactivity.js', 'src/Forma.Builder/DesignerWeb/component-customization.js']) window.eval(fs.readFileSync(path.join(base, file), 'utf8'));
+  for (const file of ['src/Forma.WebView2/Web/scripts/data-grid.js', 'src/Forma.WebView2/Web/scripts/forma.js', 'src/Forma.WebView2/Web/scripts/tooltips.js', 'src/Forma.WebView2/Web/scripts/icons.js', 'src/Forma.WebView2/Web/scripts/modern-controls.js', 'src/Forma.WebView2/Web/scripts/selection-controls.js', 'src/Forma.Builder/DesignerWeb/designer.js', 'src/Forma.Builder/DesignerWeb/reactivity.js', 'src/Forma.Builder/DesignerWeb/component-customization.js']) window.eval(fs.readFileSync(path.join(base, file), 'utf8'));
   const create = (id, control, parentId, properties = {}) => window.forma.receive({ type: 'create', id, control, parentId, properties });
   create('root', 'form'); window.formaDesigner.receive({ action: 'initialize', id: 'root' });
   return { window, document: window.document, messages, create };
@@ -707,6 +827,54 @@ test('toasts honor preview, dismissal and timeout without restarting on repeated
   assert.equal(messages.at(-1).event, 'toast-close'); assert.equal(messages.at(-1).payload.reason, 'timeout');
   window.forma.update({ id: 'notice', properties: { dismissible: true } });
   document.querySelector('.forma-toast-popup button').click(); assert.equal(messages.at(-1).payload.reason, 'dismiss');
+  window.close();
+});
+test('toast variants expose semantic styles and scripts pass validated dynamic show options', () => {
+  const { window, document, create, messages } = fixture();
+  create('notice', 'toast', 'root', { isOpen: true, duration: 60000 });
+  create('button', 'button', 'root');
+  window.formaDesigner.preview = true;
+  for (const variant of ['neutral', 'info', 'success', 'warning', 'caution', 'error', 'danger']) {
+    window.forma.update({ id: 'notice', properties: { variant, text: variant } });
+    window.formaModern.refresh(document.getElementById('notice'), { enabled: true, visible: true });
+    const popup = document.querySelector('.forma-toast-popup');
+    assert.equal(popup.dataset.variant, variant);
+    assert.equal(popup.getAttribute('role'), ['warning', 'caution', 'error', 'danger'].includes(variant) ? 'alert' : 'status');
+    if (['caution', 'error'].includes(variant)) assert.notEqual(window.getComputedStyle(popup).backgroundColor, 'rgb(255, 255, 255)');
+  }
+  window.formaCustomization.apply({ controls: [
+    { id: 'button', name: 'button1', kind: 'button', enabled: true, visible: true,
+      customization: { behavior: 'window.toastApi = forma; forma.on("Click", () => forma.showToast("notice1", { text: "Saved!", variant: "success", duration: 2000 }));' } },
+    { id: 'notice', name: 'notice1', kind: 'toast', variant: 'error', isOpen: true }
+  ] }, true);
+  document.getElementById('button').click();
+  const message = messages.at(-1); assert.equal(message.event, 'show-toast');
+  assert.equal(message.payload.options.text, 'Saved!'); assert.equal(message.payload.options.variant, 'success');
+  assert.equal(window.toastApi.get('notice1', 'variant'), 'error');
+  assert.equal(window.toastApi.get('notice1', 'isOpen'), true);
+  assert.throws(() => window.toastApi.showToast('notice1', { variant: 'unknown' }), /Invalid toast option/);
+  assert.throws(() => window.toastApi.showToast('notice1', null), /object/);
+  assert.throws(() => window.toastApi.showToast('button1'), /Toast/);
+  window.close();
+});
+test('legacy generated toast colors do not mask error variants while explicit custom colors still apply', () => {
+  const { window, document, create } = fixture();
+  create('notice', 'toast', 'root', { text: 'Error', variant: 'error', isOpen: true, duration: 60000 });
+  window.formaDesigner.preview = true;
+  const item = { id: 'notice', name: 'notice1', kind: 'toast', component: true, enabled: true, visible: true,
+    foreColor: '#ffffff', backColor: '#2878ff', borderColor: '#d3deee', customization: {
+      css: '/* These are your current appearance defaults; edit them as needed. */ :host { color: #ffffff; background-color: #2878ff; border: 1px solid #d3deee; font-size: 18px; }'
+    } };
+  window.formaCustomization.apply({ controls: [item] });
+  window.formaModern.refresh(document.getElementById('notice'), item);
+  const style = [...document.head.querySelectorAll('style')].find(style => style.textContent.includes('18px'));
+  assert.doesNotMatch(style.textContent, /background-color|color:.*(?:255|ffffff|2878ff|d3deee)/);
+  assert.match(style.textContent, /border-width: 1px/); assert.match(style.textContent, /font-size: 18px/);
+  const popup = document.querySelector('.forma-toast-popup'); assert.equal(popup.dataset.variant, 'error');
+  assert.notEqual(window.getComputedStyle(popup).backgroundColor, 'rgb(40, 120, 255)');
+  item.customization.css = ':host[data-variant="error"] { background-color: rgb(100, 0, 0); }';
+  window.formaCustomization.apply({ controls: [item] });
+  assert.equal(window.getComputedStyle(popup).backgroundColor, 'rgb(100, 0, 0)');
   window.close();
 });
 

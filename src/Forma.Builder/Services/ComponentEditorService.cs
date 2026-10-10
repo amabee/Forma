@@ -12,6 +12,13 @@ public static class ComponentEditorService
     {
         if (appearance.Customization is not null) return ComponentCustomization.Validate(appearance.Customization);
         string Number(double value) => value.ToString(CultureInfo.InvariantCulture);
+        var toast = control is Forma.Core.Controls.Toast;
+        var eventName = control is Forma.Core.Controls.SplitButton ? "primary-click"
+            : control is Forma.Core.Controls.DropdownButton ? "command-item" : "click";
+        var palette = toast ? "/* Colors follow Variant. Use :host[data-variant=\"error\"] for custom colors. */"
+            : $"color: {appearance.ForeColor};\n  background-color: {appearance.BackColor};";
+        var border = toast ? $"border-width: {appearance.BorderWidth}px;\n  border-style: {appearance.BorderStyle};"
+            : $"border: {appearance.BorderWidth}px {appearance.BorderStyle} {appearance.BorderColor};";
         return new()
         {
             Css = $$"""
@@ -20,8 +27,7 @@ public static class ComponentEditorService
                    These are your current appearance defaults; edit them as needed.
                    Keep position and sizing in the Layout properties. */
                 :host {
-                  color: {{appearance.ForeColor}};
-                  background-color: {{appearance.BackColor}};
+                  {{palette}}
                   font-family: {{JsonSerializer.Serialize(appearance.FontFamily)}};
                   font-size: {{appearance.FontSize}}px;
                   font-weight: {{appearance.FontWeight}};
@@ -29,7 +35,7 @@ public static class ComponentEditorService
                   text-align: {{appearance.TextAlign}};
                   line-height: {{Number(appearance.LineHeight)}};
                   letter-spacing: {{Number(appearance.LetterSpacing)}}px;
-                  border: {{appearance.BorderWidth}}px {{appearance.BorderStyle}} {{appearance.BorderColor}};
+                  {{border}}
                   border-radius: {{appearance.BorderRadius}}px;
                   padding: {{appearance.PaddingTop}}px {{appearance.PaddingRight}}px {{appearance.PaddingBottom}}px {{appearance.PaddingLeft}}px;
                   opacity: {{Number(appearance.Opacity / 100d)}};
@@ -42,7 +48,7 @@ public static class ComponentEditorService
                   /* Add a hover style here. */
                 }
                 """,
-            Behavior = """
+            Behavior = $$"""
                 // JavaScript runs once when Preview starts, never in the designer.
                 // component.element: this control's DOM element
                 // component.properties: your custom JSON values (runtime copy)
@@ -65,7 +71,9 @@ public static class ComponentEditorService
                 // forma.updateRow(name, index, cells), forma.removeRow(name, index), forma.clearRows(name).
                 // forma.setCell(name, rowIndex, columnIndex, "value"): edit a cell.
 
-                forma.on("click", () => {
+                // command-item supplies event.detail.itemId, text, and checked.
+                // primary-click is the SplitButton's main action, separate from its menu.
+                forma.on("{{eventName}}", event => {
                   // Example (uncomment and replace label1 with your label's Name):
                   // component.properties.clicks += 1;
                   // forma.set("label1", "text", `Clicked ${component.properties.clicks} times`);

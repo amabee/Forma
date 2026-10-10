@@ -100,7 +100,14 @@ public sealed class WebView2Renderer : IRenderer
         if (control is ChoiceControl choice) { properties["items"] = choice.Items; properties["selectedIndex"] = choice.SelectedIndex; }
         if (control is LinkLabel link) { properties["url"] = link.Url; properties["visited"] = link.Visited; }
         if (control is MaskedTextBox masked) properties["mask"] = masked.Mask;
-        if (control is CheckedListBox checkedList) { properties["items"] = checkedList.Items; properties["checkedIndices"] = checkedList.CheckedIndices; }
+        if (control is MultiChoiceControl checkedList) { properties["items"] = checkedList.Items; properties["checkedIndices"] = checkedList.CheckedIndices; }
+        if (control is SelectionGroup group) properties["orientation"] = group.Orientation;
+        if (control is MultiSelectionGroup checkGroup) properties["orientation"] = checkGroup.Orientation;
+        if (control is IconButton iconButton) { properties["iconName"] = iconButton.IconName; properties["showText"] = iconButton.ShowText; }
+        if (control is SplitButton splitButton) properties["primaryEnabled"] = splitButton.PrimaryEnabled;
+        if (control is CommandButton commandButton) properties["description"] = commandButton.Description;
+        if (control is Chip chip) { properties["variant"] = chip.Variant; properties["removable"] = chip.Removable; properties["isRemoved"] = chip.IsRemoved; }
+        if (control is Rating rating) { properties["stars"] = rating.Stars; properties["readOnly"] = rating.ReadOnly; }
         if (control is TreeView tree) { properties["nodes"] = tree.Nodes; properties["selectedNode"] = tree.SelectedNode; properties["expandedNodes"] = tree.ExpandedNodes; }
         if (control is Pagination pages) { properties["page"] = pages.Page; properties["pageCount"] = pages.PageCount; }
         if (control is PathPicker picker) { properties["selectedPath"] = picker.SelectedPath; properties["dialogTitle"] = picker.DialogTitle; }
@@ -268,6 +275,7 @@ public sealed class WebView2Renderer : IRenderer
         if (registration.Control is CommandControl commands && message.Event == "command-item"
             && data.TryGetProperty("itemId", out var itemId) && itemId.ValueKind == JsonValueKind.String)
             commands.InvokeItem(itemId.GetString()!);
+        if (registration.Control is SplitButton split && message.Event == "primary-click") split.InvokePrimary();
         if (registration.Control is Dialog dialog && message.Event == "dialog-result"
             && data.TryGetProperty("result", out var result) && result.ValueKind == JsonValueKind.String)
         {
@@ -287,13 +295,15 @@ public sealed class WebView2Renderer : IRenderer
             try { rich.Document = document.Deserialize<RichBlock[]>(new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? []; }
             catch (Exception error) when (error is JsonException or ArgumentException) { /* Reject malformed editor messages. */ }
         }
-        if (registration.Control is CheckedListBox checkedList && message.Event == "item-check"
+        if (registration.Control is Chip removedChip && message.Event == "chip-remove") removedChip.Remove();
+        if (registration.Control is MultiChoiceControl checkedList && message.Event == "item-check"
             && data.TryGetProperty("index", out var itemIndex) && itemIndex.ValueKind == JsonValueKind.Number && itemIndex.TryGetInt32(out var checkedIndex)
             && data.TryGetProperty("checked", out var itemChecked) && itemChecked.ValueKind is JsonValueKind.True or JsonValueKind.False)
             checkedList.SetItemChecked(checkedIndex, itemChecked.GetBoolean());
         if (message.Event == "value" && data.TryGetProperty("value", out var inputValue))
         {
-            if (registration.Control is NumericUpDown or Slider && inputValue.ValueKind == JsonValueKind.Number && inputValue.TryGetDouble(out var number))
+            if (registration.Control is NumericUpDown or Slider or Rating && inputValue.ValueKind == JsonValueKind.Number && inputValue.TryGetDouble(out var number)
+                && (registration.Control is not Rating rated || !rated.ReadOnly))
                 ((NumericControl)registration.Control).Value = number;
             if (registration.Control is DateTimeInput date && inputValue.ValueKind == JsonValueKind.String) date.DateValue = inputValue.GetString()!;
             if (registration.Control is ColorPicker color && inputValue.ValueKind == JsonValueKind.String) color.Color = inputValue.GetString()!;

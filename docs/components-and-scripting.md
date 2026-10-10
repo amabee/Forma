@@ -1,6 +1,6 @@
 # Using Forma components, properties, and code
 
-This guide describes the current Builder and its 60 toolbox entries. The [component reference](component-reference.md) lists every implemented control, contextual inspector property, range, C# property, constructor default, and declared method/event. The [roadmap](roadmap-stages.md) tracks features still pending.
+This guide describes the current Builder and its 72 toolbox entries. The [component reference](component-reference.md) lists every implemented control, contextual inspector property, range, C# property, constructor default, and declared method/event. The [roadmap](roadmap-stages.md) tracks features still pending.
 
 ## Contents
 
@@ -119,6 +119,10 @@ Use exact camelCase keys. `forma.set` uses the bridge; it is not a synchronous D
 | `checked` | CheckBox, RadioButton, ToggleSwitch, ToggleButton | Same types | Boolean |
 | `value` | Live text inputs; NumericUpDown/Slider and native ProgressBar numbers; native date/time/color input values | NumericControl descendants, DateTimeInput descendants, ColorPicker | Finite number or correctly formatted string |
 | `selectedIndex` | ComboBox/ListBox native selects; ListView has no equivalent DOM getter | ComboBox/ListBox/ListView | Zero-based integer; -1 clears |
+| `items` | Choice and multiple-choice controls | Same types | String array |
+| `selectedIndex` | RadioGroup/SegmentedControl | Same types | Zero-based integer; -1 clears |
+| `checkedIndices` | CheckedListBox/CheckBoxGroup | Same types | Integer array |
+| `value`, `readOnly` | Rating | Rating | Whole-star value, boolean |
 | `selectedTab` | TabControl | TabControl | Zero-based integer |
 | `selectedRow` | DataGridView | DataGridView | Original Rows index; -1 clears |
 | `columns` | DataGridView | DataGridView | Array of header strings |
@@ -128,6 +132,8 @@ Use exact camelCase keys. `forma.set` uses the bridge; it is not a synchronous D
 | `sortColumn` | DataGridView | DataGridView | Zero-based column; -1 unsorted |
 | `sortDirection` | DataGridView | DataGridView | `ascending`, `descending` |
 | `isActive` | Spinner, LoadingOverlay | Spinner, LoadingOverlay | Boolean |
+| `variant`, `position`, `duration`, `dismissible` | Toast | Toast | Severity string, corner string, milliseconds, boolean |
+| `isOpen` | Toast | Not supported | Boolean; use showToast/closeToast to change |
 
 For a textbox: **read `value`, write `text`**. `forma.set("nameInput", "value", "...")` is not supported. Numeric setters include ProgressBar/CircularProgress. Date/time formats are below.
 
@@ -228,6 +234,115 @@ Put `forma.on("click", () => forma.showDialog("confirmDelete"));` on a Button. C
 
 ### Text, buttons, links and choices
 
+**DropdownButton** opens a command menu. **SplitButton** adds a separate main
+action with Primary enabled, leaving the dropdown available when that action is
+disabled. Both use Commands (JSON), including nested commands, separators,
+disabled items, and checkable entries. Down Arrow on the trigger opens the menu;
+Up/Down/Home/End navigate its top-level entries; Escape returns focus to the
+trigger. Outside clicks and command selection close it. Text updates retain the
+command tree. **CommandButton** is a regular action button with an icon, title,
+description, and optional visible text; it uses standard Click behavior.
+
+For a SplitButton named `runButton`, put this in its JavaScript tab:
+
+```javascript
+forma.on("primary-click", () => {
+  forma.showToast("savedToast", { text: "Running the main action", variant: "info" });
+});
+
+forma.on("command-item", event => {
+  console.log(event.detail.itemId, event.detail.text, event.detail.checked);
+});
+```
+
+`command-item` callbacks are delivered after the native model accepts the command,
+with the actual checked state. Use this event for menu commands rather than a
+generic Click handler, which also sees clicks on the trigger and descendants.
+The generated script template chooses command-item for DropdownButton and
+primary-click for SplitButton.
+
+Set Commands in the inspector with an array such as
+`[{"Id":"save","Text":"Save"},{"Id":"autosave","Text":"Auto save","CheckOnClick":true}]`.
+In JS use an actual array:
+
+```javascript
+forma.set("runButton", "commandItems", [
+  { id: "run", text: "Run once" },
+  { id: "runAll", text: "Run all" }
+]);
+forma.set("runButton", "primaryEnabled", false);
+const commands = forma.get("runButton", "commandItems");
+```
+
+Command getters return deep copies; setters validate the complete tree before
+applying it. JS commandItems also works for MenuStrip, Toolbar, ToolStrip, and
+context menus. CommandButton supports iconName, showText, description, and the
+common text/enabled/visible keys. All three controls support inspector editing,
+save/open, Undo/Redo, Preview scripts and bindings.
+
+**Chip** is a selectable pill with Text, Variant, Checked, and optional Removable.
+Its close button removes it from the current Preview without deleting the saved
+design. `forma.on("chip-remove", handler)` reacts to dismissal. In C#, use
+Removed, Remove(), and Restore(). In JS, set isRemoved to false to restore it.
+**ChipGroup** supports multiple selected tags through Items and Checked indices;
+**ButtonGroup** supports a single selected option through Items and Selected index.
+Both groups support horizontal/vertical Orientation. ChipGroup arrow keys move
+focus without changing selection; Space/Enter activates the focused tag.
+
+**IconButton** and **FloatingActionButton** use the bundled icon selector and
+Show text. Text supplies the accessible label even when the visible caption is
+hidden. FloatingActionButton is a circular elevated action button at its designed
+location; it does not automatically anchor itself to a window corner. Increase
+its width if you turn on Show text for an extended action button. Both expose
+standard Click behavior and work with disabled state.
+
+```javascript
+const tags = forma.bind("tagPicker", "checkedIndices"); // ChipGroup
+const mode = forma.bind("modeButtons", "selectedIndex"); // ButtonGroup
+const selected = forma.bind("activeTag", "checked"); // Chip
+
+forma.on("Click", () => {
+  console.log(tags.value, mode.value, selected.value);
+  forma.set("searchAction", "iconName", "settings");
+  forma.set("searchAction", "showText", true);
+});
+```
+
+Chip runtime properties: checked, variant, removable, isRemoved. Removal requires
+Removable=true; restoring does not. Icon action button properties: iconName,
+showText, and common text/enabled/visible. All five controls support inspector
+editing, save/open, Undo/Redo, scripts and bindings. Group selection changes
+preserve item elements and focus when Items have not changed.
+
+RadioGroup and SegmentedControl provide a single choice from Items. Set Items
+one per line, Selected index (zero-based, -1 for none), and Orientation. RadioGroup
+renders native radios; SegmentedControl renders a button strip with arrow-key,
+Home, and End navigation. CheckBoxGroup permits multiple choices with
+comma-separated Checked indices (e.g. `0, 2`) and Orientation.
+
+Rating renders 1–10 stars, with Value from zero to the star count and optional
+Read only. Values round to whole stars. Click a star or use arrow keys/Home/End;
+Delete/Backspace clears the rating. Read only blocks user interaction while
+scripts can still set the value.
+
+```javascript
+const plan = forma.bind("planPicker", "selectedIndex"); // RadioGroup/SegmentedControl
+const interests = forma.bind("interestsPicker", "checkedIndices"); // CheckBoxGroup
+const score = forma.bind("reviewRating", "value"); // Rating
+
+forma.on("Click", () => {
+  const plans = forma.get("planPicker", "items");
+  console.log(plans[plan.value], interests.value, score.value);
+});
+```
+
+Use `forma.set(name, "items", ["A", "B"])` to replace choices,
+`forma.set(name, "selectedIndex", 1)` for a single selection,
+`forma.set(name, "checkedIndices", [0, 2])` for multiple selections, and
+`forma.set(name, "value", 4)` for Rating. Reads return copies of arrays.
+Change events and reactive bindings reflect user selection. These controls
+support save/open, inspector editing, and Undo/Redo.
+
 - **Button:** Text, Style preset, common appearance; click behavior.
 - **Label:** display Text; update through `text`.
 - **TextBox/SearchBox/PasswordBox/TextArea:** starting Text, Placeholder, Read only, Password, Max length. Read live `value`. Password obscures presentation, not storage encryption.
@@ -236,7 +351,7 @@ Put `forma.on("click", () => forma.showDialog("confirmDelete"));` on a Button. C
 - **LinkLabel:** HTTP/HTTPS URL; Preview hands clicks to the native host/default browser. C# exposes LinkClicked.
 - **CheckBox/RadioButton/ToggleSwitch/ToggleButton:** Checked boolean. User radio interaction groups siblings with the same parent; explicitly set group states for programmatic changes.
 - **ComboBox/ListBox/ListView:** Items, Selected index; zero-based, -1 none. ListView is a list-style widget, not a multi-column grid.
-- **CheckedListBox:** Items and comma-separated zero-based Checked indices, e.g. `0, 2`; C# SetItemChecked raises ItemCheck. No generic JS checked-array setter.
+- **CheckedListBox:** Items and comma-separated zero-based Checked indices, e.g. `0, 2`; C# SetItemChecked raises ItemCheck. JavaScript supports items and checkedIndices arrays.
 
 ### Numeric, dates and loading
 

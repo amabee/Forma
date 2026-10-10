@@ -193,6 +193,18 @@ public sealed class DesignerEditingService(BuilderViewModel viewModel)
             "treeview" => new Forma.Core.Controls.TreeView(),
             "pagination" => new Forma.Core.Controls.Pagination(),
             "checkedlistbox" => new Forma.Core.Controls.CheckedListBox(),
+            "radiogroup" => new Forma.Core.Controls.RadioGroup(),
+            "checkboxgroup" => new Forma.Core.Controls.CheckBoxGroup(),
+            "segmentedcontrol" => new Forma.Core.Controls.SegmentedControl(),
+            "rating" => new Forma.Core.Controls.Rating(),
+            "chip" => new Forma.Core.Controls.Chip(),
+            "chipgroup" => new Forma.Core.Controls.ChipGroup(),
+            "buttongroup" => new Forma.Core.Controls.ButtonGroup(),
+            "iconbutton" => new Forma.Core.Controls.IconButton(),
+            "floatingactionbutton" => new Forma.Core.Controls.FloatingActionButton(),
+            "dropdownbutton" => new Forma.Core.Controls.DropdownButton(),
+            "splitbutton" => new Forma.Core.Controls.SplitButton(),
+            "commandbutton" => new Forma.Core.Controls.CommandButton(),
             "textbox" => new Forma.Core.Controls.TextBox { Text = "" },
             "panel" => new Forma.Core.Controls.Panel(),
             "groupbox" => new Forma.Core.Controls.GroupBox { Text = "Group" },
@@ -276,6 +288,13 @@ public sealed class DesignerEditingService(BuilderViewModel viewModel)
                 ForeColor = "#1f2937",
                 BackColor = "#ffffff",
             },
+            "radiogroup" or "checkboxgroup" or "chipgroup" => new Appearance { Width = 280, Height = 100, ForeColor = "#1f2937", BackColor = "#ffffff" },
+            "segmentedcontrol" or "rating" or "buttongroup" => new Appearance { Width = 280, Height = 44, ForeColor = "#1f2937", BackColor = "#ffffff" },
+            "chip" => new Appearance { Width = 120, Height = 36, BorderRadius = 18, BackColor = "#ffffff", ForeColor = "#1f2937" },
+            "iconbutton" => new Appearance { Width = 44, Height = 44 },
+            "dropdownbutton" or "splitbutton" => new Appearance { Width = 160, Height = 40, PaddingTop = 0, PaddingBottom = 0, PaddingLeft = 0, PaddingRight = 0 },
+            "commandbutton" => new Appearance { Width = 240, Height = 64 },
+            "floatingactionbutton" => new Appearance { Width = 56, Height = 56, BorderRadius = 28 },
             "listbox" or "listview" or "treeview" or "checkedlistbox" or "richtextbox" or "textarea" or "circularprogress" => new Appearance
             {
                 Width = 180,
@@ -532,9 +551,25 @@ public sealed class DesignerEditingService(BuilderViewModel viewModel)
         }
         if (control is Forma.Core.Controls.LinkLabel link && property == "url" && text is not null) link.Url = text;
         if (control is Forma.Core.Controls.MaskedTextBox masked && property == "mask" && text is not null) masked.Mask = text;
-        if (control is Forma.Core.Controls.CheckedListBox checkedList) {
+        if (control is Forma.Core.Controls.MultiChoiceControl checkedList) {
             if (property == "items" && text is not null) checkedList.Items = Lines(text);
             if (property == "checkedIndices" && text is not null) checkedList.CheckedIndices = text.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).Select(int.Parse).ToArray();
+        }
+        if (control is Forma.Core.Controls.SelectionGroup group && property == "orientation" && text is not null) group.Orientation = text;
+        if (control is Forma.Core.Controls.MultiSelectionGroup checkGroup && property == "orientation" && text is not null) checkGroup.Orientation = text;
+        if (control is Forma.Core.Controls.IconButton iconButton) {
+            if (property == "iconName" && text is not null) iconButton.IconName = text;
+            if (property == "showText") iconButton.ShowText = Boolean(payload, "value", iconButton.ShowText);
+        }
+        if (control is Forma.Core.Controls.SplitButton split && property == "primaryEnabled") split.PrimaryEnabled = Boolean(payload, "value", split.PrimaryEnabled);
+        if (control is Forma.Core.Controls.CommandButton commandButton && property == "description" && text is not null) commandButton.Description = text;
+        if (control is Forma.Core.Controls.Chip chip) {
+            if (property == "variant" && text is not null) chip.Variant = text;
+            if (property == "removable") chip.Removable = Boolean(payload, "value", chip.Removable);
+        }
+        if (control is Forma.Core.Controls.Rating rating) {
+            if (property == "stars" && number is int stars) rating.Stars = stars;
+            if (property == "readOnly") rating.ReadOnly = Boolean(payload, "value", rating.ReadOnly);
         }
         if (control is Forma.Core.Controls.RichTextBox rich) {
             if (property == "text" && text is not null) rich.SetPlainText(text);

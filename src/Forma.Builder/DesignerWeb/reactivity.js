@@ -184,6 +184,6 @@
     }
   }
   for (const event of ["input", "change"]) document.addEventListener(event, refresh, true);
-  for (const event of ["click", "row-selection"]) document.addEventListener(event, refresh);
+  for (const event of ["click", "row-selection", "chip-remove"]) document.addEventListener(event, refresh);
   window.formaReactivity = { createScope, refresh };
 })();

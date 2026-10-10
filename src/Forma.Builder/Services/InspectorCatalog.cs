@@ -23,14 +23,14 @@ public static class InspectorCatalog
         new("text", "Text / Title", "General"),
         new("tag", "Tag", "General"),
         new("locked", "Locked", "General", "checkbox"),
-        new("description", "Description", "General", "textarea", Kind: "card,emptystate"),
+        new("description", "Description", "General", "textarea", Kind: "card,emptystate,commandbutton"),
         new(
             "iconName",
             "Icon",
             "Appearance",
             "select",
             Options: Forma.Core.Controls.Icon.Names.ToArray(),
-            Kind: "icon,emptystate"
+            Kind: "icon,emptystate,iconbutton,floatingactionbutton,commandbutton"
         ),
         new("strokeWidth", "Stroke width", "Appearance", "number", 1, 4, Kind: "icon"),
         new(
@@ -49,7 +49,11 @@ public static class InspectorCatalog
             "Appearance",
             "select",
             Options: ["neutral", "info", "success", "warning", "danger"],
-            Kind: "badge,toast"
+            Kind: "badge,chip"
+        ),
+        new(
+            "variant", "Variant", "Appearance", "select",
+            Options: Forma.Core.Controls.Toast.Variants.ToArray(), Kind: "toast"
         ),
         new("initials", "Initials (blank=automatic)", "General", Kind: "avatar"),
         new(
@@ -235,7 +239,7 @@ public static class InspectorCatalog
             "Commands (JSON)",
             "General",
             "textarea",
-            Kind: "menustrip,toolbar,toolstrip,contextmenu,contextmenustrip"
+            Kind: "menustrip,toolbar,toolstrip,contextmenu,contextmenustrip,dropdownbutton,splitbutton"
         ),
         new(
             "targetId",
@@ -295,20 +299,26 @@ public static class InspectorCatalog
             Kind: "maskedtextbox",
             ReadOnly: true
         ),
-        new("checkedIndices", "Checked indices", "Behavior", Kind: "checkedlistbox"),
+        new("checkedIndices", "Checked indices", "Behavior", Kind: "checkedlistbox,checkboxgroup,chipgroup"),
+        new("showText", "Show text", "Appearance", "checkbox", Kind: "iconbutton,floatingactionbutton,commandbutton"),
+        new("primaryEnabled", "Primary enabled", "Behavior", "checkbox", Kind: "splitbutton"),
+        new("removable", "Removable", "Behavior", "checkbox", Kind: "chip"),
+        new("stars", "Stars", "Behavior", "number", 1, 10, Kind: "rating"),
+        new("number", "Value", "Behavior", "number", 0, 10, Kind: "rating"),
+        new("readOnly", "Read only", "Behavior", "checkbox", Kind: "rating"),
         new(
             "checked",
             "Checked",
             "Behavior",
             "checkbox",
-            Kind: "checkbox,radiobutton,toggleswitch,togglebutton"
+            Kind: "checkbox,radiobutton,toggleswitch,togglebutton,chip"
         ),
         new(
             "items",
             "Items (one per line)",
             "General",
             "textarea",
-            Kind: "combobox,listbox,listview,checkedlistbox"
+            Kind: "combobox,listbox,listview,checkedlistbox,radiogroup,checkboxgroup,segmentedcontrol,chipgroup,buttongroup"
         ),
         new(
             "selectedIndex",
@@ -317,7 +327,7 @@ public static class InspectorCatalog
             "number",
             -1,
             10000,
-            Kind: "combobox,listbox,listview"
+            Kind: "combobox,listbox,listview,radiogroup,segmentedcontrol,buttongroup"
         ),
         new("source", "Image source", "General", Kind: "image,picturebox,avatar", ReadOnly: true),
         new(
@@ -334,7 +344,7 @@ public static class InspectorCatalog
             "Layout",
             "select",
             Options: ["horizontal", "vertical"],
-            Kind: "splitcontainer,flowlayoutpanel,tabcontrol,toolbar,toolstrip,divider"
+            Kind: "splitcontainer,flowlayoutpanel,tabcontrol,toolbar,toolstrip,divider,radiogroup,checkboxgroup,segmentedcontrol,chipgroup,buttongroup"
         ),
         new(
             "gap",

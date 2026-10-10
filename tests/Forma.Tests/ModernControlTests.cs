@@ -8,6 +8,39 @@ namespace Forma.Tests;
 
 public class ModernControlTests
 {
+    [Fact]
+    public void ToastVariantsAndDynamicOptionsAreValidatedPersistedAndIsolatedFromDesign()
+    {
+        var design = new BuilderViewModel(); design.CreateNew();
+        var original = Assert.IsType<Toast>(design.ExecuteEdit("drop", design.Form.Id, Payload(new { control = "toast", x = 0, y = 0 })).AddedControl);
+        original.Variant = "caution";
+        var template = ComponentEditorService.Template(original, design.Appearance[original.Id]);
+        Assert.DoesNotContain("background-color:", template.Css);
+        Assert.Contains("Colors follow Variant", template.Css);
+        var restored = ProjectFile.Restore(ProjectFile.Capture(design.Form, c => Payload(design.Appearance[c.Id])));
+        Assert.Equal("caution", restored.Form.Children.OfType<Toast>().Single().Variant);
+        Assert.Contains("caution", InspectorCatalog.ForKind("toast").Single(p => p.Id == "variant").Options!);
+        Assert.DoesNotContain("caution", InspectorCatalog.ForKind("badge").Single(p => p.Id == "variant").Options!);
+        using var preview = new PreviewSession(design);
+        var toast = preview.Controls.OfType<Toast>().Single();
+        foreach (var variant in Toast.Variants) {
+            preview.ShowToast(toast.Id, Payload(new { text = "Saved!", variant, position = "top-left", duration = 1200, dismissible = false }));
+            Assert.True(toast.IsOpen); Assert.Equal(variant, toast.Variant);
+            Assert.Equal("Saved!", toast.Text); Assert.Equal(1200, toast.Duration); Assert.False(toast.Dismissible);
+            var state = Payload(preview.State()).GetProperty("controls").EnumerateArray().Single(c => c.GetProperty("id").GetString() == toast.Id);
+            Assert.Equal(variant, state.GetProperty("variant").GetString()); Assert.True(state.GetProperty("isOpen").GetBoolean());
+            toast.Close();
+        }
+        Assert.Equal("caution", original.Variant); Assert.False(original.IsOpen);
+        Assert.Throws<ArgumentException>(() => preview.ShowToast(toast.Id, Payload(new { text = "Partial", variant = "unknown" })));
+        Assert.Equal("Saved!", toast.Text); Assert.False(toast.IsOpen);
+        Assert.Throws<ArgumentException>(() => preview.ShowToast(toast.Id, Payload(new { duration = "bad" })));
+        Assert.Throws<ArgumentException>(() => preview.ShowToast(toast.Id, Payload(new { extra = true })));
+        preview.SetValue(toast.Id, "variant", Payload("success")); Assert.Equal("success", toast.Variant);
+        preview.SetValue(toast.Id, "duration", Payload(1)); Assert.Equal(500, toast.Duration);
+        preview.ShowToast(toast.Id, default); Assert.True(toast.IsOpen);
+    }
+
     private static JsonElement Payload(object value) => JsonSerializer.SerializeToElement(value);
 
     [Fact]

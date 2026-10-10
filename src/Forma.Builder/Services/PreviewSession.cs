@@ -46,6 +46,7 @@ public sealed class PreviewSession : IDisposable
                 RichTextBox rich => rich.ReadOnly,
                 PropertyGrid grid => grid.ReadOnly,
                 DataGridView grid => grid.ReadOnly,
+                Rating rating => rating.ReadOnly,
                 _ => Appearance[control.Id].ReadOnly
             };
             if (control is DataGridView dataGrid)
@@ -56,9 +57,22 @@ public sealed class PreviewSession : IDisposable
                 item["sortColumn"] = dataGrid.SortColumn; item["sortDirection"] = dataGrid.SortDirection;
             }
             if (control is Forma.Core.Controls.Image image) item["source"] = image.Source;
+            if (control is ChoiceControl choice) { item["items"] = choice.Items; item["selectedIndex"] = choice.SelectedIndex; }
+            if (control is MultiChoiceControl multi) { item["items"] = multi.Items; item["checkedIndices"] = multi.CheckedIndices; }
+            if (control is Rating ratingValue) { item["number"] = ratingValue.Value; item["stars"] = ratingValue.Stars; }
+            if (control is CheckBox check) item["checked"] = check.Checked;
+            if (control is Chip chip) { item["variant"] = chip.Variant; item["removable"] = chip.Removable; item["isRemoved"] = chip.IsRemoved; }
+            if (control is IconButton iconButton) { item["iconName"] = iconButton.IconName; item["showText"] = iconButton.ShowText; }
+            if (control is CommandButton commandButton) item["description"] = commandButton.Description;
+            if (control is SplitButton split) item["primaryEnabled"] = split.PrimaryEnabled;
+            if (control is CommandControl commands) item["commandItems"] = commands.Items;
             if (control is PathPicker picker) item["selectedPath"] = picker.SelectedPath;
             if (control is Spinner spinner) item["isActive"] = spinner.IsActive;
             if (control is LoadingOverlay overlay) item["isActive"] = overlay.IsActive;
+            if (control is Toast toast) {
+                item["variant"] = toast.Variant; item["position"] = toast.Position;
+                item["duration"] = toast.Duration; item["dismissible"] = toast.Dismissible; item["isOpen"] = toast.IsOpen;
+            }
             return item;
         }).ToArray()
     };
@@ -75,6 +89,32 @@ public sealed class PreviewSession : IDisposable
             ?? throw new ArgumentException("The target control no longer exists.");
         switch (property)
         {
+            case "commandItems" when control is CommandControl commands:
+                if (value.ValueKind != JsonValueKind.Array) throw new ArgumentException("Commands must be an array.");
+                commands.Items = value.Deserialize<CommandItem[]>(new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? []; return;
+            case "primaryEnabled" when control is SplitButton split && value.ValueKind is JsonValueKind.True or JsonValueKind.False: split.PrimaryEnabled = value.GetBoolean(); return;
+            case "description" when control is CommandButton commandButton && value.ValueKind == JsonValueKind.String: commandButton.Description = value.GetString()!; return;
+            case "iconName" when control is IconButton iconButton && value.ValueKind == JsonValueKind.String && Forma.Core.Controls.Icon.Names.Contains(value.GetString()!): iconButton.IconName = value.GetString()!; return;
+            case "showText" when control is IconButton iconButton && value.ValueKind is JsonValueKind.True or JsonValueKind.False: iconButton.ShowText = value.GetBoolean(); return;
+            case "variant" when control is Chip chip && value.ValueKind == JsonValueKind.String && value.GetString() is "neutral" or "info" or "success" or "warning" or "danger": chip.Variant = value.GetString()!; return;
+            case "removable" when control is Chip chip && value.ValueKind is JsonValueKind.True or JsonValueKind.False: chip.Removable = value.GetBoolean(); return;
+            case "isRemoved" when control is Chip chip && value.ValueKind is JsonValueKind.True or JsonValueKind.False:
+                if (value.GetBoolean()) chip.Remove(); else chip.Restore(); return;
+            case "items" when control is ChoiceControl choice: choice.Items = StringArray(value); return;
+            case "items" when control is MultiChoiceControl multi: multi.Items = StringArray(value); return;
+            case "checkedIndices" when control is MultiChoiceControl multi && value.ValueKind == JsonValueKind.Array:
+                if (value.EnumerateArray().Any(index => index.ValueKind != JsonValueKind.Number || !index.TryGetInt32(out _))) throw new ArgumentException("Checked indices must be integers.");
+                multi.CheckedIndices = value.EnumerateArray().Select(index => index.GetInt32()).ToArray(); return;
+            case "readOnly" when control is Rating rating && value.ValueKind is JsonValueKind.True or JsonValueKind.False: rating.ReadOnly = value.GetBoolean(); return;
+            case "variant" or "position" or "duration" or "dismissible" when control is Toast toast:
+                ValidateToastOption(property, value);
+                switch (property) {
+                    case "variant": toast.Variant = value.GetString()!; break;
+                    case "position": toast.Position = value.GetString()!; break;
+                    case "duration": toast.Duration = value.GetInt32(); break;
+                    case "dismissible": toast.Dismissible = value.GetBoolean(); break;
+                }
+                return;
             case "columns" when control is DataGridView grid:
                 grid.Columns = StringArray(value); return;
             case "rows" when control is DataGridView grid && value.ValueKind == JsonValueKind.Array:
@@ -140,6 +180,32 @@ public sealed class PreviewSession : IDisposable
         if (value.ValueKind != JsonValueKind.Array || value.EnumerateArray().Any(cell => cell.ValueKind != JsonValueKind.String))
             throw new ArgumentException("Grid columns and cells must be arrays of strings.");
         return value.EnumerateArray().Select(cell => cell.GetString()!).ToArray();
+    }
+
+    private static void ValidateToastOption(string property, JsonElement value)
+    {
+        var valid = property switch {
+            "text" => value.ValueKind == JsonValueKind.String && value.GetString()!.Length <= 32767,
+            "variant" => value.ValueKind == JsonValueKind.String && Toast.Variants.Contains(value.GetString()!),
+            "position" => value.ValueKind == JsonValueKind.String && value.GetString() is "top-right" or "top-left" or "bottom-right" or "bottom-left",
+            "duration" => value.ValueKind == JsonValueKind.Number && value.TryGetInt32(out _),
+            "dismissible" => value.ValueKind is JsonValueKind.True or JsonValueKind.False,
+            _ => false
+        };
+        if (!valid) throw new ArgumentException($"Invalid toast option '{property}'.");
+    }
+
+    public void ShowToast(string id, JsonElement options)
+    {
+        var toast = Controls.FirstOrDefault(control => control.Id == id) as Toast
+            ?? throw new ArgumentException("The target must be a Toast.");
+        if (options.ValueKind is not (JsonValueKind.Object or JsonValueKind.Undefined)) throw new ArgumentException("Toast options must be an object.");
+        if (options.ValueKind == JsonValueKind.Object) {
+            var properties = options.EnumerateObject().ToArray();
+            foreach (var property in properties) ValidateToastOption(property.Name, property.Value);
+            foreach (var property in properties) SetValue(id, property.Name, property.Value);
+        }
+        toast.Show();
     }
 
     /// <summary>Apply each script command to the latest runtime rows, avoiding stale browser read/modify/write races.</summary>

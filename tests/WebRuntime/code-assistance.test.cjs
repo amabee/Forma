@@ -61,3 +61,29 @@ test('reactive API and binding values are suggested and checked', async () => {
   const issues = await diagnose('javascript', 'forma.bind("nameInput", "unsupported"); forma.bind("missing", "value");', controls);
   assert.equal(issues.length, 2);
 });
+test('toast scripting suggests editable settings and severity values', async () => {
+  const { formaCompletions: complete, propertiesFor } = await load();
+  const known = [{ name: 'notice', kind: 'toast' }];
+  const labels = text => complete(context(text), known).options.map(option => option.label);
+  assert.ok(labels('forma.set("notice", "').includes('variant'));
+  assert.ok(labels('forma.set("notice", "variant", "').includes('caution'));
+  assert.ok(labels('forma.showToast("notice", { variant: "').includes('error'));
+  assert.ok(labels('forma.showToast("notice", {\n text: "Saved",\n variant: "').includes('success'));
+  assert.ok(propertiesFor('toast', 'get').includes('isOpen'));
+  assert.ok(!propertiesFor('toast', 'set').includes('isOpen'));
+});
+test('chip and button properties appear in scripting assistance', async () => {
+  const { propertiesFor, diagnose } = await load();
+  assert.ok(propertiesFor('chip', 'set').includes('checked'));
+  assert.ok(propertiesFor('chipgroup', 'get').includes('checkedIndices'));
+  assert.ok(propertiesFor('buttongroup', 'set').includes('selectedIndex'));
+  assert.ok(propertiesFor('floatingactionbutton', 'set').includes('showText'));
+  assert.deepEqual(await diagnose('javascript', 'forma.set("action", "iconName", "settings"); forma.bind("tags", "checkedIndices");', [{ name: 'action', kind: 'iconbutton' }, { name: 'tags', kind: 'chipgroup' }]), []);
+});
+test('command buttons offer menu and primary properties in scripting assistance', async () => {
+  const { propertiesFor, diagnose } = await load();
+  assert.ok(propertiesFor('dropdownbutton', 'get').includes('commandItems'));
+  assert.ok(propertiesFor('splitbutton', 'set').includes('primaryEnabled'));
+  assert.ok(propertiesFor('commandbutton', 'set').includes('description'));
+  assert.deepEqual(await diagnose('javascript', 'forma.set("actions", "commandItems", []); forma.bind("split", "primaryEnabled");', [{ name: 'actions', kind: 'dropdownbutton' }, { name: 'split', kind: 'splitbutton' }]), []);
+});

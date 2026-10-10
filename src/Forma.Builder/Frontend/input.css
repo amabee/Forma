@@ -3,6 +3,47 @@
 @source "../DesignerWeb/designer.js";
 @source "../DesignerWeb/workspace.js";
 @layer components {
+  [data-forma-type="dropdownbutton"], [data-forma-type="splitbutton"] { @apply inline-flex items-stretch overflow-visible; }
+  [data-forma-type="dropdownbutton"] > .action-menu { @apply w-full; }
+  [data-forma-type="dropdownbutton"] > .action-menu > summary, [data-forma-type="splitbutton"] > .action-menu > summary { @apply flex h-full items-center justify-center text-inherit; }
+  [data-forma-type="splitbutton"] .split-primary { @apply flex-1 bg-transparent text-inherit border-0 py-1 px-3; }
+  [data-forma-type="splitbutton"] > .action-menu { @apply border-l border-current/30; }
+  [data-forma-type="dropdownbutton"] .command-popup, [data-forma-type="splitbutton"] .command-popup { @apply text-sm; }
+  [data-forma-type="splitbutton"] > .action-menu > .command-popup { @apply left-auto right-0; }
+  [data-forma-type="commandbutton"] { @apply inline-flex items-center justify-start gap-3 overflow-hidden; }
+  [data-forma-type="commandbutton"] > svg { @apply size-6 shrink-0; }
+  .command-button-content { @apply flex flex-col items-start text-left min-w-0; }
+  .command-button-title { @apply font-semibold truncate max-w-full; }
+  .command-button-description { @apply text-xs opacity-80 truncate max-w-full; }
+  [data-forma-type="commandbutton"][data-show-text="false"] .command-button-content { @apply hidden; }
+  [data-forma-type="iconbutton"], [data-forma-type="floatingactionbutton"] { @apply inline-flex items-center justify-center gap-2 overflow-hidden; }
+  [data-forma-type="iconbutton"] > svg, [data-forma-type="floatingactionbutton"] > svg { @apply size-5 shrink-0; }
+  [data-forma-type="iconbutton"][data-show-text="false"] .icon-button-label, [data-forma-type="floatingactionbutton"][data-show-text="false"] .icon-button-label { @apply hidden; }
+  [data-forma-type="floatingactionbutton"] { @apply shadow-lg; }
+  [data-forma-type="chip"] { @apply inline-flex items-center overflow-hidden; }
+  [data-forma-type="chip"] button { @apply border-0 bg-transparent text-inherit px-2 py-1; }
+  [data-forma-type="chip"] .chip-toggle { @apply flex-1 truncate; }
+  [data-forma-type="chip"][data-checked="true"] .chip-toggle { @apply font-semibold underline; }
+  [data-forma-type="chip"][data-variant="info"] button { @apply bg-blue-100 text-blue-800; }
+  [data-forma-type="chip"][data-variant="success"] button { @apply bg-emerald-100 text-emerald-800; }
+  [data-forma-type="chip"][data-variant="warning"] button { @apply bg-amber-100 text-amber-800; }
+  [data-forma-type="chip"][data-variant="danger"] button { @apply bg-red-100 text-red-800; }
+  [data-forma-type="chipgroup"], [data-forma-type="buttongroup"] { @apply flex flex-wrap items-center gap-2 overflow-auto; }
+  [data-forma-type="chipgroup"][data-orientation="vertical"], [data-forma-type="buttongroup"][data-orientation="vertical"] { @apply flex-col items-stretch flex-nowrap; }
+  [data-forma-type="chipgroup"] button { @apply rounded-full border border-slate-300 bg-slate-100 text-slate-700 px-3 py-1; }
+  [data-forma-type="buttongroup"] button { @apply flex-1 rounded border border-slate-300 bg-white text-slate-700 px-3 py-1; }
+  [data-forma-type="chipgroup"] button.selected, [data-forma-type="buttongroup"] button.selected { @apply bg-blue-600 border-blue-600 text-white; }
+  [data-forma-type="chipgroup"] button:focus-visible, [data-forma-type="buttongroup"] button:focus-visible, [data-forma-type="chip"] button:focus-visible { @apply outline-2 outline-blue-600 outline-offset-2; }
+  [data-forma-type="radiogroup"], [data-forma-type="checkboxgroup"], [data-forma-type="segmentedcontrol"] { @apply flex flex-wrap items-center gap-2 overflow-auto; }
+  [data-forma-type="radiogroup"][data-orientation="vertical"], [data-forma-type="checkboxgroup"][data-orientation="vertical"], [data-forma-type="segmentedcontrol"][data-orientation="vertical"] { @apply flex-col items-stretch flex-nowrap; }
+  [data-forma-type="radiogroup"] label, [data-forma-type="checkboxgroup"] label { @apply inline-flex items-center gap-2 cursor-pointer; }
+  [data-forma-type="radiogroup"] input, [data-forma-type="checkboxgroup"] input { @apply accent-blue-600; }
+  [data-forma-type="segmentedcontrol"] button { @apply flex-1 rounded border border-slate-300 px-3 py-1 text-inherit; }
+  [data-forma-type="segmentedcontrol"] button.selected { @apply bg-blue-600 border-blue-600 text-white; }
+  [data-forma-type="rating"] { @apply flex items-center gap-1 overflow-auto; }
+  [data-forma-type="rating"] button { @apply text-2xl text-slate-300 bg-transparent p-0 border-0; }
+  [data-forma-type="rating"] button.filled { @apply text-amber-500; }
+  [data-forma-type="rating"] button:focus-visible, [data-forma-type="segmentedcontrol"] button:focus-visible { @apply outline-2 outline-blue-600 outline-offset-2; }
   .property-error { @apply col-start-2 text-[10px] text-red-400 break-words; }
   [data-theme="light"] .property-error { @apply text-red-700; }
   .property-group textarea[aria-invalid="true"] { @apply border-red-500; }
@@ -714,10 +755,12 @@
   .forma-toast-popup[data-position$="left"] { @apply left-4; }
   .toast-message { @apply flex-1 break-words; }
   .forma-toast-popup button { @apply shrink-0 rounded px-2 py-1 text-lg hover:bg-black/5 focus-visible:outline-2 focus-visible:outline-blue-500; }
-  .forma-toast-popup[data-variant="info"] { @apply border-blue-200 bg-blue-50 text-blue-800; }
-  .forma-toast-popup[data-variant="success"] { @apply border-emerald-200 bg-emerald-50 text-emerald-800; }
-  .forma-toast-popup[data-variant="warning"] { @apply border-amber-200 bg-amber-50 text-amber-800; }
-  .forma-toast-popup[data-variant="danger"] { @apply border-red-200 bg-red-50 text-red-800; }
+  .forma-toast-popup[data-variant="info"] { @apply border-blue-600 bg-blue-600 text-white; }
+  .forma-toast-popup[data-variant="success"] { @apply border-emerald-700 bg-emerald-700 text-white; }
+  .forma-toast-popup[data-variant="warning"] { @apply border-amber-700 bg-amber-700 text-white; }
+  .forma-toast-popup[data-variant="caution"] { @apply border-orange-700 bg-orange-700 text-white; }
+  .forma-toast-popup[data-variant="error"] { @apply border-red-600 bg-red-600 text-white; }
+  .forma-toast-popup[data-variant="danger"] { @apply border-red-600 bg-red-600 text-white; }
 }
 
 @layer components {

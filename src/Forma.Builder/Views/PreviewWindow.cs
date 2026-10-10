@@ -60,6 +60,7 @@ public sealed class PreviewWindow : System.Windows.Forms.Form
                 if (control is PathPicker picker) picker.BrowseRequested += BrowseRequested;
                 if (control is LinkLabel link) link.LinkClicked += LinkClicked;
                 if (control is Forma.Core.Controls.Timer timer) timer.Tick += TimerTick;
+                if (control is CommandControl commands) commands.ItemClicked += CommandInvoked;
             }
             _ready = true;
             await _bridge.SendAsync(_session.State());
@@ -105,12 +106,12 @@ public sealed class PreviewWindow : System.Windows.Forms.Form
             if (_session.Appearance.TryGetValue(message.Id, out var toastAppearance) && toastAppearance.Enabled
                 && _session.Controls.FirstOrDefault(control => control.Id == message.Id) is Toast toast)
             {
-                if (message.Event == "show-toast") toast.Show();
+                if (message.Event == "show-toast") _session.ShowToast(toast.Id, payload.TryGetProperty("options", out var options) ? options : default);
                 if (message.Event == "close-toast") toast.Close();
             }
             await _stateRefresh.Request("Ready");
         }
-        catch (Exception error) when (error is ArgumentException or InvalidOperationException or KeyNotFoundException)
+        catch (Exception error) when (error is ArgumentException or InvalidOperationException or KeyNotFoundException or JsonException)
         {
             if (!IsDisposed) Text = $"{_session.Form.Title} — {error.Message}";
         }
@@ -120,6 +121,13 @@ public sealed class PreviewWindow : System.Windows.Forms.Form
     {
         if (!_ready || _bridge is null || IsDisposed || sender is not Forma.Core.Controls.Timer timer) return;
         try { await _bridge.SendAsync(new { type = "designer", action = "component-event", id = timer.Id, @event = "tick" }); }
+        catch (Exception error) when (IsDisposed || error is ObjectDisposedException) { }
+    }
+
+    private async void CommandInvoked(object? sender, CommandItemClickedEventArgs e)
+    {
+        if (!_ready || _bridge is null || IsDisposed || sender is not CommandControl commands) return;
+        try { await _bridge.SendAsync(new { type = "designer", action = "component-event", id = commands.Id, @event = "command-item", detail = new { itemId = e.Id, text = e.Text, @checked = e.Checked } }); }
         catch (Exception error) when (IsDisposed || error is ObjectDisposedException) { }
     }
 
@@ -155,6 +163,7 @@ public sealed class PreviewWindow : System.Windows.Forms.Form
             if (control is PathPicker picker) picker.BrowseRequested -= BrowseRequested;
             if (control is LinkLabel link) link.LinkClicked -= LinkClicked;
             if (control is Forma.Core.Controls.Timer timer) timer.Tick -= TimerTick;
+            if (control is CommandControl commands) commands.ItemClicked -= CommandInvoked;
         }
         if (_bridge is not null) _bridge.MessageReceived -= CustomMessage;
         _bridge?.Dispose();

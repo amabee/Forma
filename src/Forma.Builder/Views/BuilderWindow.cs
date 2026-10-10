@@ -370,15 +370,16 @@ public sealed class BuilderWindow : System.Windows.Forms.Form
                         url = (c as Forma.Core.Controls.LinkLabel)?.Url ?? "",
                         mask = (c as Forma.Core.Controls.MaskedTextBox)?.Mask ?? "",
                         maskCompleted = (c as Forma.Core.Controls.MaskedTextBox)?.MaskCompleted ?? false,
-                        checkedIndices = c is Forma.Core.Controls.CheckedListBox checkedList ? string.Join(", ", checkedList.CheckedIndices) : "",
-                        items = c is Forma.Core.Controls.CheckedListBox list ? string.Join("\n", list.Items) : c is Forma.Core.Controls.ChoiceControl choice
+                        checkedIndices = c is Forma.Core.Controls.MultiChoiceControl checkedList ? string.Join(", ", checkedList.CheckedIndices) : "",
+                        stars = (c as Forma.Core.Controls.Rating)?.Stars ?? 5,
+                        items = c is Forma.Core.Controls.MultiChoiceControl list ? string.Join("\n", list.Items) : c is Forma.Core.Controls.ChoiceControl choice
                             ? string.Join("\n", choice.Items)
                             : "",
                         selectedIndex = (c as Forma.Core.Controls.ChoiceControl)?.SelectedIndex
                             ?? -1,
                         source = (c as Forma.Core.Controls.Image)?.Source ?? "",
                         sizeMode = (c as Forma.Core.Controls.Image)?.SizeMode ?? "contain",
-                        orientation = (c as Forma.Core.Controls.Divider)?.Orientation ?? (c as Forma.Core.Controls.Toolbar)?.Orientation ?? (c as Forma.Core.Controls.LayoutContainer)?.Orientation
+                        orientation = (c as Forma.Core.Controls.SelectionGroup)?.Orientation ?? (c as Forma.Core.Controls.MultiSelectionGroup)?.Orientation ?? (c as Forma.Core.Controls.Divider)?.Orientation ?? (c as Forma.Core.Controls.Toolbar)?.Orientation ?? (c as Forma.Core.Controls.LayoutContainer)?.Orientation
                             ?? "horizontal",
                         gap = (c as Forma.Core.Controls.LayoutContainer)?.Gap ?? 8,
                         columns = (c as Forma.Core.Controls.LayoutContainer)?.Columns ?? 2,
@@ -424,7 +425,7 @@ public sealed class BuilderWindow : System.Windows.Forms.Form
                         padding = _viewModel.Appearance[c.Id].Padding,
                         opacity = _viewModel.Appearance[c.Id].Opacity,
                         placeholder = _viewModel.Appearance[c.Id].Placeholder,
-                        readOnly = c is Forma.Core.Controls.PropertyGrid propertyInput ? propertyInput.ReadOnly : c is Forma.Core.Controls.RichTextBox richInput ? richInput.ReadOnly : c is Forma.Core.Controls.DataGridView dgv
+                        readOnly = c is Forma.Core.Controls.Rating rated ? rated.ReadOnly : c is Forma.Core.Controls.PropertyGrid propertyInput ? propertyInput.ReadOnly : c is Forma.Core.Controls.RichTextBox richInput ? richInput.ReadOnly : c is Forma.Core.Controls.DataGridView dgv
                             ? dgv.ReadOnly
                             : _viewModel.Appearance[c.Id].ReadOnly,
                         password = _viewModel.Appearance[c.Id].Password,
@@ -441,12 +442,16 @@ public sealed class BuilderWindow : System.Windows.Forms.Form
                         toolTip = _viewModel.Appearance[c.Id].ToolTip,
                         cssClass = _viewModel.Appearance[c.Id].CssClass,
                         customCss = _viewModel.Appearance[c.Id].CustomCss,
-                        description = (c as Forma.Core.Controls.Card)?.Description ?? (c as Forma.Core.Controls.EmptyState)?.Description ?? "",
-                        iconName = (c as Forma.Core.Controls.Icon)?.IconName ?? (c as Forma.Core.Controls.EmptyState)?.IconName ?? "image",
+                        primaryEnabled = (c as Forma.Core.Controls.SplitButton)?.PrimaryEnabled ?? true,
+                        description = (c as Forma.Core.Controls.CommandButton)?.Description ?? (c as Forma.Core.Controls.Card)?.Description ?? (c as Forma.Core.Controls.EmptyState)?.Description ?? "",
+                        showText = (c as Forma.Core.Controls.IconButton)?.ShowText ?? false,
+                        removable = (c as Forma.Core.Controls.Chip)?.Removable ?? false,
+                        isRemoved = (c as Forma.Core.Controls.Chip)?.IsRemoved ?? false,
+                        iconName = (c as Forma.Core.Controls.IconButton)?.IconName ?? (c as Forma.Core.Controls.Icon)?.IconName ?? (c as Forma.Core.Controls.EmptyState)?.IconName ?? "image",
                         strokeWidth = (c as Forma.Core.Controls.Icon)?.StrokeWidth ?? 2,
                         lines = (c as Forma.Core.Controls.Skeleton)?.Lines ?? 3,
                         headerVisible = (c as Forma.Core.Controls.Card)?.HeaderVisible ?? true,
-                        variant = (c as Forma.Core.Controls.Badge)?.Variant ?? (c as Forma.Core.Controls.Toast)?.Variant ?? "info",
+                        variant = (c as Forma.Core.Controls.Chip)?.Variant ?? (c as Forma.Core.Controls.Badge)?.Variant ?? (c as Forma.Core.Controls.Toast)?.Variant ?? "info",
                         initials = (c as Forma.Core.Controls.Avatar)?.Initials ?? "",
                         shape = (c as Forma.Core.Controls.Avatar)?.Shape ?? (c as Forma.Core.Controls.Skeleton)?.Shape ?? "circle",
                         thickness = (c as Forma.Core.Controls.Divider)?.Thickness ?? 1,

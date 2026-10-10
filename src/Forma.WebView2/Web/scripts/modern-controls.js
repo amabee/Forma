@@ -13,7 +13,7 @@
     removeToast(el.id);
     const popup = document.createElement("div"); popup.className = "forma-toast-popup";
     popup.dataset.componentSource = el.id; popup.dataset.variant = p.variant ?? "info"; popup.dataset.position = p.position ?? "bottom-right";
-    popup.setAttribute("role", p.variant === "danger" ? "alert" : "status"); popup.appendChild(span("toast-message", p.text ?? "Notification"));
+    popup.setAttribute("role", ["danger", "error", "warning", "caution"].includes(p.variant) ? "alert" : "status"); popup.appendChild(span("toast-message", p.text ?? "Notification"));
     if (p.dismissible !== false) {
       const close = document.createElement("button"); close.type = "button"; close.textContent = "×"; close.setAttribute("aria-label", "Dismiss notification");
       close.addEventListener("click", () => { removeToast(el.id); emit(el, "toast-close", { reason: "dismiss" }); }); popup.appendChild(close);
@@ -70,6 +70,42 @@
         const header = el.querySelector(":scope > .layout-header"), host = el.querySelector(":scope > .layout-content");
         header.hidden = p.headerVisible === false; host.style.height = p.headerVisible === false ? "100%" : "calc(100% - 56px)";
         header.replaceChildren(span("card-title", p.text ?? "Card"), span("card-description", p.description ?? ""));
+      }
+      if (["iconbutton", "floatingactionbutton", "commandbutton"].includes(kind)) {
+        el.setAttribute("aria-label", p.text || "Action");
+        el.dataset.showText = String(!!p.showText);
+        const icon = window.formaIcons.create(p.iconName ?? "search"); icon.setAttribute("aria-hidden", "true");
+        if (kind === "commandbutton") {
+          const caption = span("command-button-content"); caption.append(span("command-button-title", p.text ?? "Command"), span("command-button-description", p.description ?? ""));
+          el.replaceChildren(icon, caption);
+        } else el.replaceChildren(icon, span("icon-button-label", p.text ?? "Action"));
+      }
+      if (kind === "chip") {
+        el.dataset.variant = p.variant ?? "neutral";
+        el.hidden = runtime() && !!p.isRemoved;
+        if (!el.querySelector(".chip-toggle")) {
+          const toggle = document.createElement("button"), remove = document.createElement("button");
+          toggle.type = remove.type = "button"; toggle.className = "chip-toggle"; remove.className = "chip-remove"; remove.textContent = "×";
+          toggle.addEventListener("click", () => {
+            if (!allowed(el)) return;
+            el._modernProperties.checked = !el._modernProperties.checked;
+            window.formaModern.update(el, {});
+            emit(el, "checked", { checked: el._modernProperties.checked });
+            el.dispatchEvent(new Event("change", { bubbles: true }));
+          });
+          remove.addEventListener("click", event => {
+            event.stopPropagation();
+            if (!allowed(el) || !el._modernProperties.removable) return;
+            el._modernProperties.isRemoved = true; window.formaModern.update(el, {});
+            emit(el, "chip-remove", {}); el.dispatchEvent(new CustomEvent("chip-remove", { bubbles: true }));
+          });
+          el.replaceChildren(toggle, remove);
+        }
+        const toggle = el.querySelector(".chip-toggle"), remove = el.querySelector(".chip-remove");
+        toggle.textContent = p.text ?? "Chip"; toggle.setAttribute("aria-pressed", String(!!p.checked));
+        toggle.disabled = remove.disabled = el._modernAppearance?.enabled === false;
+        el.dataset.checked = String(!!p.checked);
+        remove.hidden = !p.removable; remove.setAttribute("aria-label", `Remove ${p.text ?? "chip"}`);
       }
       if (kind === "icon") {
         el.setAttribute("role", "img"); el.setAttribute("aria-label", p.text || "Icon");

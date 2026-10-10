@@ -1,6 +1,6 @@
 # Component and property reference
 
-This reference covers the 60 implemented toolbox entries plus Form. It was checked against the compiled Core models and InspectorCatalog. The larger roadmap is separate. Start with [the usage guide](components-and-scripting.md) for setup, JavaScript recipes, and C# integration.
+This reference covers the 72 implemented toolbox entries plus Form. It was checked against the compiled Core models and InspectorCatalog. The larger roadmap is separate. Start with [the usage guide](components-and-scripting.md) for setup, JavaScript recipes, and C# integration.
 
 ## Reading the tables
 
@@ -1325,7 +1325,80 @@ Uses the shared inspector fields and contextual actions.
 
 `Id` is an init-only stable identifier; `Name` is the script lookup name; `Text` is display text; `X`/`Y` are nullable positions; `LayoutSlot` is a one-based pane/tab/cell. `Children` and `Parent` describe ownership. `Add`, `Insert`, `Remove` and `MoveChild` manage the tree. Every control has `PropertyChanged`. The base `Value` is a string field; NumericControl shadows it with a double. Input JavaScript should use the guide’s typed runtime API.
 
-## Important inspector/model aliases
+## Selection controls and Rating
+
+### RadioGroup
+
+Inherits ChoiceControl through SelectionGroup. `Items` defaults to three items,
+`SelectedIndex` defaults to zero (-1 clears), and `Orientation` defaults to
+horizontal. Inspector: Items, Selected index, Orientation, and common properties.
+JS: items and selectedIndex get/set/bind. C# event: SelectedIndexChanged.
+
+### SegmentedControl
+
+Uses the same model and properties as RadioGroup, rendered as buttons. Supports
+arrow keys/Home/End and a single keyboard tab stop for the selected segment.
+
+### CheckBoxGroup
+
+Inherits MultiChoiceControl. `Items` defaults to three items; `CheckedIndices`
+defaults to empty and normalizes to unique valid ascending indices. Orientation
+defaults to horizontal. Inspector: Items, Checked indices, Orientation, and common
+properties. JS: items and checkedIndices get/set/bind. C# method/event:
+SetItemChecked(index, checked), ItemCheck. CheckedListBox shares this model base.
+
+### Rating
+
+Inherits NumericControl. Stars defaults to five (1–10); Value defaults to zero
+and rounds to whole stars within bounds. ReadOnly defaults to false.
+Inspector: Stars, Value, Read only, and common properties. JS: value and readOnly
+get/set/bind. C# event: ValueChanged. Delete/Backspace clears to zero in Preview.
+
+## Chips and icon action buttons
+
+### Chip
+
+Inherits CheckBox. Checked defaults false, Removable false, Variant neutral.
+Supports neutral/info/success/warning/danger. IsRemoved is transient and omitted
+from saved projects. Remove() requires Removable and raises Removed once;
+Restore() clears removal. JS get/set/bind supports checked, variant, removable,
+isRemoved. Inspector exposes Checked, Variant, and Removable.
+
+### ChipGroup and ButtonGroup
+
+ChipGroup inherits MultiSelectionGroup/MultiChoiceControl: Items, CheckedIndices,
+Orientation, ItemCheck and SetItemChecked. ButtonGroup inherits SelectionGroup/
+ChoiceControl: Items, SelectedIndex, Orientation and SelectedIndexChanged.
+The inspector exposes those choices and orientation; JS uses items plus
+checkedIndices or selectedIndex. Defaults match their shared model bases.
+
+### IconButton and FloatingActionButton
+
+IconButton inherits Button. IconName defaults search; ShowText defaults false;
+Text defaults Search. FloatingActionButton inherits IconButton, defaults to
+file-plus/Add, and has a circular Builder appearance. Icons use Icon.Names.
+Inspector: Icon, Show text, and common properties. JS get/set/bind: iconName,
+showText, and common properties. Both retain Button.Click/OnClick behavior.
+
+## Command menu buttons
+
+### DropdownButton and SplitButton
+
+DropdownButton inherits CommandControl, with Text=Actions and the default Action
+command. SplitButton inherits DropdownButton, defaults Text=Run, and adds
+PrimaryEnabled=true, PrimaryClick, and InvokePrimary(). Both inherit Items,
+ItemClicked, and InvokeItem(id). Inspector: Commands JSON and common properties;
+SplitButton also exposes Primary enabled. JS get/set/bind: commandItems and
+primaryEnabled (SplitButton). Events: command-item and primary-click (SplitButton).
+
+### CommandButton
+
+Inherits IconButton/Button. Defaults: Text=Command, IconName=file-plus,
+ShowText=true, Description=Perform an action. Inspector includes Description,
+Icon, Show text, and common properties. JS get/set/bind supports description,
+iconName, showText, and common properties. Click/OnClick retain Button behavior.
+
+## Inspector/model aliases
 
 | Inspector ID | C# model property | JavaScript API when supported |
 | --- | --- | --- |
@@ -1336,7 +1409,7 @@ Uses the shared inspector fields and contextual actions.
 | `gridColumns`, `gridRows` | `DataGridView.Columns`, `Rows` | Inspector/C#; JS `forma.get/set` uses array properties `columns`, `rows` |
 | `source` | `Image.Source` | Choose image / configure in C# |
 | `rowCount` | `TableLayoutPanel.RowCount` | Configure in inspector/C# |
-| `checkedIndices` | `CheckedListBox.CheckedIndices` | Configure in inspector/C# |
+| `checkedIndices` | `MultiChoiceControl.CheckedIndices` | JS get/set uses an integer array |
 | `targetId` | `TargetId` | Inspector resolves names to stable IDs; C# uses the target’s Id |
 
 The current Core LayoutContainer base also exposes shared fields such as Tabs/Columns on its descendants. Only the contextual fields listed above have meaning for that particular rendered layout; for example Card is not a tab control.

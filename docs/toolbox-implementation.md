@@ -294,5 +294,4 @@ and is excluded from project persistence. Notifications stack in each corner.
 All seven controls support contextual properties, save/open and design Undo/Redo.
 Card children keep their identities. The separate runtime helper is
 `src/Forma.WebView2/Web/scripts/modern-controls.js`; styling uses Tailwind source
-in `src/Forma.Builder/Frontend/input.css`. EmptyState, Skeleton, richer selection
-controls and the remaining stage 4 catalog are still pending.
+in `src/Forma.Builder/Frontend/input.css`. EmptyState, Skeleton, RadioGroup, CheckBoxGroup, SegmentedControl, and Rating are also implemented; Chip, ChipGroup, ButtonGroup, IconButton, and FloatingActionButton are also implemented. SplitButton, DropdownButton, and CommandButton are also implemented.

@@ -5,6 +5,18 @@
 //   "value"   - written to the value property (form fields)
 //   "none"    - ignored, so containers never overwrite their own children
 const CONTROL_TYPES = {
+  dropdownbutton: { tag: "div", text: "none" },
+  splitbutton: { tag: "div", text: "none" },
+  commandbutton: { tag: "button", text: "none" },
+  chip: { tag: "div", text: "none" },
+  chipgroup: { tag: "div", text: "none" },
+  buttongroup: { tag: "div", text: "none" },
+  iconbutton: { tag: "button", text: "none" },
+  floatingactionbutton: { tag: "button", text: "none" },
+  radiogroup: { tag: "div", text: "none" },
+  checkboxgroup: { tag: "div", text: "none" },
+  segmentedcontrol: { tag: "div", text: "none" },
+  rating: { tag: "div", text: "none" },
   card: { tag: "section", text: "none", init: initContainer },
   icon: { tag: "span", text: "none" },
   emptystate: { tag: "section", text: "none" },
@@ -352,7 +364,8 @@ window.forma = {
   },
 
   applyData(element, properties) {
-    if (["icon", "emptystate", "skeleton", "card", "badge", "avatar", "divider", "toast", "spinner", "loadingoverlay"].includes(element.dataset.formaType)) window.formaModern?.update(element, properties);
+    window.formaSelections?.update(element, properties);
+    if (["icon", "emptystate", "skeleton", "card", "badge", "avatar", "divider", "toast", "spinner", "loadingoverlay", "chip", "iconbutton", "floatingactionbutton", "commandbutton"].includes(element.dataset.formaType)) window.formaModern?.update(element, properties);
     if (element.dataset.formaType === "tooltip") window.formaTooltip?.update(element, properties);
     const kind = element.dataset.formaType;
     if (kind === "treeview") {
@@ -426,12 +439,13 @@ window.forma = {
     if (kind === "colorpicker") element.value = properties.color ?? "#2878ff";
     if (["dialog", "confirmationdialog"].includes(kind)) applyDialog(element, properties);
     if (["contextmenu", "contextmenustrip"].includes(kind)) element.dataset.targetId = properties.targetId ?? "";
-    if (["menustrip", "toolbar", "toolstrip", "contextmenu", "contextmenustrip"].includes(kind)) {
-      const items = properties.commandItems ?? [];
-      element.setAttribute("aria-label", kind === "menustrip" ? "Menu" : "Toolbar");
-      if (kind !== "menustrip") element.setAttribute("role", "toolbar");
-      element.dataset.orientation = properties.orientation ?? "horizontal";
-      const signature = JSON.stringify(items);
+    if (["menustrip", "toolbar", "toolstrip", "contextmenu", "contextmenustrip", "dropdownbutton", "splitbutton"].includes(kind)) {
+      const p = element._commandProperties = { ...element._commandProperties, ...properties };
+      const items = p.commandItems ?? [], actionMenu = ["dropdownbutton", "splitbutton"].includes(kind);
+      element.setAttribute("aria-label", actionMenu ? p.text ?? "Actions" : kind === "menustrip" ? "Menu" : "Toolbar");
+      if (kind !== "menustrip") element.setAttribute("role", actionMenu ? "group" : "toolbar");
+      element.dataset.orientation = p.orientation ?? "horizontal";
+      const signature = JSON.stringify([items, actionMenu ? p.text : null, actionMenu ? p.primaryEnabled : null]);
       if (element.dataset.commands !== signature) {
         const activeId = document.activeElement?.dataset.commandItem;
         const get = (item, key) => item[key] ?? item[key[0].toUpperCase() + key.slice(1)];
@@ -441,6 +455,7 @@ window.forma = {
           if (children.length) {
             const details = document.createElement("details"), summary = document.createElement("summary"), popup = document.createElement("div");
             summary.textContent = get(item, "text"); summary.setAttribute("aria-disabled", String(!enabled));
+            summary.dataset.itemDisabled = String(!enabled);
             details.className = "command-menu"; popup.className = "command-popup";
             details.addEventListener("toggle", () => {
               if (element.querySelector("details[open]")) {
@@ -456,10 +471,12 @@ window.forma = {
             popup.append(...render(children, enabled)); details.append(summary, popup); return details;
           }
           const button = document.createElement("button"); button.type = "button";
+          if (actionMenu) button.setAttribute("role", get(item, "checkOnClick") ? "menuitemcheckbox" : "menuitem");
           button.dataset.commandItem = get(item, "id"); button.dataset.itemDisabled = String(!enabled);
           button.disabled = !enabled || element.dataset.disabled === "true";
           button.textContent = `${get(item, "checked") ? "✓ " : ""}${get(item, "text")}`;
           if (get(item, "checkOnClick")) button.setAttribute("aria-pressed", String(get(item, "checked") ?? false));
+          if (actionMenu && get(item, "checkOnClick")) button.setAttribute("aria-checked", String(get(item, "checked") ?? false));
           button.addEventListener("click", () => {
             if (button.disabled || (window.formaDesigner && !window.formaDesigner.preview)) return;
             element.querySelectorAll("details").forEach(menu => { menu.open = false; });
@@ -468,7 +485,54 @@ window.forma = {
           });
           return button;
         });
-        element.replaceChildren(...render(items)); element.dataset.commands = signature;
+        if (actionMenu) {
+          const menu = document.createElement("details"), trigger = document.createElement("summary"), popup = document.createElement("div");
+          menu.className = "command-menu action-menu"; popup.className = "command-popup"; popup.id = `${element.id}-menu`;
+          popup.setAttribute("role", "menu");
+          trigger.textContent = kind === "splitbutton" ? "▾" : `${p.text ?? "Actions"} ▾`;
+          trigger.setAttribute("aria-label", kind === "splitbutton" ? `More ${p.text ?? "actions"}` : p.text ?? "Actions");
+          trigger.setAttribute("aria-haspopup", "menu"); trigger.setAttribute("aria-controls", popup.id);
+          trigger.setAttribute("aria-disabled", String(element.dataset.disabled === "true"));
+          trigger.addEventListener("click", event => {
+            if (element.dataset.disabled === "true" || window.formaDesigner?.preview === false) event.preventDefault();
+          });
+          trigger.addEventListener("keydown", event => {
+            if (event.key === "ArrowDown" && element.dataset.disabled !== "true" && window.formaDesigner?.preview !== false) {
+              event.preventDefault(); menu.open = true; popup.querySelector('button:not(:disabled),summary:not([aria-disabled="true"])')?.focus();
+            }
+          });
+          menu.addEventListener("toggle", () => {
+            trigger.setAttribute("aria-expanded", String(menu.open));
+            if (menu.open) { element.dataset.menuZIndex ??= element.style.zIndex; element.style.zIndex = "10000"; }
+            else if (element.dataset.menuZIndex != null) { element.style.zIndex = element.dataset.menuZIndex; delete element.dataset.menuZIndex; }
+          });
+          trigger.setAttribute("aria-expanded", "false");
+          menu.addEventListener("keydown", event => { if (event.key === "Escape") { menu.open = false; trigger.focus(); event.stopPropagation(); } });
+          popup.addEventListener("keydown", event => {
+            if (!["ArrowDown", "ArrowUp", "Home", "End"].includes(event.key)) return;
+            const entries = [...popup.querySelectorAll(':scope > button:not(:disabled), :scope > .command-menu > summary:not([aria-disabled="true"])')];
+            const index = entries.indexOf(event.target); if (index < 0 || !entries.length) return;
+            event.preventDefault();
+            const target = event.key === "Home" ? 0 : event.key === "End" ? entries.length - 1 : (index + (event.key === "ArrowDown" ? 1 : -1) + entries.length) % entries.length;
+            entries[target].focus();
+          });
+          popup.append(...render(items)); menu.append(trigger, popup);
+          if (kind === "splitbutton") {
+            const primary = document.createElement("button"); primary.type = "button"; primary.className = "split-primary";
+            primary.dataset.itemDisabled = String(p.primaryEnabled === false);
+            primary.disabled = p.primaryEnabled === false || element.dataset.disabled === "true";
+            primary.textContent = p.text ?? "Run";
+            primary.addEventListener("click", () => {
+              if (primary.disabled || window.formaDesigner?.preview === false) return;
+              menu.open = false;
+              window.forma.send({ type: "event", id: element.id, event: "primary-click", payload: {} });
+              element.dispatchEvent(new CustomEvent("primary-click"));
+            });
+            element.replaceChildren(primary, menu);
+          } else element.replaceChildren(menu);
+        } else element.replaceChildren(...render(items));
+        element.dataset.commands = signature;
+        element.dataset.commandItems = JSON.stringify(items);
         if (activeId) Array.from(element.querySelectorAll("button")).find(button => button.dataset.commandItem === activeId)?.focus();
       }
     }
@@ -644,7 +708,7 @@ window.forma = {
       if (element.getAttribute("aria-disabled") === "true") return;
       window.forma.send({ type: "event", id: element.id, event: "link", payload: {} });
     });
-    if (message.control === "button") {
+    if (["button", "iconbutton", "floatingactionbutton", "commandbutton"].includes(message.control)) {
       element.addEventListener("click", () => {
         window.forma.send({
           type: "event",
@@ -743,13 +807,16 @@ document.addEventListener("contextmenu", event => {
   contextPopup.dataset.formaType = "contextmenu"; contextPopup.dataset.commandSource = menu.id;
   contextPopup.dataset.componentSource = menu.id;
   contextPopup.className = "forma-context-popup"; document.body.appendChild(contextPopup);
-  window.forma.applyData(contextPopup, { commandItems: JSON.parse(menu.dataset.commands ?? "[]") });
+  window.forma.applyData(contextPopup, { commandItems: JSON.parse(menu.dataset.commandItems ?? "[]") });
   const rect = contextPopup.getBoundingClientRect();
   contextPopup.style.left = `${Math.max(0, Math.min(event.clientX, window.innerWidth - rect.width))}px`;
   contextPopup.style.top = `${Math.max(0, Math.min(event.clientY, window.innerHeight - rect.height))}px`;
   contextPopup.querySelector("button,summary")?.focus();
 });
 document.addEventListener("pointerdown", event => {
+  document.querySelectorAll('[data-forma-type="dropdownbutton"], [data-forma-type="splitbutton"]').forEach(element => {
+    if (!element.contains(event.target)) element.querySelectorAll("details[open]").forEach(menu => { menu.open = false; });
+  });
   if (contextPopup && !contextPopup.contains(event.target)) closeContextPopup();
 });
 document.addEventListener("keydown", event => { if (event.key === "Escape") closeContextPopup(); });
