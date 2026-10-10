@@ -8,6 +8,8 @@ This guide describes the current Builder and its 84 toolbox entries. The [compon
 - [Properties and layout](#properties-and-layout)
 - [Custom Properties editor](#custom-properties-editor)
 - [JavaScript API](#javascript-api)
+- [Runtime property reference](runtime-properties.md)
+- [Global scripts and shared state](global-scripts.md)
 - [JavaScript recipes](#javascript-recipes)
 - [Component families](#component-families)
 - [FilePicker and FolderPicker](#filepicker-and-folderpicker)
@@ -75,19 +77,25 @@ In free-position containers, hold Alt while dragging to bypass alignment snaps.
 
 ## Custom Properties editor
 
+Component JavaScript is now script.js. For project-wide state/functions and
+forma.provide/use, see [global scripts and shared state](global-scripts.md).
+Open the shared file through Project → Global script.
+
 Select a component → **Custom Properties**, directly below Search properties. Edit:
 
 - **CSS:** scoped visual overrides using `:host`.
-- **Behavior:** JavaScript executed once per Preview start.
+- **Script:** JavaScript executed once per Preview start.
 - **Custom JSON:** an object available as `component.properties`.
 
 The built-in editor docks beneath the canvas. Drag its top divider to resize. Use Ctrl+Space for Forma API, component-name, supported-property and custom-value suggestions. Syntax diagnostics show underlines, gutter markers and a Problems list. Unknown literal component names and unsupported runtime properties show warnings; dynamic values and behavior still need Preview testing.
 
 The built-in editor has line numbers, syntax colors, bracket matching, folding, indentation and search (Ctrl+F). Format / Ctrl+Shift+F formats the current tab. Format on save (enabled by default) formats all three sources before saving; turn it off to skip formatting. Syntax errors stop formatting without replacing your text.
 
-Save / Ctrl+S automatically applies sources. Open external editor uses detected VS Code or an executable chosen through Choose editor. External saves auto-apply while the component editor remains open. Invalid JSON keeps the last valid version. Reopen Preview after behavior changes because an existing Preview owns an independent copy.
+Save / Ctrl+S automatically applies sources. External editor (under **···**) uses detected VS Code or an executable chosen through Choose editor. External saves auto-apply while the component editor remains open. Invalid JSON keeps the last valid version. Reopen Preview after behavior changes because an existing Preview owns an independent copy.
 
-Files are `component.css`, `behavior.js`, `custom-properties.json`. Saved designs use `<project-name>.components/<component-id>` beside the project. Unsaved designs use `%LOCALAPPDATA%/Forma/ComponentEditors`. Applied sources are also embedded in `.forma`.
+Right-click a component and choose **View CSS**, **View Script**, or **View Custom Properties**. Code opens in its own workspace tab; switching to Design preserves the draft. Each source has a file tab and an unsaved-change indicator.
+
+Files are `component.css`, `script.js`, `custom-properties.json`. Saved designs use `<project-name>.components/<component-id>` beside the project. Unsaved designs use `%LOCALAPPDATA%/Forma/ComponentEditors`. Applied sources are also embedded in `.forma`.
 
 Custom JSON must be an object:
 
@@ -114,7 +122,7 @@ Every selector must begin with `:host`. Regular rules, `@media` and `@supports` 
 
 ## JavaScript API
 
-Behavior is JavaScript, not C#. It receives `forma` and `component`; `api` remains
+Script is JavaScript, not C#. It receives `forma` and `component`; `api` remains
 a compatibility alias. It does not directly receive Core model objects or the WinForms window.
 
 For live values declared outside events, use `const name = forma.bind("nameInput", "value")`
@@ -128,14 +136,25 @@ for examples, subscriptions, cleanup, and write semantics.
 | `forma.on(event, handler)` | Listen on this component DOM element; automatic listener cleanup |
 | `forma.get(nameOrId, property)` | Read one of the supported properties below |
 | `forma.set(nameOrId, property, value)` | Send a supported update to the cloned Preview model |
+| `forma.bind(nameOrId, property)` | A live property binding; read its `.value`, and write only supported writable properties |
+| `forma.ref(value)` / `forma.reactive(object)` | Reactive local values or a shallow reactive object |
+| `forma.computed(getter)` / `forma.effect(callback)` | Derived values and reactive work |
+| `forma.watch(source, callback, options)` | Observe changes with automatic script cleanup |
+| `forma.provide(name, value)` | Register a shared module from the global script |
+| `forma.use(name)` / `forma.shared` | Access a shared module or the session's shallow reactive namespace |
 | `forma.find(nameOrId)` | Get the matched DOM element for advanced local work |
 | `forma.showDialog(nameOrId)` | Open Dialog/ConfirmationDialog |
 | `forma.showToast(nameOrId)` / `forma.closeToast(nameOrId)` | Notification lifecycle |
 | `forma.cleanup(callback)` | Register cleanup for timers, extra listeners or resources |
 
-`component.id`, `component.name`, `component.element`, `component.properties` describe the current component. `forma.on` listeners run while the source is Enabled and Visible. Sync/async handler errors are reported in the Preview title. Behavior never runs in Design.
+`component.id`, `component.name`, `component.element`, `component.properties` describe the current component. `forma.on` listeners run while the source is Enabled and Visible. Sync/async handler errors are reported in the Preview title. Script never runs in Design.
 
 ### Runtime property operations
+
+See [the extended runtime property guide](runtime-properties.md) for shared
+appearance/geometry fields, input settings, display controls, dialogs/pickers,
+structured data and read-only status properties. These now support get/set/bind
+with the types shown there and in code suggestions.
 
 Use exact camelCase keys. `forma.set` uses the bridge; it is not a synchronous DOM assignment. A getter immediately following a setter in the same callback may see the previous state. Keep the new value in a local variable if you need it immediately.
 
@@ -150,13 +169,13 @@ Use exact camelCase keys. `forma.set` uses the bridge; it is not a synchronous D
 | `speed` | Spinner | Spinner | Integer milliseconds, clamped to 100–5000 |
 | `shape`, `lines` | Skeleton | Skeleton | text/rectangle/circle; integer lines clamped to 1–10 |
 | `checked` | CheckBox, RadioButton, ToggleSwitch, ToggleButton | Same types | Boolean |
-| `value` | Live text inputs; NumericUpDown/Slider and native ProgressBar numbers; native date/time/color input values | NumericControl descendants, DateTimeInput descendants, ColorPicker | Finite number or correctly formatted string |
-| `selectedIndex` | ComboBox/ListBox native selects; ListView has no equivalent DOM getter | ComboBox/ListBox/ListView | Zero-based integer; -1 clears |
+| `value` | Live text inputs; numeric controls including ProgressBar/CircularProgress; date/time/color input values | NumericControl descendants, DateTimeInput descendants, ColorPicker | Finite number or correctly formatted string |
+| `selectedIndex` | ComboBox/ListBox/ListView native selects | Same types | Zero-based integer; -1 clears |
 | `items` | Choice and multiple-choice controls | Same types | String array |
 | `selectedIndex` | RadioGroup/SegmentedControl | Same types | Zero-based integer; -1 clears |
 | `checkedIndices` | CheckedListBox/CheckBoxGroup | Same types | Integer array |
 | `value`, `readOnly` | Rating | Rating | Whole-star value, boolean |
-| `selectedTab` | TabControl | TabControl | Zero-based integer |
+| `selectedTab` | TabControl, Accordion | Same types | Zero-based integer |
 | `selectedRow` | DataGridView | DataGridView | Original Rows index; -1 clears |
 | `columns` | DataGridView | DataGridView | Array of header strings |
 | `rows` | DataGridView | DataGridView | Array of string-cell arrays |
@@ -166,18 +185,23 @@ Use exact camelCase keys. `forma.set` uses the bridge; it is not a synchronous D
 | `sortDirection` | DataGridView | DataGridView | `ascending`, `descending` |
 | `isActive` | Spinner, LoadingOverlay, Skeleton | Same types | Boolean |
 | `variant`, `position`, `duration`, `dismissible` | Toast | Toast | Severity string, corner string, milliseconds, boolean |
-| `isOpen` | Toast | Not supported | Boolean; use showToast/closeToast to change |
+| `isOpen` | Toast, Dialog/ConfirmationDialog | Not supported | Boolean; use lifecycle helpers to open/close |
 
 For a textbox: **read `value`, write `text`**. `forma.set("nameInput", "value", "...")` is not supported. Numeric setters include ProgressBar/CircularProgress. Date/time formats are below.
 
 DataGridView supports `columns` (string array), `rows` (array of string arrays),
 `readOnly`, `sortingEnabled`, and `filteringEnabled` through get/set. Use its row
-helpers to append, update, remove, or clear runtime data. Other collection fields,
-font size, variant, targetId, description, iconName, Skeleton active state, page,
-nodes and arbitrary model fields are not generic JS setters. Configure them in
-the inspector or C#. `forma.get` is not a universal serializer:
-CircularProgress/RichTextBox/CheckedListBox do not expose a generic input `.value`.
-Unsupported operations should not be inferred from inspector labels.
+helpers to append, update, remove, or clear runtime data. Additional supported
+properties include typography, Badge variants, popup targets, descriptions,
+icons, Pagination state, TreeView nodes, PropertyGrid entries and RichTextBox
+documents. Use the [runtime property guide](runtime-properties.md) for their
+exact types and read-only restrictions. Pass structured arrays directly, rather
+than JSON strings. CheckedListBox uses `checkedIndices`; RichTextBox uses `text`
+and `document`. Arbitrary model fields are not automatically script properties.
+
+For values shared across component scripts, use
+[global scripts and shared state](global-scripts.md). A plain local variable
+remains local to its script; `forma.use` returns an explicitly provided module.
 
 ## JavaScript recipes
 
@@ -445,7 +469,7 @@ DataGridView: Columns/Rows, Read only, sorting/filtering flags, Filter text, Sor
 
 TreeView: JSON Nodes with unique IDs, Selected node, comma-separated Expanded nodes. Pagination: Total items/Page size/Page (one-based); your app fetches/changes data on PageChanged. PropertyGrid: categorized string Entries plus whole-grid/per-entry read-only; object binding/typed editors are pending.
 
-MenuStrip/Toolbar/ToolStrip/ContextMenu/ContextMenuStrip: command JSON with nesting, separators, disabled/checkable leaves. Toolbar orientation is configurable; context menus need a Target. StatusBar: left Text/Right text. Implement command actions yourself in C#. Automatic docking/shortcuts are pending.
+MenuStrip/Toolbar/ToolStrip/ContextMenu/ContextMenuStrip: command JSON with nesting, separators, disabled/checkable leaves. Toolbar orientation is configurable; context menus need a Target. StatusBar: left Text/Right text. Implement command actions yourself in C#. Use Dock explicitly for visual bars; default automatic docking and shortcuts are pending.
 
 Dialog/ConfirmationDialog: title, message, Buttons (OK/OKCancel/YesNo/YesNoCancel), Allow cancel, read-only Result. They show messages, not arbitrary child form content. FilePicker/FolderPicker: Selected path, Dialog title; FilePicker also has a Windows Filter string. Builder supplies native dialogs; a custom C# host handles BrowseRequested and assigns SelectedPath.
 
@@ -556,7 +580,7 @@ Rich document blocks use paragraph/bullet/number and plain-text runs:
 
 ## C# model code
 
-C# belongs in a host project, not Behavior. Builder does not generate a C# application or provide a C# script editor yet. [The Demo host](../src/Forma.Demo/Form1.cs) loads WebView2, constructs a bridge and renders Core controls.
+C# belongs in a host project, not Script. Builder does not generate a C# application or provide a C# script editor yet. [The Demo host](../src/Forma.Demo/Form1.cs) loads WebView2, constructs a bridge and renders Core controls.
 
 ```csharp
 using Forma.Core.Controls;

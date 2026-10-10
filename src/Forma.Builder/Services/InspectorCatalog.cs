@@ -23,7 +23,13 @@ public static class InspectorCatalog
         new("text", "Text / Title", "General"),
         new("tag", "Tag", "General"),
         new("locked", "Locked", "General", "checkbox"),
-        new("description", "Description", "General", "textarea", Kind: "card,emptystate,commandbutton"),
+        new(
+            "description",
+            "Description",
+            "General",
+            "textarea",
+            Kind: "card,emptystate,commandbutton"
+        ),
         new(
             "iconName",
             "Icon",
@@ -52,8 +58,12 @@ public static class InspectorCatalog
             Kind: "badge,chip"
         ),
         new(
-            "variant", "Variant", "Appearance", "select",
-            Options: Forma.Core.Controls.Toast.Variants.ToArray(), Kind: "toast"
+            "variant",
+            "Variant",
+            "Appearance",
+            "select",
+            Options: Forma.Core.Controls.Toast.Variants.ToArray(),
+            Kind: "toast"
         ),
         new("initials", "Initials (blank=automatic)", "General", Kind: "avatar"),
         new(
@@ -299,8 +309,19 @@ public static class InspectorCatalog
             Kind: "maskedtextbox",
             ReadOnly: true
         ),
-        new("checkedIndices", "Checked indices", "Behavior", Kind: "checkedlistbox,checkboxgroup,chipgroup"),
-        new("showText", "Show text", "Appearance", "checkbox", Kind: "iconbutton,floatingactionbutton,commandbutton"),
+        new(
+            "checkedIndices",
+            "Checked indices",
+            "Behavior",
+            Kind: "checkedlistbox,checkboxgroup,chipgroup"
+        ),
+        new(
+            "showText",
+            "Show text",
+            "Appearance",
+            "checkbox",
+            Kind: "iconbutton,floatingactionbutton,commandbutton"
+        ),
         new("primaryEnabled", "Primary enabled", "Behavior", "checkbox", Kind: "splitbutton"),
         new("removable", "Removable", "Behavior", "checkbox", Kind: "chip"),
         new("stars", "Stars", "Behavior", "number", 1, 10, Kind: "rating"),
@@ -355,10 +376,25 @@ public static class InspectorCatalog
             64,
             Kind: "splitcontainer,flowlayoutpanel,tablelayoutpanel,sidebar,appshell,responsivepanel,accordion,stackpanel,hstack,vstack,wrappanel,centerpanel"
         ),
-        new("scrollDirection", "Scroll direction", "Layout", "select", Options: ["both", "horizontal", "vertical"], Kind: "scrollablepanel"),
+        new(
+            "scrollDirection",
+            "Scroll direction",
+            "Layout",
+            "select",
+            Options: ["both", "horizontal", "vertical"],
+            Kind: "scrollablepanel"
+        ),
         new("columns", "Columns", "Layout", "number", 1, 12, Kind: "tablelayoutpanel"),
         new("rowCount", "Rows", "Layout", "number", 1, 100, Kind: "tablelayoutpanel"),
-        new("breakpoint", "Stack below width", "Layout", "number", 100, 2400, Kind: "appshell,responsivepanel"),
+        new(
+            "breakpoint",
+            "Stack below width",
+            "Layout",
+            "number",
+            100,
+            2400,
+            Kind: "appshell,responsivepanel"
+        ),
         new("tabs", "Sections (one per line)", "General", "textarea", Kind: "accordion"),
         new("expanded", "Expanded", "Behavior", "checkbox", Kind: "accordion"),
         new("selectedTab", "Expanded section", "Behavior", "number", 0, 99, Kind: "accordion"),
@@ -366,7 +402,14 @@ public static class InspectorCatalog
         new("selectedTab", "Selected tab", "Behavior", "number", 0, 99, Kind: "tabcontrol"),
         new("layoutSlot", "Pane / tab / cell", "Layout", "number", 1, 100, ChildOnly: true),
         new("dock", "Dock", "Layout", "select", Options: Appearance.DockValues, ChildOnly: true),
-        new("anchor", "Anchor", "Layout", "select", Options: Appearance.AnchorValues, ChildOnly: true),
+        new(
+            "anchor",
+            "Anchor",
+            "Layout",
+            "select",
+            Options: Appearance.AnchorValues,
+            ChildOnly: true
+        ),
         new("gridColumns", "Columns (one per line)", "General", "textarea", Kind: "datagridview"),
         new("gridRows", "Rows (JSON)", "General", "textarea", Kind: "datagridview"),
         new("readOnly", "Read only", "Behavior", "checkbox", Kind: "datagridview"),

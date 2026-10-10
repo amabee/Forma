@@ -5,6 +5,86 @@ const path = require('node:path');
 const { JSDOM } = require('../../src/Forma.Builder/Frontend/node_modules/jsdom');
 const base = path.join(__dirname, '../..');
 
+test('global modules initialize before components and shared refs survive component reloads and state updates', () => {
+  const { window, document, create, messages } = fixture('preview.html'); window.formaDesigner.preview = true;
+  create('counter', 'button', 'root'); create('label', 'label', 'root');
+  const counter = { id: 'counter', name: 'counter', kind: 'button', enabled: true, visible: true, customization: {
+    behavior: 'window.app = forma.use("app"); forma.on("click", () => window.app.count.value++);'
+  } };
+  const state = { id: 'root', globalScript: 'window.globalRuns = (window.globalRuns ?? 0) + 1; forma.shared.title = "Shared"; forma.provide("app", { count: forma.ref(0), title: () => forma.shared.title });', controls: [
+    { id: 'root', name: 'Form1', kind: 'form', enabled: true, visible: true }, counter,
+    { id: 'label', name: 'label', kind: 'label', enabled: true, visible: true, customization: {
+      behavior: 'const app = forma.use("app"); forma.watch(app.count, value => forma.set("label", "text", String(value)), { immediate: true });'
+    } }
+  ] };
+  window.formaCustomization.apply(state, true); const app = window.app;
+  assert.equal(app.title(), 'Shared'); assert.equal(messages.at(-1).payload.value, '0');
+  document.getElementById('counter').click(); assert.equal(messages.at(-1).payload.value, '1');
+  window.formaCustomization.apply(state, true); assert.equal(window.globalRuns, 1); assert.equal(window.app, app);
+  counter.customization.behavior += '\n// reloaded'; window.formaCustomization.apply(state, true);
+  assert.equal(window.app, app); const count = messages.filter(message => message.event === 'set').length;
+  document.getElementById('counter').click(); assert.equal(app.count.value, 2); assert.equal(messages.filter(message => message.event === 'set').length, count + 1);
+  window.formaCustomization.clear(); window.formaCustomization.apply(state, true);
+  assert.equal(window.globalRuns, 2); assert.notEqual(window.app, app); assert.equal(window.app.count.value, 0);
+  window.close();
+});
+
+test('global startup runs after component installation, errors roll back modules and are reported once', () => {
+  const { window, document, create, messages } = fixture('preview.html'); window.formaDesigner.preview = true;
+  create('button', 'button', 'root');
+  const state = { id: 'root', controls: [{ id: 'root', kind: 'form', enabled: true, visible: true },
+    { id: 'button', kind: 'button', enabled: true, visible: true, customization: { behavior: 'window.installed = true;' } }],
+    globalScript: 'forma.on("load", () => { window.globalSawInstalled = !!window.installed; });' };
+  window.formaCustomization.apply(state, true); assert.equal(window.globalSawInstalled, true);
+  state.globalScript = 'forma.provide("broken", {}); throw new Error("Global failed");';
+  window.formaCustomization.apply(state, true); window.formaCustomization.apply(state, true);
+  assert.equal(messages.filter(m => m.event === 'error' && /Global failed/.test(m.payload.message)).length, 1);
+  state.globalScript = 'forma.provide("fixed", { ok: true });';
+  state.controls[1].customization.behavior = 'window.fixed = forma.use("fixed");';
+  window.formaCustomization.apply(state, true); assert.equal(window.fixed.ok, true);
+  state.controls[1].customization.behavior = 'forma.use("broken");'; window.formaCustomization.apply(state, true);
+  assert.match(messages.at(-1).payload.message, /not provided/);
+  window.close();
+});
+
+test('progress getters return the actual model value rather than its zero-based display offset', () => {
+  const { window, create } = fixture('preview.html'); window.formaDesigner.preview = true;
+  create('progress', 'progressbar', 'root', { minimum: 100, maximum: 200, number: 125 });
+  create('circle', 'circularprogress', 'root', { minimum: 100, maximum: 200, number: 125 });
+  create('source', 'button', 'root');
+  window.formaCustomization.apply({ controls: [
+    { id: 'progress', name: 'progress', kind: 'progressbar', number: 125, enabled: true, visible: true },
+    { id: 'circle', name: 'circle', kind: 'circularprogress', number: 125, enabled: true, visible: true },
+    { id: 'source', kind: 'button', enabled: true, visible: true, customization: { behavior: 'window.progressApi = forma;' } }
+  ] }, true);
+  assert.equal(window.progressApi.get('progress', 'value'), 125);
+  assert.equal(window.progressApi.get('circle', 'value'), 125);
+  window.close();
+});
+
+test('catalog properties bind through host updates, render input styling and return defensive data copies', () => {
+  const { window, document, create, messages } = fixture('preview.html'); window.formaDesigner.preview = true;
+  create('input', 'textbox', 'root'); create('tree', 'treeview', 'root'); create('button', 'button', 'root');
+  const input = { id: 'input', name: 'input', kind: 'textbox', enabled: true, visible: true, width: 220, height: 36,
+    fontSize: 20, foreColor: '#123456', placeholder: 'Name', readOnly: true, maxLength: 40,
+    scriptProperties: ['fontSize', 'foreColor', 'placeholder', 'readOnly', 'maxLength', 'width'] };
+  const tree = { id: 'tree', name: 'tree', kind: 'treeview', enabled: true, visible: true, nodes: [{ id: 'a', text: 'A', children: [] }], scriptProperties: ['nodes'] };
+  const controls = [input, tree, { id: 'button', name: 'button', kind: 'button', enabled: true, visible: true, customization: { behavior:
+    'window.propsApi = forma; window.fontBinding = forma.bind("input", "fontSize"); window.fontChanges = []; window.fontBinding.subscribe(v => window.fontChanges.push(v)); forma.on("click", () => forma.set("input", "fontSize", 24));' } }];
+  window.formaCustomization.apply({ controls }, true);
+  assert.equal(window.propsApi.get('input', 'placeholder'), 'Name'); assert.equal(window.fontBinding.value, 20);
+  const copy = window.propsApi.get('tree', 'nodes'); copy[0].text = 'Changed'; copy[0].children.push({ id: 'b' });
+  assert.equal(tree.nodes[0].text, 'A'); assert.equal(tree.nodes[0].children.length, 0);
+  document.getElementById('button').click(); assert.equal(messages.at(-1).payload.property, 'fontSize');
+  assert.equal(messages.at(-1).payload.value, 24);
+  input.fontSize = 24; window.formaCustomization.apply({ controls }, true);
+  assert.equal(window.fontBinding.value, 24); assert.deepEqual([...window.fontChanges], [24]);
+  window.formaDesigner.state = { controls }; window.formaDesigner.applyAppearance(input);
+  const element = document.getElementById('input'); assert.equal(element.style.fontSize, '24px');
+  assert.equal(element.readOnly, true); assert.equal(element.maxLength, 40); assert.equal(element.placeholder, 'Name');
+  window.close();
+});
+
 test('timer interval is readable, bindable and sent as a numeric setting from a click script', () => {
   const { window, document, create, messages } = fixture('preview.html');
   window.formaDesigner.preview = true;

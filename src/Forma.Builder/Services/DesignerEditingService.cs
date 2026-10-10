@@ -28,6 +28,12 @@ public sealed class DesignerEditingService(BuilderViewModel viewModel)
         }
         // Editing guards belong here as well as in the browser UI.
         if (_viewModel.PreviewMode) return new("Ready");
+        if (action == "global-script" && payload.ValueKind == JsonValueKind.Object && payload.TryGetProperty("script", out var global))
+        {
+            if (global.ValueKind != JsonValueKind.String || global.GetString()!.Length > 200_000) throw new ArgumentException("Global script must be under 200,000 characters.");
+            _viewModel.Appearance[form.Id].GlobalScript = global.GetString()!;
+            return new("Global script saved");
+        }
         if (action == "customize" && control is not null && !_viewModel.Appearance[control.Id].Locked)
         {
             var customization = payload.Deserialize<ComponentCustomization>(new JsonSerializerOptions { PropertyNameCaseInsensitive = true })

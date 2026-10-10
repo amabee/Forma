@@ -12,13 +12,23 @@ with `format: "forma-project"` and `version: 1`.
 
 Files retain the form title and size, stable control IDs and names, nesting and
 sibling order, control values, layout slots, appearance, spacing, layer order,
-and component configuration. Components reopen stopped, in Design mode.
+and component configuration. Component CSS, `script.js`, custom JSON values,
+and the form's `global-script.js` source are embedded too. Components reopen
+stopped, in Design mode.
 Local images are embedded as data URLs on save so they survive moving the design
 or deleting the source image. Remote image URLs remain references.
 
 Files describe the design and its values; they do not contain C# event handlers,
 background tasks, or a compiled application. JSON is plain text, not encrypted.
-Zoom, current selection, and transient preview state are not saved.
+Zoom, current selection, and transient Preview state are not saved. This includes
+shared modules, reactive refs, timers and values changed by runtime scripts.
+Every fresh Preview initializes these from the saved design and script source.
+
+External editing files live in `<project-name>.components/<control-id>/`;
+the global file lives in `<project-name>.components/<form-id>/global/`.
+These folders are editing conveniences, not dependencies needed to reopen the
+project. See [Custom Properties](component-customization.md) and
+[global scripts](global-scripts.md) for save/auto-apply and legacy file support.
 
 Open validates the format version, control types, IDs, tree structure, and
 properties before replacing the active design. Unsupported versions and malformed
@@ -33,7 +43,8 @@ future installer work. Use Open inside Builder for now.
 
 Use Edit or the toolbar, Ctrl+Z for Undo, and Ctrl+Y or Ctrl+Shift+Z for Redo.
 Design history includes insertion, deletion (including descendants), movement,
-resizing, property changes, image selection, and layer actions. Consecutive edits
+resizing, property changes, image selection, layer actions, and applied component
+or global script edits. Consecutive edits
 to the same Text field within 800 ms form one history entry. A new edit after Undo
 clears the redo branch. History retains up to 100 edits and trims older large entries.
 

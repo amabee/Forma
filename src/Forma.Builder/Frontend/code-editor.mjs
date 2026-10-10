@@ -20,10 +20,10 @@ const language = key => ({ css: "css", behavior: "javascript", characteristics: 
 const send = message => window.chrome?.webview?.postMessage({ type: "editor", ...message });
 const status = text => { document.getElementById("editor-message").textContent = text; };
 const theme = EditorView.theme({
-  "&": { height: "100%", color: "#e2e8f0", backgroundColor: "#0f172a", fontSize: "14px" },
+  "&": { height: "100%", color: "#e2e8f0", backgroundColor: "#1e1e24", fontSize: "14px" },
   ".cm-scroller": { fontFamily: "Consolas, monospace", overflow: "auto", lineHeight: "1.65" },
   ".cm-content": { padding: "14px 0", caretColor: "#60a5fa" },
-  ".cm-gutters": { backgroundColor: "#0f172a", color: "#64748b", border: "none", paddingRight: "12px" },
+  ".cm-gutters": { backgroundColor: "#1e1e24", color: "#64748b", border: "none", paddingRight: "12px" },
   // CodeMirror draws selections behind the text. An opaque active line hides them.
   ".cm-activeLine": { backgroundColor: "rgba(148, 163, 184, 0.08)" },
   ".cm-activeLineGutter": { backgroundColor: "#1e293b" },
@@ -56,9 +56,18 @@ const lightHighlighting = syntaxHighlighting(HighlightStyle.define([
 ]));
 const themeSlot = new Compartment(); let editorTheme = "dark";
 const themeExtensions = () => editorTheme === "light" ? [lightTheme, lightHighlighting] : [theme, highlighting];
+const savedSources = {};
+let globalDocument = false;
+const fileName = key => ({ css: "component.css", behavior: globalDocument ? "global-script.js" : "script.js", characteristics: "custom-properties.json" })[key];
 const views = new Map(); let active = "css", busy = false, dirty = false, populating = false;
 function source() { return Object.fromEntries([...views].map(([key, view]) => [key, view.state.doc.toString()])); }
 function markDirty(value) {
+  for (const [key, view] of views) {
+    const tab = document.querySelector(`[data-tab="${key}"]`);
+    const changed = view.state.doc.toString() !== (savedSources[key] ?? "");
+    tab.querySelector(".file-dirty").hidden = !changed;
+    tab.setAttribute("aria-label", `${fileName(key)}${changed ? ", unsaved changes" : ""}`);
+  }
   if (dirty === value) return;
   dirty = value; document.getElementById("editor-dirty").textContent = dirty ? "Unsaved changes" : "Saved";
   send({ event: "dirty", dirty });
@@ -73,12 +82,12 @@ function extensions(key) {
     ...(key === "behavior" ? [autocompletion({ override: [context => {
       if (/Comment/.test(syntaxTree(context.state).resolveInner(context.pos, -1).name)) return null;
       let values = {}; try { values = JSON.parse(views.get("characteristics")?.state.doc.toString() ?? "{}"); } catch {}
-      return formaCompletions(context, completionContext.controls, values);
+      return formaCompletions(context, completionContext.controls, values, completionContext.modules);
     }, localCompletionSource] })] : []),
     keymap.of([indentWithTab, { key: "Mod-s", run: () => { command("save"); return true; } },
       { key: "Mod-Shift-f", run: () => { command("format"); return true; } }]),
     EditorView.updateListener.of(update => {
-      if (update.docChanged && !populating) markDirty(true);
+      if (update.docChanged && !populating) markDirty([...views].some(([name, view]) => view.state.doc.toString() !== (savedSources[name] ?? "")));
       if (update.selectionSet || update.docChanged) cursor();
       let count = 0; for (const [name, view] of views) {
         let fileCount = 0; forEachDiagnostic(view.state, () => { count++; fileCount++; });
@@ -90,10 +99,13 @@ function extensions(key) {
 }
 for (const key of Object.keys(definitions)) views.set(key, new EditorView({ state: EditorState.create({ extensions: extensions(key) }), parent: document.getElementById(`editor-${key}`) }));
 function activate(key) {
+  if (!views.has(key) || (globalDocument && key !== "behavior")) return;
   active = key;
+  document.getElementById("editor-file-name").textContent = fileName(key);
+  send({ event: "document", document: key });
   for (const [name, view] of views) {
     view.dom.parentElement.hidden = name !== key;
-    const tab = document.querySelector(`[data-tab="${name}"]`); tab.setAttribute("aria-selected", String(name === key));
+    const tab = document.querySelector(`[data-tab="${name}"]`); tab.setAttribute("aria-selected", String(name === key)); tab.tabIndex = name === key ? 0 : -1;
     if (name === key) { view.requestMeasure(); view.focus(); }
   }
   cursor();
@@ -138,23 +150,40 @@ function receive(message) {
     completionContext = message.context;
     if (message.action === "context") for (const view of views.values()) forceLinting(view);
   }
-  if (message.name) document.getElementById("editor-component-name").textContent = `${message.name} · Custom Properties`;
+  if (message.name) document.getElementById("editor-component-name").textContent = message.name;
+  if (message.action === "activate") activate(message.document);
   if (message.action === "source") {
+    globalDocument = !!message.globalScript;
+    Object.assign(savedSources, message.source);
+    if (message.document && views.has(message.document)) active = message.document;
+    document.querySelectorAll('[data-tab]').forEach(tab => { tab.hidden = !!message.globalScript && tab.dataset.tab !== "behavior"; });
+    document.querySelector('#tab-behavior span').textContent = message.globalScript ? "global-script.js" : "script.js";
+    if (message.globalScript) { active = "behavior"; document.getElementById("editor-component-name").textContent = "Global script"; }
     populating = true;
     try { for (const [key, view] of views) view.setState(EditorState.create({ doc: message.source[key] ?? "", extensions: extensions(key) })); }
     finally { populating = false; }
     markDirty(false); activate(active);
   }
-  if (message.action === "saved") { const current = source(); markDirty(Object.keys(definitions).some(key => current[key] !== message.source[key])); setBusy(false); }
+  if (message.action === "saved") { Object.assign(savedSources, message.source); const current = source(); markDirty(Object.keys(definitions).some(key => current[key] !== message.source[key])); setBusy(false); }
   if (message.action === "error") setBusy(false);
   if (message.status) status(message.status);
 }
 document.querySelectorAll("[data-tab]").forEach(tab => tab.addEventListener("click", () => activate(tab.dataset.tab)));
-document.querySelectorAll("[data-command]").forEach(button => button.addEventListener("click", () => command(button.dataset.command)));
+document.querySelector(".editor-tabs").addEventListener("keydown", event => {
+  if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
+  event.preventDefault();
+  const tabs = [...document.querySelectorAll("[data-tab]")].filter(tab => !tab.hidden);
+  const index = tabs.findIndex(tab => tab.dataset.tab === active);
+  const next = event.key === "Home" ? 0 : event.key === "End" ? tabs.length - 1 : (index + (event.key === "ArrowRight" ? 1 : -1) + tabs.length) % tabs.length;
+  activate(tabs[next].dataset.tab); tabs[next].focus();
+});
+document.querySelectorAll("[data-command]").forEach(button => button.addEventListener("click", () => { command(button.dataset.command); document.querySelector(".editor-tools").open = false; }));
+document.addEventListener("pointerdown", event => { const tools = document.querySelector(".editor-tools"); if (!tools.contains(event.target)) tools.open = false; });
+document.addEventListener("keydown", event => { if (event.key === "Escape") document.querySelector(".editor-tools").open = false; });
 window.chrome?.webview?.addEventListener("message", event => receive(event.data));
 window.addEventListener("keydown", event => {
   if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "s") { event.preventDefault(); command("save"); }
 });
 window.addEventListener("pagehide", () => { for (const view of views.values()) view.destroy(); });
 window.formaCodeEditor = { command, receive, source, views, activate };
-activate("css"); send({ event: "ready" });
+send({ event: "ready" }); activate("css");

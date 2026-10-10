@@ -28,7 +28,7 @@ public sealed class PreviewSession : IDisposable
 
     public object State() => new
     {
-        type = "designer", action = "runtime-preview", id = Form.Id,
+        type = "designer", action = "runtime-preview", id = Form.Id, globalScript = Appearance[Form.Id].GlobalScript,
         controls = Controls.Select(control =>
         {
             var item = JsonSerializer.Deserialize<Dictionary<string, object?>>(
@@ -77,7 +77,7 @@ public sealed class PreviewSession : IDisposable
             if (control is PathPicker picker) item["selectedPath"] = picker.SelectedPath;
             if (control is Spinner spinner) item["isActive"] = spinner.IsActive;
             if (control is Forma.Core.Controls.Timer timer) item["interval"] = timer.Interval;
-            if (control is NumericControl numeric) { item["minimum"] = numeric.Minimum; item["maximum"] = numeric.Maximum; item["increment"] = numeric.Increment; }
+            if (control is NumericControl numeric) { item["number"] = numeric.Value; item["minimum"] = numeric.Minimum; item["maximum"] = numeric.Maximum; item["increment"] = numeric.Increment; }
             if (control is Spinner animation) item["speed"] = animation.Speed;
             if (control is Skeleton skeleton) { item["shape"] = skeleton.Shape; item["lines"] = skeleton.Lines; item["isActive"] = skeleton.IsActive; }
             if (control is LoadingOverlay overlay) item["isActive"] = overlay.IsActive;
@@ -85,6 +85,7 @@ public sealed class PreviewSession : IDisposable
                 item["variant"] = toast.Variant; item["position"] = toast.Position;
                 item["duration"] = toast.Duration; item["dismissible"] = toast.Dismissible; item["isOpen"] = toast.IsOpen;
             }
+            RuntimePropertyService.Project(control, Appearance[control.Id], item);
             return item;
         }).ToArray()
     };
@@ -202,7 +203,52 @@ public sealed class PreviewSession : IDisposable
             case "filterText" when control is DataGridView grid && value.ValueKind == JsonValueKind.String:
                 grid.FilterText = value.GetString()!; return;
         }
+        if (property == "targetId" && value.ValueKind == JsonValueKind.String && value.GetString() is string reference && reference.Length > 0)
+        {
+            var target = Controls.FirstOrDefault(c => c.Id == reference || c.Name == reference);
+            if (target is null || target is INonvisualControl || target == control) throw new ArgumentException("Target must identify another visual control.");
+            value = JsonSerializer.SerializeToElement(target.Id);
+        }
+        var oldContent = ContentSize(control);
+        if (RuntimePropertyService.TrySet(control, Appearance[id], property, value))
+        {
+            if (property is "width" or "height" or "minimumWidth" or "minimumHeight" or "maximumWidth" or "maximumHeight"
+                or "paddingTop" or "paddingRight" or "paddingBottom" or "paddingLeft" or "borderWidth" or "headerVisible")
+                ResizeAnchoredChildren(control, oldContent);
+            return;
+        }
         throw new ArgumentException($"Property '{property}' is unsupported or has the wrong value type for {control.ControlType}.");
+    }
+
+    private (int Width, int Height) ContentSize(Control control)
+    {
+        var a = Appearance[control.Id];
+        if (control == Form) return (a.Width, a.Height);
+        var width = a.Width - a.PaddingLeft - a.PaddingRight - 2 * a.BorderWidth;
+        var height = a.Height - a.PaddingTop - a.PaddingBottom - 2 * a.BorderWidth;
+        if (control is Forma.Core.Controls.GroupBox) height -= 28;
+        if (control is Card { HeaderVisible: true }) height -= 56;
+        if (control is Accordion accordion) height -= (accordion.Tabs.Length + 1) * 36;
+        else if (control is TabControl tab) { if (tab.Orientation == "vertical") width -= 120; else height -= 36; }
+        if (control is Forma.Core.Controls.SplitContainer split) { if (split.Orientation == "vertical") height = (height - split.Gap) / 2; else width = (width - split.Gap) / 2; }
+        return (Math.Max(24, width), Math.Max(20, height));
+    }
+
+    private void ResizeAnchoredChildren(Control parent, (int Width, int Height) oldContent)
+    {
+        if (parent is LinearLayout or Forma.Core.Controls.TableLayoutPanel) return;
+        var next = ContentSize(parent);
+        foreach (var child in parent.Children.Where(c => c is not INonvisualControl))
+        {
+            var a = Appearance[child.Id];
+            if (a.Dock != "none") continue; // Dock follows actual host geometry in the browser.
+            var oldChildContent = ContentSize(child);
+            var bounds = LayoutGeometry.Anchor(new(child.X ?? 0, child.Y ?? 0, a.Width, a.Height), a.Anchor, next.Width - oldContent.Width, next.Height - oldContent.Height);
+            RuntimePropertyService.TrySet(child, a, "width", JsonSerializer.SerializeToElement(bounds.Width));
+            RuntimePropertyService.TrySet(child, a, "height", JsonSerializer.SerializeToElement(bounds.Height));
+            child.X = Math.Max(0, bounds.X); child.Y = Math.Max(0, bounds.Y);
+            ResizeAnchoredChildren(child, oldChildContent);
+        }
     }
 
     private static string[] StringArray(JsonElement value)

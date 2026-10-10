@@ -66,7 +66,7 @@ public sealed class BuilderViewModel : INotifyPropertyChanged
     public DesignerEditResult ExecuteEdit(string action, string? id, JsonElement payload)
     {
         var mutates = !PreviewMode && Form is not null
-            && (action is "drop" or "move" or "resize" or "property" or "customize" or "image-source" or "path-source"
+            && (action is "drop" or "move" or "resize" or "property" or "customize" or "global-script" or "image-source" or "path-source"
                 || action == "command" && payload.ValueKind == JsonValueKind.Object
                     && payload.TryGetProperty("command", out var command)
                     && command.ValueKind == JsonValueKind.String

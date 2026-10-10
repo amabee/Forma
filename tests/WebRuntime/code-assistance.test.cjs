@@ -5,6 +5,30 @@ const { pathToFileURL } = require('node:url');
 const load = () => import(pathToFileURL(path.join(__dirname, '../../src/Forma.Builder/Frontend/code-assistance.mjs')).href);
 const controls = [{ name: 'userAvatar', id: 'avatar-id', kind: 'avatar' }, { name: 'nameInput', id: 'input-id', kind: 'textbox' }, { name: 'inputFile', kind: 'filepicker' }];
 
+test('shared scripting API is suggested and recognized by diagnostics', async () => {
+  const { formaCompletions, diagnose } = await load();
+  const suggestions = formaCompletions(context('forma.'), controls).options.map(option => option.label);
+  for (const method of ['use', 'provide', 'shared']) assert.ok(suggestions.includes(method));
+  assert.deepEqual(formaCompletions(context('forma.use("'), controls, {}, ['app', 'utils']).options.map(option => option.label), ['app', 'utils']);
+  assert.deepEqual(await diagnose('javascript', 'forma.provide("app", { count: forma.ref(0) }); const app = forma.use("app"); forma.shared.name = "Angel";', controls), []);
+});
+
+test('shared runtime catalog suggests appearance, input, structured data and read-only properties', async () => {
+  const { propertiesFor, diagnose } = await load();
+  for (const [kind, properties] of Object.entries({
+    button: ['fontSize', 'backColor', 'width', 'style'], textbox: ['placeholder', 'readOnly', 'maxLength'],
+    avatar: ['shape', 'initials'], treeview: ['nodes', 'expandedNodes'], richtextbox: ['document'],
+    tablelayoutpanel: ['columns', 'rowCount'], tooltip: ['placement', 'initialDelay'],
+    filepicker: ['filter', 'dialogTitle'], pagination: ['pageSize', 'pageCount']
+  })) for (const property of properties) assert.ok(propertiesFor(kind, 'get').includes(property), `${kind}.${property}`);
+  assert.ok(!propertiesFor('pagination', 'set').includes('pageCount'));
+  assert.ok(!propertiesFor('dialog', 'set').includes('result'));
+  assert.ok(!propertiesFor('timer', 'get').includes('fontSize'));
+  assert.ok(!propertiesFor('form', 'get').includes('x'));
+  const source = 'forma.set("nameInput", "fontSize", 24); forma.bind("nameInput", "readOnly"); forma.set("userAvatar", "shape", "square");';
+  assert.deepEqual(await diagnose('javascript', source, controls), []);
+});
+
 test('timer interval and loading/numeric properties are offered without unsupported-property diagnostics', async () => {
   const { propertiesFor, diagnose, formaCompletions } = await load();
   const known = [{ name: 'timer', kind: 'timer' }];

@@ -11,6 +11,13 @@ Preview layout and design history. Managed-child resize positions are fixed,
 and dimensions owned by Dock/AppShell are disabled in the inspector. AutoSize,
 more explicit AutoScroll settings, and further layout properties remain pending.
 
+Component `script.js`, a project-wide `global-script.js`, shared reactive state,
+and the expanded typed `forma.get`/`forma.set`/`forma.bind` property API are
+implemented. See [global scripts](global-scripts.md) and
+[runtime properties](runtime-properties.md). These are Builder authoring/runtime
+features; they do not complete the roadmap's code-editor component or all data
+binding and application components.
+
 | Stage | Scope | Status |
 | --- | --- | --- |
 | 1 | Basic controls, original six layout containers, practical inputs, image picker, Timer/BackgroundWorker, basic DataGridView | Implemented; advanced layout/grid behavior remains below |

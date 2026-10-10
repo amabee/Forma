@@ -1,55 +1,58 @@
 @import "tailwindcss";
 @source "../DesignerWeb/code-editor.html";
 @layer base {
-  body { @apply m-0 h-screen overflow-hidden bg-slate-900 text-slate-200 font-sans; }
+  body { @apply m-0 h-screen overflow-hidden bg-[#1e1e24] text-slate-200 font-sans; }
   button { @apply cursor-pointer; }
   button:disabled { @apply opacity-50 cursor-default; }
   [hidden] { display: none !important; }
 }
 @layer components {
-  .embedded-editor .editor-header { @apply px-3 py-2; }
-  .embedded-editor .editor-header h1 { @apply text-xs; }
-  .embedded-editor .editor-header p { @apply hidden; }
-  .embedded-editor .editor-actions { @apply mt-1.5 gap-1; }
-  .embedded-editor .editor-actions button { @apply px-2 py-1; }
-  .embedded-editor .editor-option { @apply mt-1 text-[10px]; }
-  .embedded-editor .editor-tabs button { @apply px-3 py-2; }
-  .embedded-editor .editor-footer { @apply gap-2 px-3 py-1.5 text-[10px]; }
-  .embedded-editor .editor-actions kbd { @apply hidden; }
-  #editor-problems { @apply shrink-0 rounded px-1 text-amber-300 hover:bg-slate-700; }
-  .editor-tabs button[data-problems]::after { content: attr(data-problems); @apply ml-2 rounded bg-amber-500/20 px-1 text-amber-300; }
-}
-@layer components {
   .editor-shell { @apply flex h-full flex-col; }
-  .editor-header { @apply shrink-0 border-b border-slate-700 bg-slate-800 px-5 py-3; }
-  .editor-header h1 { @apply text-lg font-semibold; }
-  .editor-header p { @apply mt-1 text-xs text-slate-400; }
-  .editor-actions { @apply mt-3 flex flex-wrap gap-2; }
-  .editor-actions button { @apply rounded border border-slate-600 bg-slate-700 px-3 py-1.5 text-xs hover:bg-slate-600 focus-visible:outline-2 focus-visible:outline-blue-400; }
-  .editor-actions .editor-primary { @apply border-blue-500 bg-blue-600 hover:bg-blue-500; }
-  .editor-actions kbd { @apply ml-2 opacity-65; }
-  .editor-option { @apply mt-2 flex items-center gap-2 text-xs text-slate-400; }
-  .editor-tabs { @apply flex shrink-0 border-b border-slate-700 bg-slate-800; }
-  .editor-tabs button { @apply border-r border-slate-700 px-4 py-3 text-xs text-slate-400; }
-  .editor-tabs button span { @apply ml-2; }
-  .editor-tabs [aria-selected="true"] { @apply border-t-2 border-t-blue-400 bg-slate-900 text-slate-100; }
-  .editor-workspace { @apply flex-1 min-h-0 overflow-hidden; }
+  .editor-tabs { @apply flex shrink-0 gap-px overflow-x-auto border-b border-[#393544] bg-[#18171d] pt-1; }
+  .editor-tabs button { @apply flex shrink-0 items-center gap-2 border-t-2 border-transparent bg-[#25232c] px-4 py-2.5 text-xs text-slate-400 hover:text-slate-100; }
+  .editor-tabs [aria-selected="true"] { @apply border-t-violet-400 bg-[#1e1e24] text-white; }
+  .file-kind { @apply text-[10px] font-semibold; }
+  .css-kind { @apply text-sky-300; }
+  .js-kind { @apply text-amber-300; }
+  .json-kind { @apply text-violet-300; }
+  .file-dirty { @apply text-[8px] not-italic text-violet-300; }
+  .editor-header { @apply flex shrink-0 items-center justify-between gap-3 border-b border-[#393544] bg-[#25232c] px-3 py-1.5; }
+  .editor-location { @apply flex min-w-0 items-center gap-2 text-xs text-slate-400; }
+  .editor-header h1 { @apply truncate font-medium text-slate-200; }
+  #editor-file-name { @apply truncate; }
+  .location-divider { @apply text-slate-500; }
+  .editor-actions { @apply flex shrink-0 items-center gap-1; }
+  .editor-actions > button { @apply flex items-center gap-1.5 rounded px-2 py-1 text-xs hover:bg-[#393544] focus-visible:outline-2 focus-visible:outline-violet-400; }
+  .editor-primary { @apply text-violet-200; }
+  .editor-primary img { @apply h-3.5 w-3.5; filter: brightness(0) invert(0.8); }
+  .editor-tools { @apply relative; }
+  .editor-tools summary { @apply cursor-pointer list-none rounded px-2 py-0.5 text-lg leading-5 hover:bg-[#393544] focus-visible:outline-2 focus-visible:outline-violet-400; }
+  .editor-tools-menu { @apply absolute right-0 top-full z-50 mt-2 min-w-48 rounded border border-[#494351] bg-[#25232c] p-1 shadow-xl; }
+  .editor-tools-menu button { @apply block w-full rounded px-3 py-2 text-left text-xs hover:bg-violet-600; }
+  .editor-option { @apply flex items-center gap-2 border-t border-[#494351] px-3 py-2 text-xs text-slate-300; }
+  .editor-workspace { @apply min-h-0 flex-1 overflow-hidden; }
   .editor-document { @apply h-full; }
-  .editor-footer { @apply flex shrink-0 items-center gap-4 border-t border-slate-700 bg-slate-800 px-4 py-2 text-xs text-slate-400; }
-  #editor-message { @apply flex-1 min-w-0 truncate; }
-  #editor-cursor { @apply shrink-0; }
-}
-
-@layer components {
+  .editor-footer { @apply flex shrink-0 items-center gap-3 border-t border-[#393544] bg-[#25232c] px-3 py-1.5 text-[11px] text-slate-400; }
+  #editor-message { @apply min-w-0 flex-1 truncate; }
+  #editor-cursor, #editor-dirty { @apply shrink-0; }
+  #editor-problems { @apply shrink-0 rounded px-1 text-amber-300 hover:bg-[#393544]; }
+  .editor-tabs button[data-problems]::after { content: attr(data-problems); @apply rounded bg-amber-500/20 px-1 text-amber-300; }
   [data-theme="light"] body { @apply bg-white text-slate-800; color-scheme: light; }
-  [data-theme="light"] .editor-header, [data-theme="light"] .editor-tabs,
-  [data-theme="light"] .editor-footer { @apply border-slate-200 bg-slate-50; }
-  [data-theme="light"] .editor-header p, [data-theme="light"] .editor-option,
-  [data-theme="light"] .editor-footer, [data-theme="light"] .editor-tabs button { @apply text-slate-600; }
-  [data-theme="light"] .editor-actions button { @apply border-slate-300 bg-white text-slate-700 hover:bg-slate-100; }
-  [data-theme="light"] .editor-actions .editor-primary { @apply border-blue-600 bg-blue-600 text-white hover:bg-blue-700; }
-  [data-theme="light"] .editor-tabs button { @apply border-slate-200; }
-  [data-theme="light"] .editor-tabs [aria-selected="true"] { @apply border-t-blue-500 bg-white text-blue-700; }
+  [data-theme="light"] .editor-tabs { @apply border-slate-300 bg-slate-200; }
+  [data-theme="light"] .editor-tabs button { @apply bg-slate-100 text-slate-600; }
+  [data-theme="light"] .editor-tabs [aria-selected="true"] { @apply bg-white text-violet-700; }
+  [data-theme="light"] .editor-header, [data-theme="light"] .editor-footer { @apply border-slate-200 bg-slate-50 text-slate-600; }
+  [data-theme="light"] .editor-header h1 { @apply text-slate-800; }
+  [data-theme="light"] .editor-primary { @apply text-violet-700; }
+  [data-theme="light"] .editor-primary img { filter: none; }
+  [data-theme="light"] .editor-actions > button:hover, [data-theme="light"] .editor-tools summary:hover { @apply bg-slate-200; }
+  [data-theme="light"] .editor-tools-menu { @apply border-slate-300 bg-white; }
+  [data-theme="light"] .editor-tools-menu button:hover { @apply text-white; }
+  [data-theme="light"] .editor-option { @apply border-slate-200 text-slate-700; }
+  [data-theme="light"] .file-dirty, [data-theme="light"] .json-kind { @apply text-violet-700; }
+  [data-theme="light"] .css-kind { @apply text-sky-700; }
+  [data-theme="light"] .js-kind { @apply text-amber-700; }
   [data-theme="light"] #editor-problems { @apply text-amber-700 hover:bg-amber-50; }
   [data-theme="light"] .editor-tabs button[data-problems]::after { @apply bg-amber-100 text-amber-800; }
+  @media (max-width: 600px) { #editor-cursor { @apply hidden; } .editor-tabs button { @apply px-2; } }
 }

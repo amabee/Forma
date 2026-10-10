@@ -1,67 +1,75 @@
 # Properties implemented in Builder
 
 The inspector is generated from C# descriptors in `InspectorCatalog.cs`, with
-categories, editor types, bounds, choices, and control-specific availability.
-Changing a selected control's values does not rebuild its editors, preserving
-focus while typing. Advanced starts collapsed; category expansion is preserved
-when switching between kinds.
+categories, editor types, bounds, choices and component-specific availability.
+Updates preserve editor focus; category expansion is remembered. Search filters
+properties, and **Custom Properties…** appears immediately below the search.
 
 | Category | Supported properties |
 | --- | --- |
 | General | Name, Text/Title, read-only ID, Tag, Locked |
-| Appearance | Background, foreground, border style/color/width/radius, opacity, shadow, cursor; Button style presets |
-| Typography | Family, size, weight (including 100–900), style, alignment, line height, letter spacing |
-| Layout | X/Y, size, minimum/maximum size, independent top/right/bottom/left margin and padding |
-| Behavior | Enabled, Visible, Focusable, TabIndex, ToolTip; TextBox placeholder, ReadOnly, Password, MaxLength |
-| Advanced | CSS Class, read-only CSS ID, visual Custom CSS, Z-index |
+| Appearance | Background, foreground, borders, opacity, shadow, cursor; component style/variant options |
+| Typography | Family, size, weight, style, alignment, line height, letter spacing |
+| Layout | X/Y, size, minimum/maximum size, per-side margin/padding, Dock/Anchor and container-specific slots/settings |
+| Behavior | Enabled, Visible, Focusable, TabIndex, ToolTip; component-specific input and runtime settings |
+| Advanced | CSS Class and read-only CSS ID |
 
-Properties are contextual. Root position and child borders/spacing are omitted
-for Forms. TextBox options appear only on TextBox, and style presets only on
-Button. Form font settings affect its preview title. Name is separate from
-render identity and title; names must be unique identifiers. ID remains read-only
-because Core IDs are set once and renderers use them as stable keys.
+Properties are contextual. Root position is omitted, input settings appear on
+applicable inputs, and layout providers control the fields they own. Name is
+separate from render identity; names must be unique identifiers. IDs are stable
+keys used by renderers, persistence and scripts.
 
-Locked controls remain selectable but cannot be moved, resized, deleted, or
-edited. Unlocking remains available. Locking the form prevents adding controls
-and resizing it; it does not lock its children recursively.
+Locked controls remain selectable but cannot be moved, resized, deleted or edited.
+Unlocking remains available. Locking the form does not lock children recursively.
+Enabled/Visible control runtime interaction; Design preserves selection.
 
-Style presets change button background/foreground/border colors. Individual
-color edits switch the preset to Custom. Cursor, tooltips, focusability, and
-keyboard tab order are best checked in Preview; design mode preserves selection
-and dragging. Tag is metadata and is also exposed as `data-tag` on the element.
+## Layout and styling
 
-MaximumWidth/Height of zero means the parent or canvas limit. Minimums are
-subject to available space and hard minimum dimensions. Size constraints apply
-to both numeric property edits and resize handles. Margin consumes available
-parent space; larger margin may shrink/reposition the control to keep it inside.
-Form shrink keeps children inside and preserves the position of locked children.
+MaximumWidth/Height of zero uses the available parent/canvas limit. Size
+constraints apply to property edits and resize handles. Margin consumes parent
+space. Free-position containers support Dock/Anchor; managed layouts own child
+placement. See [Dock and Anchor](components-and-scripting.md#dock-and-anchor).
 
-Custom CSS accepts visual declarations (color, background-color, fonts, text,
-borders, line height, letter spacing, and shadows). These override ordinary
-appearance fields while geometry stays controlled by Layout. Removing Custom
-CSS restores descriptor values. CSS classes cannot replace reserved designer
-classes; changing CSS Class removes previously assigned user classes.
+Custom CSS and Z-index live in **Custom Properties → Styles**, rather than
+separate inspector fields. Scoped `:host` styles override ordinary appearance
+settings. Keep position and sizing in Layout to preserve designer geometry.
+Nonvisual popup components style their runtime popup, not their designer tray.
+The editor also contains `script.js` and custom JSON values.
 
-State remains owned by the C# Builder. Appearance metadata is not yet a shared
-Core styling API or a saveable project format.
+Design appearance and applied sources are saved in `.forma` projects and
+participate in Undo/Redo. Appearance metadata currently belongs to Builder;
+moving the styling contract into the shared Core API is still separate work.
+
+## Properties from JavaScript
+
+Use `forma.get`, `forma.set` and `forma.bind` with exact camelCase keys and
+types in [runtime properties](runtime-properties.md). Code suggestions reflect
+supported component keys. Inspector labels do not automatically become script
+properties, and read-only status fields cannot be set.
+
+```js
+const enabled = forma.bind("timer", "enabled");
+forma.on("click", () => {
+  forma.set("timer", "interval", 1000);
+  enabled.value = !enabled.value;
+});
+```
+
+Attach that example to a Button, with a Timer named `timer`. Numeric setters
+take numbers rather than quoted strings. Runtime writes affect the Preview
+copy; they do not edit the saved design. Bridge updates are asynchronous.
 
 ## Remaining proposal items
 
-- Events tab, handler generation, and binding to user code.
-- Dock/Anchor and horizontal/vertical alignment: these need a layout system.
-- TextBox Multiline, CharacterCasing, ScrollBars, and WordWrap.
-- Custom attributes, RenderMode, data binding, and AllowDrop behavior in apps.
-- Form BackgroundImage and native window StartPosition, Resizable, MinimizeBox,
-  MaximizeBox, ShowIcon, and native BorderStyle.
-- Save/load and moving the descriptor/property model into the shared Core API.
+- Visual Events-tab authoring and generated C# handlers; JavaScript event
+  handlers already work in `script.js`.
+- AutoSize, explicit AutoScroll controls and further layout/alignment settings.
+- Additional TextBox options such as CharacterCasing and WordWrap.
+- Custom attributes, RenderMode and application AllowDrop configuration.
+- A visual binding editor beyond the current reactive scripting API.
+- Form BackgroundImage and further native window configuration properties.
+- A shared Core styling/property contract.
 
-These are not presented as working editors. The proposal recommends incremental
-implementation rather than adding every property immediately.
-
-## Checks
-
-Run `dotnet test tests/Forma.Tests` and
-`node --test tests/WebRuntime/designer.test.cjs`. Checks cover contextual metadata,
-identity restrictions, descriptor editor generation, locking, size limits,
-spacing/typography rendering, and preview tab order. Manual desktop inspection
-is still needed for the resulting layout.
+The [original property proposal](Forma_Properties_System.md) includes future
+ideas. Use the current [component reference](component-reference.md) for available
+fields and exact ranges, and the [roadmap](roadmap-stages.md) for priorities.

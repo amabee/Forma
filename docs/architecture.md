@@ -246,3 +246,22 @@ it observes free content hosts, applies runtime geometry, and releases observers
 on removal/reset. It does not replace stack/table/AppShell layout rules or store
 DOM coordinates as project data. Script edits change PreviewSession appearance,
 then the refreshed runtime snapshot updates the View.
+
+RuntimePropertyService extends the typed Preview API using the explicit
+DesignerWeb/runtime-script-properties.json catalog. The same catalog is embedded
+in Builder/tests and imported by code-assistance.mjs. InspectorCatalog supplies
+type, range and option validation; only registered members are reflected.
+Runtime snapshots advertise available extension fields, and the browser getter
+reads their projected values, cloning structured arrays before returning them.
+Core setters still validate TreeView, PropertyGrid and rich document structures.
+PreviewSession adjusts nested anchors when scripts change container dimensions.
+
+Project global source is held in the root Appearance.GlobalScript model and
+validated by the global-script editing command. Existing snapshot/restore paths
+therefore preserve it in Save/Open and history. Preview copies the source into
+its own runtime snapshot. The editor uses script.js and global-script.js names;
+legacy Behavior serialization and behavior.js fallback remain compatible.
+component-customization.js initializes one shared reactive scope and module
+registry before component scripts, using provide/use and shared access. Consumer
+effects are still owned by their component scopes; the project scope is disposed
+after consumers on Preview reset/close. Runtime values are not saved to disk.

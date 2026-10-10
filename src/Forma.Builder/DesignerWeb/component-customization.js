@@ -5,6 +5,8 @@
     failedStyles = new Map(),
     failedBehaviors = new Map();
   let currentState;
+  const modules = new Map();
+  let sharedState, globalSignature, globalKey, globalFailed = false;
   const aliases = { doubleclick: "dblclick", mousewheel: "wheel" };
   const lifecycle = new Set([
     "created",
@@ -28,9 +30,10 @@
   }
   function validate(record) {
     if (!emit(record, "validating", {}, true)) return false;
-    const inputs = record.element.matches("input,select,textarea")
-      ? [record.element]
-      : [...record.element.querySelectorAll("input,select,textarea")];
+    const element = record.validationElement ?? record.element;
+    const inputs = element.matches("input,select,textarea")
+      ? [element]
+      : [...element.querySelectorAll("input,select,textarea")];
     if (!inputs.every((input) => input.checkValidity())) return false;
     emit(record, "validated");
     return true;
@@ -150,7 +153,7 @@
   }
 
   function installBehavior(item, state, source, characteristics) {
-    const element = document.getElementById(item.id),
+    const element = item.globalElement ?? document.getElementById(item.id),
       cleanups = [];
     const values = JSON.parse(characteristics || "{}");
     function gridCommand(name, operation, args = {}) {
@@ -161,7 +164,7 @@
         type: "custom",
         id: destination.id,
         event: "grid",
-        payload: { sourceId: item.id, operation, ...args },
+        payload: { sourceId: item.ownerId ?? item.id, operation, ...args },
       });
     }
     function cells(value) {
@@ -178,6 +181,19 @@
       return value;
     }
     const api = {
+      provide(name, value) {
+        if (!item.globalElement) throw new Error("Define shared modules in global-script.js using forma.provide.");
+        if (typeof name !== "string" || !/^[A-Za-z][\w.-]{0,63}$/.test(name)) throw new Error("Use a nonempty module name, e.g. app.");
+        if (modules.has(name)) throw new Error(`Module '${name}' is already provided.`);
+        if (value === undefined) throw new Error("Provide a defined module value.");
+        modules.set(name, value);
+        return value;
+      },
+      use(name) {
+        if (!modules.has(name)) throw new Error(`Shared module '${name}' was not provided by global-script.js.`);
+        return modules.get(name);
+      },
+      get shared() { return sharedState; },
       addRow(name, row) {
         gridCommand(name, "addRow", { row: cells(row) });
       },
@@ -220,9 +236,10 @@
           capture: ["focus", "blur"].includes(event),
           passive: false,
         };
-        element.addEventListener(event, listener, options);
+        const eventTarget = item.globalElement && !lifecycle.has(event) ? document.getElementById(item.ownerId) ?? element : element;
+        eventTarget.addEventListener(event, listener, options);
         cleanups.push(() =>
-          element.removeEventListener(event, listener, options),
+          eventTarget.removeEventListener(event, listener, options),
         );
       },
       validate() {
@@ -313,6 +330,7 @@
                   'input[type="checkbox"],input[type="radio"]',
                 ) ?? el
               ).checked;
+        if (property === "value" && ["progressbar", "circularprogress"].includes(item.kind)) return item.number;
         if (property === "value")
           return ["numericupdown", "slider"].includes(item.kind)
             ? el.valueAsNumber
@@ -325,6 +343,7 @@
           item.kind === "datagridview"
         )
           return item[property];
+        if (item.scriptProperties?.includes(property)) return item[property] && typeof item[property] === "object" ? JSON.parse(JSON.stringify(item[property])) : item[property];
         throw new Error(`Unsupported property '${property}'.`);
       },
       set(name, property, value) {
@@ -342,7 +361,7 @@
           type: "custom",
           id: destination.id,
           event: "set",
-          payload: { sourceId: item.id, property, value },
+          payload: { sourceId: item.ownerId ?? item.id, property, value },
         });
       },
       showToast(name, options = {}) {
@@ -361,7 +380,7 @@
           type: "custom",
           id: destination.id,
           event: "show-toast",
-          payload: { sourceId: item.id, options },
+          payload: { sourceId: item.ownerId ?? item.id, options },
         });
       },
       closeToast(name) {
@@ -369,7 +388,7 @@
           type: "custom",
           id: target(currentState, name).id,
           event: "close-toast",
-          payload: { sourceId: item.id },
+          payload: { sourceId: item.ownerId ?? item.id },
         });
       },
       showDialog(name) {
@@ -377,14 +396,14 @@
           type: "custom",
           id: target(currentState, name).id,
           event: "show-dialog",
-          payload: { sourceId: item.id },
+          payload: { sourceId: item.ownerId ?? item.id },
         });
       },
     };
     const component = {
-      id: item.id,
+      id: item.ownerId ?? item.id,
       name: item.name,
-      element,
+      element: item.globalElement ? document.getElementById(item.ownerId) ?? element : element,
       properties: values,
       characteristics: values,
     };
@@ -395,6 +414,7 @@
       item,
       cleanups,
       snapshot: snapshot(item),
+      validationElement: item.globalElement ? document.getElementById(item.ownerId) : undefined,
     };
     behaviors.set(item.id, record);
     const reactiveScope = window.formaReactivity.createScope({
@@ -433,8 +453,9 @@
       "bind",
     ])
       api[name] = reactiveScope[name];
+    if (item.globalElement) sharedState = reactiveScope.reactive({});
     cleanups.push(() => reactiveScope.dispose());
-    if (window.ResizeObserver) {
+    if (window.ResizeObserver && !item.globalElement) {
       let lastSize;
       const observer = new ResizeObserver((entries) => {
         const rect = entries[0]?.contentRect;
@@ -488,8 +509,27 @@
   window.formaCustomization = {
     apply(state, runtime = false) {
       currentState = state;
+      if (runtime && !state.controls.length) { this.clear(); window.formaReactivity.refresh(); return; }
       const pending = [];
       const live = new Set(state.controls.map((item) => item.id));
+      if (runtime) {
+        const root = { id: state.id ?? state.controls.find(item => item.kind === "form")?.id ?? document.querySelector('[data-forma-type="form"]')?.id ?? state.controls[0].id };
+        const source = state.globalScript ?? "";
+        const signature = JSON.stringify([root?.id, source]);
+        if (signature !== globalSignature) {
+          for (const id of [...behaviors.keys()].filter(id => id !== globalKey)) cleanupBehavior(id);
+          if (globalKey) cleanupBehavior(globalKey);
+          modules.clear(); sharedState = undefined; globalFailed = false; globalSignature = signature;
+          globalKey = "__global__" + root.id;
+          try {
+            const record = installBehavior({ id: globalKey, ownerId: root.id, name: "Global script", kind: "form", enabled: true, visible: true, globalElement: document.createElement("div") }, state, source, "{}");
+            pending.push(() => { for (const event of ["created", "mounted", "ready", "load"]) emit(record, event); });
+          } catch (error) { globalFailed = true; modules.clear(); sharedState = undefined; report(root.id, error); }
+        }
+        live.add(globalKey);
+      } else {
+        modules.clear(); sharedState = undefined; globalSignature = undefined; globalFailed = false;
+      }
       for (const map of [failedStyles, failedBehaviors])
         for (const id of map.keys()) if (!live.has(id)) map.delete(id);
       for (const [id, record] of styles)
@@ -538,7 +578,7 @@
             report(item.id, error);
           }
         }
-        if (!runtime) continue;
+        if (!runtime || globalFailed) continue;
         const source = field(customization, "behavior") ?? "",
           characteristics = field(customization, "characteristics") ?? "{}";
         const existing = behaviors.get(item.id);
@@ -604,7 +644,9 @@
         ?.dispatchEvent(new CustomEvent(eventName(event), { detail }));
     },
     clear() {
-      for (const id of behaviors.keys()) cleanupBehavior(id);
+      for (const id of [...behaviors.keys()].filter(id => id !== globalKey)) cleanupBehavior(id);
+      if (globalKey) cleanupBehavior(globalKey);
+      modules.clear(); sharedState = undefined; globalSignature = undefined; globalKey = undefined; globalFailed = false;
       for (const record of styles.values()) record.element.remove();
       styles.clear();
       failedStyles.clear();

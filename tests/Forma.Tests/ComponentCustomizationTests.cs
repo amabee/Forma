@@ -46,7 +46,8 @@ public class ComponentCustomizationTests
         {
             var source = ComponentEditorService.Template(button, model.Appearance[button.Id]);
             ComponentEditorService.Write(folder, source);
-            File.WriteAllText(Path.Combine(folder, "behavior.js"), "api.set(component.id, 'text', 'Updated');");
+            Assert.True(File.Exists(Path.Combine(folder, "script.js")));
+            File.WriteAllText(Path.Combine(folder, "script.js"), "api.set(component.id, 'text', 'Updated');");
             var reloaded = ComponentEditorService.Read(folder);
             Assert.Equal(source.Css, reloaded.Css);
             Assert.Contains("Updated", reloaded.Behavior);
@@ -66,6 +67,9 @@ public class ComponentCustomizationTests
         Assert.True(model.Appearance[button.Id].Visible);
         Assert.False(preview.Appearance[button.Id].Visible);
         Assert.Throws<ArgumentException>(() => preview.SetValue(button.Id, "text", JsonSerializer.SerializeToElement(3)));
-        Assert.Throws<ArgumentException>(() => preview.SetValue(button.Id, "width", JsonSerializer.SerializeToElement(30)));
+        preview.SetValue(button.Id, "width", JsonSerializer.SerializeToElement(30));
+        Assert.Equal(30, preview.Appearance[button.Id].Width);
+        Assert.NotEqual(30, model.Appearance[button.Id].Width);
+        Assert.Throws<ArgumentException>(() => preview.SetValue(button.Id, "width", JsonSerializer.SerializeToElement("30")));
     }
 }

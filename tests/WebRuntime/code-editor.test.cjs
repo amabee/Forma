@@ -28,6 +28,18 @@ function fixture(t) {
   return { window, editor: window.formaCodeEditor, messages };
 }
 
+test('global editor shows only global-script.js and component editor uses script.js', async t => {
+  const { window, editor } = fixture(t);
+  editor.receive({ action: 'source', globalScript: true, name: 'Global script', source: { css: '', behavior: 'forma.provide("app", {});', characteristics: '{}' } });
+  assert.equal(window.document.getElementById('tab-css').hidden, true);
+  assert.equal(window.document.getElementById('tab-characteristics').hidden, true);
+  assert.equal(window.document.querySelector('#tab-behavior span').textContent, 'global-script.js');
+  assert.equal(window.document.getElementById('editor-behavior').hidden, false);
+  editor.receive({ action: 'source', globalScript: false, source: { css: '', behavior: '', characteristics: '{}' } });
+  assert.equal(window.document.getElementById('tab-css').hidden, false);
+  assert.equal(window.document.querySelector('#tab-behavior span').textContent, 'script.js');
+});
+
 test('editor has line numbers, syntax colors, tabs, formats and saves all sources to the host', async t => {
   const { window, editor, messages } = fixture(t);
   const source = { css: ':host{color:red}', behavior: 'api.on("click",()=>{});', characteristics: '{"count":1}' };
@@ -111,6 +123,26 @@ test('editor theme switches live without changing source, selection or dirty sta
   assert.equal(view.state.selection.main.anchor, selection.anchor); assert.equal(view.state.selection.main.head, selection.head);
   assert.equal(window.document.getElementById('editor-dirty').textContent, 'Unsaved changes');
   editor.receive({ action: 'theme', theme: 'dark' });
-  assert.equal(window.getComputedStyle(view.dom).backgroundColor, 'rgb(15, 23, 42)');
+  assert.equal(window.getComputedStyle(view.dom).backgroundColor, 'rgb(30, 30, 36)');
   assert.equal(JSON.stringify(editor.source()), source);
+});
+
+
+test('requested source tabs preserve drafts, selection and undo when switching files', t => {
+  const { window, editor } = fixture(t);
+  editor.receive({ action: 'source', document: 'behavior', name: 'button1', source: { css: ':host {}', behavior: 'const count = 0;', characteristics: '{}' } });
+  assert.equal(window.document.getElementById('editor-behavior').hidden, false);
+  assert.equal(window.document.getElementById('editor-file-name').textContent, 'script.js');
+  const view = editor.views.get('behavior');
+  view.dispatch({ changes: { from: 0, insert: '// draft\n' }, selection: { anchor: 3, head: 8 } });
+  const selection = view.state.selection.main;
+  editor.receive({ action: 'activate', document: 'css' });
+  editor.receive({ action: 'activate', document: 'behavior' });
+  assert.match(editor.source().behavior, /^\/\/ draft/);
+  assert.equal(view.state.selection.main.head, selection.head);
+  assert.equal(window.document.querySelector('#tab-behavior .file-dirty').hidden, false);
+  assert.equal(window.document.querySelector('#tab-css .file-dirty').hidden, true);
+  assert.equal(window.document.querySelector('#tab-behavior').tabIndex, 0);
+  editor.receive({ action: 'saved', source: editor.source() });
+  assert.equal(window.document.querySelector('#tab-behavior .file-dirty').hidden, true);
 });

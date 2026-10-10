@@ -21,6 +21,9 @@ public sealed class BuilderWindow : System.Windows.Forms.Form
     private PreviewWindow? _runtimePreview;
     private ComponentEditorView? _componentEditor;
     private string? _editorTargetId;
+    private readonly Dictionary<string, ComponentEditorView> _editors = new();
+    private bool _codeVisible;
+    private bool _closingEditors;
     private string _workspaceTheme = "dark";
     private readonly BuilderViewModel _viewModel = new();
 
@@ -121,7 +124,7 @@ public sealed class BuilderWindow : System.Windows.Forms.Form
         if (message.Type == "designer" && message.Event == "theme" && message.Payload is JsonElement themePayload
             && themePayload.ValueKind == JsonValueKind.Object && themePayload.TryGetProperty("theme", out var themeValue)) {
             var theme = themeValue.GetString();
-            if (theme is "light" or "dark") { _workspaceTheme = theme; _componentEditor?.ApplyTheme(theme); }
+            if (theme is "light" or "dark") { _workspaceTheme = theme; foreach (var editor in _editors.Values) editor.ApplyTheme(theme); }
             return;
         }
         if (message.Type == "custom" && message.Event == "error" && _ready
@@ -146,6 +149,21 @@ public sealed class BuilderWindow : System.Windows.Forms.Form
                     _componentEditor.BringToFront();
                     await _componentEditor.StartEditorAsync();
                 }
+                return;
+            }
+            if (message.Event == "editor-activate") {
+                var key = String(payload, "key");
+                if (key is not null && _editors.ContainsKey(key)) { ActivateEditor(key); await PublishEditorTabsAsync(true); }
+                return;
+            }
+            if (message.Event == "editor-close-tab") {
+                var key = String(payload, "key");
+                if (key is not null && _editors.TryGetValue(key, out var editor)) editor.RequestClose();
+                return;
+            }
+            if (message.Event == "editor-visibility") {
+                _codeVisible = payload.GetProperty("visible").GetBoolean();
+                if (_componentEditor is not null) _componentEditor.Visible = _codeVisible;
                 return;
             }
             if (message.Event == "preview")
@@ -177,35 +195,53 @@ public sealed class BuilderWindow : System.Windows.Forms.Form
                     case "about": ShowAbout(); return;
                     case "edit-characteristics":
                     case "edit-custom-properties":
-                        if (_viewModel.SelectedControl is FControl selected && !_viewModel.PreviewMode && !_viewModel.Appearance[selected.Id].Locked)
+                    case "edit-global-script":
+                    case "view-css":
+                    case "view-script":
+                    case "view-custom-properties":
+                        var globalEditor = String(payload, "command") == "edit-global-script";
+                        var sourceCommand = String(payload, "command");
+                        var document = globalEditor || sourceCommand == "view-script" ? "behavior" : sourceCommand == "view-custom-properties" ? "characteristics" : "css";
+                        var editorControl = globalEditor ? _viewModel.Form : sourceCommand?.StartsWith("view-", StringComparison.Ordinal) == true
+                            ? Walk(_viewModel.Form).FirstOrDefault(c => c.Id == message.Id) : _viewModel.SelectedControl;
+                        if (editorControl is FControl selected && !_viewModel.PreviewMode && (globalEditor || !_viewModel.Appearance[selected.Id].Locked))
                         {
-                            if (_editorTargetId == selected.Id && _componentEditor is not null) { _componentEditor.Focus(); return; }
-                            if (_componentEditor?.HasUnsavedChanges == true && MessageBox.Show(this, "Discard unsaved component code and switch editors?", "Unsaved code", MessageBoxButtons.YesNo) != DialogResult.Yes) return;
-                            CloseDockedEditor();
-                            _editorTargetId = selected.Id;
+                            var targetKey = globalEditor ? "global:" + selected.Id : selected.Id;
+                            if (_editors.TryGetValue(targetKey, out var existing)) {
+                                ActivateEditor(targetKey);
+                                existing.ActivateDocument(document);
+                                await PublishEditorTabsAsync(true);
+                                return;
+                            }
                             var editor = new ComponentEditorView(
-                                selected.Name ?? selected.ControlType,
-                                ComponentEditorService.Folder(_viewModel, selected),
-                                ComponentEditorService.Template(selected, _viewModel.Appearance[selected.Id]),
+                                globalEditor ? "Global script" : selected.Name ?? selected.ControlType,
+                                globalEditor ? Path.Combine(ComponentEditorService.Folder(_viewModel, selected), "global") : ComponentEditorService.Folder(_viewModel, selected),
+                                globalEditor ? new ComponentCustomization { Behavior = _viewModel.Appearance[selected.Id].GlobalScript } : ComponentEditorService.Template(selected, _viewModel.Appearance[selected.Id]),
                                 async source =>
                                 {
-                                    var result = _viewModel.ExecuteEdit("customize", selected.Id, JsonSerializer.SerializeToElement(source));
+                                    var result = globalEditor ? _viewModel.ExecuteEdit("global-script", selected.Id, JsonSerializer.SerializeToElement(new { script = source.Behavior }))
+                                        : _viewModel.ExecuteEdit("customize", selected.Id, JsonSerializer.SerializeToElement(source));
                                     await StateAsync(result.Status);
-                                }, () => new { controls = Walk(_viewModel.Form).Select(c => new { id = c.Id, name = c.Name, kind = c.ControlType }).ToArray() });
-                            _componentEditor = editor;
+                                }, () => new { controls = Walk(_viewModel.Form).Select(c => new { id = c.Id, name = c.Name, kind = c.ControlType }).ToArray(), modules = ComponentEditorService.ModuleNames(_viewModel.Appearance[_viewModel.Form.Id].GlobalScript) }, globalScript: globalEditor);
+                            _editors.Add(targetKey, editor);
+                            ActivateEditor(targetKey);
+                            editor.ActivateDocument(document);
                             editor.ApplyTheme(_workspaceTheme);
                             editor.MinimumSize = Size.Empty;
                             editor.Bounds = new Rectangle(300, Math.Max(120, ClientSize.Height / 2), Math.Max(100, ClientSize.Width - 590), Math.Max(100, ClientSize.Height / 2 - 32));
                             Controls.Add(editor);
-                            editor.Closed += (_, _) => {
-                                if (ReferenceEquals(_componentEditor, editor)) {
+                            editor.MetadataChanged += async (_, _) => await PublishEditorTabsAsync();
+                            editor.Closed += async (_, _) => {
+                                _editors.Remove(targetKey);
+                                var wasActive = ReferenceEquals(_componentEditor, editor);
+                                if (wasActive) {
                                     _componentEditor = null; _editorTargetId = null;
-                                    if (_ready && _bridge is not null) _ = _bridge.SendAsync(new { type = "designer", action = "editor-close" });
+                                    if (!_closingEditors && _editors.Count > 0) ActivateEditor(_editors.Keys.Last(), _codeVisible);
                                 }
-                                editor.Dispose();
+                                if (!_closingEditors) await PublishEditorTabsAsync(wasActive && _codeVisible && _editors.Count > 0);
                             };
                             editor.Show(); editor.BringToFront();
-                            await _bridge.SendAsync(new { type = "designer", action = "editor-open", name = selected.Name });
+                            await PublishEditorTabsAsync(true);
                         }
                         return;
                     case "exit": Close(); return;
@@ -304,9 +340,10 @@ public sealed class BuilderWindow : System.Windows.Forms.Form
         if (IsDisposed || _bridge is null || _viewModel.Form is null || _viewModel.SelectedControl is null)
             return Task.CompletedTask;
         if (_documentStateDirty) { UpdateProjectTitle(); _documentStateDirty = false; }
-        if (_componentEditor is not null) {
-            if (!Walk(_viewModel.Form).Any(c => c.Id == _editorTargetId)) CloseDockedEditor();
-            else _componentEditor.RefreshCompletionContext();
+        var ids = Walk(_viewModel.Form).Select(c => c.Id).ToHashSet();
+        foreach (var (key, editor) in _editors.ToArray()) {
+            if (key != "global:" + _viewModel.Form.Id && !ids.Contains(key)) editor.Close();
+            else editor.RefreshCompletionContext();
         }
         return _bridge.SendAsync(
             new
@@ -314,6 +351,7 @@ public sealed class BuilderWindow : System.Windows.Forms.Form
                 type = "designer",
                 action = "state",
                 id = _viewModel.Form.Id,
+                globalScript = _viewModel.Appearance[_viewModel.Form.Id].GlobalScript,
                 title = _viewModel.Form.Title,
                 selectedId = _viewModel.SelectedControl.Id,
                 canUndo = _viewModel.CanUndo, canRedo = _viewModel.CanRedo,
@@ -570,7 +608,7 @@ public sealed class BuilderWindow : System.Windows.Forms.Form
     private void UpdateProjectTitle() => _viewModel.RefreshDocumentState();
     private bool ConfirmDiscard()
     {
-        if (_componentEditor?.HasUnsavedChanges == true && MessageBox.Show(this, "Discard unsaved component code before continuing? Use Save in the code panel to apply it first.", "Unsaved code", MessageBoxButtons.YesNo) != DialogResult.Yes) return false;
+        if (_editors.Values.Any(editor => editor.HasUnsavedChanges) && MessageBox.Show(this, "Discard unsaved component code before continuing? Use Save in the code panel to apply it first.", "Unsaved code", MessageBoxButtons.YesNo) != DialogResult.Yes) return false;
         if (!HasUnsavedChanges) return true;
         return MessageBox.Show(this, "Save changes to this design before continuing?", "Forma Builder", MessageBoxButtons.YesNoCancel, MessageBoxIcon.Question) switch {
             DialogResult.Yes => SaveProject(), DialogResult.No => true, _ => false
@@ -657,9 +695,29 @@ public sealed class BuilderWindow : System.Windows.Forms.Form
         base.OnFormClosed(e);
     }
 
+    private void ActivateEditor(string key, bool visible = true)
+    {
+        foreach (var editor in _editors.Values) editor.Visible = false;
+        _editorTargetId = key; _componentEditor = _editors[key]; _codeVisible = visible;
+        _componentEditor.Visible = visible;
+        if (visible) _componentEditor.BringToFront();
+    }
+
+    private Task PublishEditorTabsAsync(bool show = false)
+    {
+        if (!_ready || _bridge is null || IsDisposed) return Task.CompletedTask;
+        return _bridge.SendAsync(new {
+            type = "designer", action = "editor-tabs", activeKey = _editorTargetId, show,
+            editors = _editors.Select(pair => new { key = pair.Key, name = pair.Value.DocumentName, dirty = pair.Value.HasUnsavedChanges }).ToArray()
+        });
+    }
+
     private void CloseDockedEditor()
     {
-        _componentEditor?.Close();
-        _componentEditor = null; _editorTargetId = null;
+        _closingEditors = true;
+        try { foreach (var editor in _editors.Values.ToArray()) editor.Close(); }
+        finally { _closingEditors = false; }
+        _editors.Clear(); _componentEditor = null; _editorTargetId = null; _codeVisible = false;
+        if (_ready && _bridge is not null) _ = PublishEditorTabsAsync();
     }
 }

@@ -2,10 +2,22 @@
 <html lang="en"><head><meta charset="UTF-8" /><meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>Custom Properties editor</title><link rel="stylesheet" href="code-editor.css" /></head>
 <body><div class="editor-shell">
-<header class="editor-header"><div><h1 id="editor-component-name">Custom Properties</h1><p>Save applies automatically · Ctrl+Space suggestions · hover underlines for errors</p></div>
-<div class="editor-actions"><button class="editor-primary" data-command="save">Save <kbd>Ctrl+S</kbd></button><button data-command="format">Format <kbd>Ctrl+Shift+F</kbd></button><button data-command="external">External editor</button><button data-command="choose-editor">Choose editor…</button><button data-command="close">Close</button></div>
-<label class="editor-option"><input type="checkbox" id="format-on-save" checked /> Format on save</label></header>
-<nav class="editor-tabs" role="tablist" aria-label="Source files"><button role="tab" id="tab-css" aria-controls="editor-css" data-tab="css">CSS <span>component.css</span></button><button role="tab" id="tab-behavior" aria-controls="editor-behavior" data-tab="behavior">JS <span>behavior.js</span></button><button role="tab" id="tab-characteristics" aria-controls="editor-characteristics" data-tab="characteristics">{ } <span>custom-properties.json</span></button></nav>
+<nav class="editor-tabs" role="tablist" aria-label="Source files">
+<button role="tab" id="tab-css" aria-controls="editor-css" data-tab="css"><b class="file-kind css-kind">CSS</b><span>component.css</span><i class="file-dirty" aria-label="Unsaved changes" hidden>●</i></button>
+<button role="tab" id="tab-behavior" aria-controls="editor-behavior" data-tab="behavior"><b class="file-kind js-kind">JS</b><span>script.js</span><i class="file-dirty" aria-label="Unsaved changes" hidden>●</i></button>
+<button role="tab" id="tab-characteristics" aria-controls="editor-characteristics" data-tab="characteristics"><b class="file-kind json-kind">{ }</b><span>custom-properties.json</span><i class="file-dirty" aria-label="Unsaved changes" hidden>●</i></button>
+</nav>
+<header class="editor-header">
+<div class="editor-location"><h1 id="editor-component-name">Component</h1><span class="location-divider">›</span><span id="editor-file-name">component.css</span></div>
+<div class="editor-actions">
+<button class="editor-primary" data-command="save" title="Save all component sources and apply (Ctrl+S)"><img src="icons/save.svg" alt="" />Save</button>
+<button data-command="format" title="Format current file (Ctrl+Shift+F)">Format</button>
+<details class="editor-tools"><summary title="Editor options" aria-label="Editor options">···</summary><div class="editor-tools-menu">
+<button data-command="external">External editor</button><button data-command="choose-editor">Choose editor…</button>
+<label class="editor-option"><input type="checkbox" id="format-on-save" checked /> Format on save</label>
+</div></details>
+<button data-command="close" title="Close code editor" aria-label="Close code editor">×</button>
+</div></header>
 <main class="editor-workspace"><div id="editor-css" class="editor-document" role="tabpanel" aria-labelledby="tab-css"></div><div id="editor-behavior" class="editor-document" role="tabpanel" aria-labelledby="tab-behavior" hidden></div><div id="editor-characteristics" class="editor-document" role="tabpanel" aria-labelledby="tab-characteristics" hidden></div></main>
 <footer class="editor-footer"><span id="editor-message" role="status">Loading editor…</span><button id="editor-problems" data-command="problems" title="Show problems for the active file">0 problems</button><span id="editor-dirty">Saved</span><span id="editor-cursor"></span></footer>
 </div><script src="code-editor.bundle.js"></script></body></html>

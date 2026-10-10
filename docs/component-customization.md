@@ -1,14 +1,21 @@
 # Custom Properties
 
-Select a control or component and open **Advanced → Custom Properties…** in
-Properties, or use Code in the activity rail. The editor docks below the canvas and has three source tabs:
+Select a control or component and click **Custom Properties…** below the
+property search field, or use Code in the activity rail. You can also right-click
+any visual control or nonvisual tray component and choose **View CSS**,
+**View Script**, or **View Custom Properties** to open that source directly.
+Locked components cannot open an editable source from the context menu.
+
+The workspace has separate **Design** and **component · Code** tabs. The editor
+fills the center area; switching to Design preserves the open editor and its
+unsaved draft. Within Code, the component has three source file tabs:
 
 - **Styles (CSS):** starts with the component's current appearance and a hover
   rule. `:host` selects the component; `:host input` selects its inputs. All
   selectors must start with `:host`; `@media` and `@supports` are supported.
   Source styles override the inspector's appearance. Keep sizing and position
   in Layout to preserve designer drag/resize geometry.
-- **Behavior (JavaScript):** runs once when Preview starts. The boilerplate
+- **Script (JavaScript):** runs once when Preview starts. The boilerplate
   includes the API and a click example. Script and callback errors appear in
   the Preview window title.
 - **Custom values (JSON):** an object containing your own values, such as a
@@ -27,7 +34,15 @@ colors, bracket matching, folding, indentation and search (Ctrl+F). Use **Format
 or **Ctrl+Shift+F** for the current tab. **Format on save** formats all three files
 with Prettier before saving; uncheck it to save without formatting. Syntax errors
 stop formatting and leave your text intact. The footer shows the cursor location
-and unsaved changes. Drag the divider above the code panel, or focus it and use the up/down arrow keys, to resize the panel. The designer and property inspector remain available. The header's Light mode / Dark mode toggle changes both the workspace and code editor and remembers your choice; it does not change component appearance.
+and unsaved changes. Each modified file also shows a dot on its tab. Arrow keys
+navigate focused workspace/file tabs. The compact toolbar contains Save and
+Format; its **···** menu contains External editor, Choose editor and Format on
+save. Click **Design** to return to the canvas or the Code tab to resume editing.
+Opening another component creates another Code tab, including for the global
+script. Reopening the same component reuses its tab. Switching keeps each
+editor's draft, file selection, cursor and undo history. Each workspace code tab
+has a close button; closing a dirty tab asks before discarding that draft.
+New/Open and closing Builder check unsaved code across all open tabs. The header's Light mode / Dark mode toggle changes both the workspace and code editor and remembers your choice; it does not change component appearance.
 
 Syntax errors in JavaScript, CSS and JSON appear as underlines and gutter markers.
 Hover them for the message, or click the Problems count for the problem list.
@@ -43,17 +58,17 @@ from the JSON tab. Arrow keys select suggestions; Enter accepts and Escape close
 CSS also has the language package's property suggestions. Suggestions are local,
 and use this form's component names. They do not provide full C# IntelliSense.
 
-Use the built-in editor directly, or click **Open external editor**. Forma finds
+Use the built-in editor directly, or click **External editor**. Forma finds
 VS Code when installed; **Choose editor…** selects another editor executable.
 The chosen editor is remembered for the current Builder session. Sources are
-written as `component.css`, `behavior.js`, and `custom-properties.json`.
+written as `component.css`, `script.js`, and `custom-properties.json`.
 **Save** or **Ctrl+S** in Forma saves the files and applies the properties in one
 step. While the Custom Properties panel is open, saves from the external editor
 are detected and applied automatically after a short debounce. There are no
 separate Reload or Apply buttons. Each changed valid save records one undo step;
 duplicate file notifications do not add edits. Invalid JSON or incomplete file
 writes leave the last valid properties active and show an error in the editor.
-Close the code panel when finished; unsaved text is not applied. Save the main project
+Close the code editor when finished; unsaved text is not applied. Save the main project
 normally to retain its latest properties in the `.forma` file.
 
 Saved projects put editing files alongside the `.forma` file in
@@ -63,16 +78,21 @@ are embedded in the `.forma` file, including save/open and undo/redo; those
 editing folders are not needed to open or preview the project. Applying again
 does not change a currently running preview. Start a new Preview to test it.
 
-## Behavior API
+## Script API
+
+Use [global-script.js](global-scripts.md) for application-wide shared state and
+named modules. Component scripts access them through forma.shared or forma.use.
 
 `component` exposes `id`, `name`, `element` (the DOM element), and
 `properties`. Other controls are addressed by their unique Name or ID.
 Existing scripts using `component.characteristics` remain compatible, and old
 `characteristics.json` editing files can still be reloaded.
+Legacy `behavior.js` files are read when `script.js` is absent; new saves write
+`script.js`. See [global scripts](global-scripts.md) for shared setup and modules.
 
 ```javascript
 forma.on("click", () => {
-  component.properties.clicks += 1;
+  component.properties.clicks = (component.properties.clicks ?? 0) + 1;
   forma.set("label1", "text", `Clicked ${component.properties.clicks} times`);
 });
 ```

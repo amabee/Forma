@@ -7,6 +7,10 @@ namespace Forma.Builder;
 /// <summary>Creates portable editing files; applied sources are embedded in the project.</summary>
 public static class ComponentEditorService
 {
+    public const string ScriptFile = "script.js";
+    public static string[] ModuleNames(string source) => System.Text.RegularExpressions.Regex.Matches(source,
+        "(?:forma|api)\\.provide\\(\\s*[\"'](?<name>[A-Za-z][\\w.-]{0,63})[\"']")
+        .Select(match => match.Groups["name"].Value).Distinct().ToArray();
     public const string PropertiesFile = "custom-properties.json";
     public static ComponentCustomization Template(Control control, Appearance appearance)
     {
@@ -103,14 +107,14 @@ public static class ComponentEditorService
         source = ComponentCustomization.Validate(source);
         Directory.CreateDirectory(folder);
         File.WriteAllText(Path.Combine(folder, "component.css"), source.Css);
-        File.WriteAllText(Path.Combine(folder, "behavior.js"), source.Behavior);
+        File.WriteAllText(Path.Combine(folder, ScriptFile), source.Behavior);
         File.WriteAllText(Path.Combine(folder, PropertiesFile), source.Characteristics);
     }
 
     public static ComponentCustomization Read(string folder) => ComponentCustomization.Validate(new()
     {
         Css = ReadFile(Path.Combine(folder, "component.css")),
-        Behavior = ReadFile(Path.Combine(folder, "behavior.js")),
+        Behavior = ReadFile(File.Exists(Path.Combine(folder, ScriptFile)) ? Path.Combine(folder, ScriptFile) : Path.Combine(folder, "behavior.js")),
         Characteristics = ReadFile(File.Exists(Path.Combine(folder, PropertiesFile))
             ? Path.Combine(folder, PropertiesFile) : Path.Combine(folder, "characteristics.json"))
     });

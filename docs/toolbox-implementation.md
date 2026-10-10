@@ -69,8 +69,8 @@ controls keep their designed positions. It runs a copy of the control tree with 
 pickers; testing does not alter the original design. Close the window to end the
 session. This currently runs inside Builder; executable export and C# event
 code generation remain later roadmap work. Component-specific CSS, JavaScript
-behavior and custom JSON values are available through **Advanced → Custom
-Properties…**. See [component customization](component-customization.md).
+scripts and custom JSON values are available through **Custom Properties…**
+below the property search field. See [component customization](component-customization.md).
 
 CheckBox/RadioButton expose Checked. RadioButton browser interactions group by
 parent container. ComboBox/ListBox expose newline-separated Items and Selected
@@ -115,7 +115,7 @@ screen pixels, with measurement guides for 8 px and 16 px gaps. Hold Alt to
 bypass snapping. Release, Escape, or cancellation clears the guides.
 Containers start behind regular controls regardless of insertion order.
 Use Bring to front / Send to back in Properties for sibling layer order;
-Advanced Z-index can also adjust the order. Layer actions work within a parent.
+The Styles tab in Custom Properties can also set `z-index`. Layer actions work within a parent.
 
 ## Data widgets
 

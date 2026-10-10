@@ -14,6 +14,7 @@
     <Content Include="DesignerWeb\**\*" Exclude="DesignerWeb\code-editor.bundle.js;DesignerWeb\code-editor.bundle.js.LICENSE.txt" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="DesignerWeb\code-editor.bundle.js" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
+  <ItemGroup><EmbeddedResource Include="DesignerWeb\runtime-script-properties.json" LogicalName="Forma.RuntimeScriptProperties.json" /></ItemGroup>
   <Target Name="BuildDesignerAssets" BeforeTargets="BeforeBuild"
           Condition="Exists('Frontend/node_modules/.bin/tailwindcss.cmd')">
     <Exec WorkingDirectory="$(MSBuildProjectDirectory)/Frontend" Command="npm.cmd run build" />

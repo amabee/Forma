@@ -51,3 +51,66 @@ test('header is consolidated and theme toggle persists choice without editing th
   restored.doc.getElementById('theme-toggle').click(); assert.equal(restored.doc.documentElement.dataset.theme, 'dark');
   assert.ok(messages.every(message => message.event !== 'property'));
 });
+
+
+test('Design/Code tabs preserve an open editor and route component context actions by ID', async t => {
+  const dom = new JSDOM(fs.readFileSync(path.join(base, 'index.html'), 'utf8'), { runScripts: 'outside-only', pretendToBeVisual: true });
+  t.after(() => dom.window.close());
+  const { window } = dom, messages = [], doc = window.document;
+  const control = doc.createElement('button'); control.id = 'button-id'; control.dataset.formaType = 'button';
+  doc.getElementById('canvas-host').append(control);
+  window.forma = { send: message => messages.push(message) };
+  window.formaDesigner = { receive() {}, select() {}, cancelDrag() {}, state: { controls: [{ id: 'button-id', name: 'startButton', kind: 'button' }] } };
+  window.eval(fs.readFileSync(path.join(base, 'workspace.js'), 'utf8'));
+  control.dispatchEvent(new window.MouseEvent('contextmenu', { bubbles: true, cancelable: true, clientX: 80, clientY: 90 }));
+  assert.equal(doc.getElementById('component-source-menu').hidden, false);
+  doc.querySelector('[data-source-command="view-script"]').click();
+  assert.equal(messages.at(-1).id, 'button-id');
+  assert.equal(messages.at(-1).payload.command, 'view-script');
+  assert.equal(doc.getElementById('component-source-menu').hidden, true);
+  window.formaDesigner.receive({ action: 'editor-open', name: 'startButton' });
+  assert.equal(doc.getElementById('stage').hidden, true);
+  assert.equal(doc.getElementById('workspace-code-tab').textContent, 'startButton · Code');
+  doc.getElementById('workspace-design-tab').click();
+  assert.equal(doc.getElementById('stage').hidden, false);
+  assert.equal(doc.getElementById('editor-dock').hidden, true);
+  assert.equal(messages.at(-1).payload.visible, false);
+  assert.equal(doc.getElementById('workspace-code-tab').hidden, false);
+  doc.getElementById('workspace-code-tab').click();
+  assert.equal(doc.getElementById('editor-dock').hidden, false);
+  assert.equal(messages.at(-1).payload.visible, true);
+  window.formaDesigner.state.controls[0].locked = true;
+  control.dispatchEvent(new window.MouseEvent('contextmenu', { bubbles: true, cancelable: true }));
+  assert.ok([...doc.querySelectorAll('[data-source-command]')].every(button => button.disabled));
+});
+
+
+test('multiple component tabs retain their identities, activate independently and close by key', t => {
+  const dom = new JSDOM(fs.readFileSync(path.join(base, 'index.html'), 'utf8'), { runScripts: 'outside-only', pretendToBeVisual: true });
+  t.after(() => dom.window.close());
+  const { window } = dom, doc = window.document, messages = [];
+  window.forma = { send: message => messages.push(message) }; window.formaDesigner = { receive() {} };
+  window.eval(fs.readFileSync(path.join(base, 'workspace.js'), 'utf8'));
+  const editors = [{ key: 'button-id', name: 'button1', dirty: true }, { key: 'label-id', name: 'label1', dirty: false }, { key: 'global:form', name: 'Global script', dirty: false }];
+  window.formaDesigner.receive({ action: 'editor-tabs', activeKey: 'label-id', editors, show: true });
+  const buttons = [...doc.querySelectorAll('[data-editor-key]')];
+  assert.equal(buttons.length, 3);
+  assert.match(buttons[0].textContent, /button1.*●/);
+  assert.equal(buttons[1].getAttribute('aria-selected'), 'true');
+  buttons[0].click();
+  assert.equal(messages.at(-1).event, 'editor-activate');
+  assert.equal(messages.at(-1).payload.key, 'button-id');
+  window.formaDesigner.receive({ action: 'editor-tabs', activeKey: 'button-id', editors, show: true });
+  doc.querySelector('[data-close-editor="label-id"]').click();
+  assert.equal(messages.at(-1).event, 'editor-close-tab');
+  assert.equal(messages.at(-1).payload.key, 'label-id');
+  window.formaDesigner.receive({ action: 'editor-tabs', activeKey: 'button-id', editors: [editors[0], editors[2]] });
+  assert.equal(doc.querySelector('[data-editor-key="button-id"]').getAttribute('aria-selected'), 'true');
+  doc.getElementById('workspace-design-tab').click();
+  window.formaDesigner.receive({ action: 'editor-tabs', activeKey: 'button-id', editors: [editors[0], editors[2]] });
+  assert.equal(doc.getElementById('editor-dock').hidden, true);
+  assert.equal(doc.querySelectorAll('[data-editor-key]').length, 2);
+  window.formaDesigner.receive({ action: 'editor-tabs', editors: [], activeKey: null });
+  assert.equal(doc.getElementById('stage').hidden, false);
+  assert.equal(doc.querySelectorAll('[data-editor-key]').length, 0);
+});

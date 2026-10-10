@@ -41,7 +41,7 @@
         </details>
         <details>
           <summary>Project</summary>
-          <div class="menu"><button disabled>Project settings</button></div>
+          <div class="menu"><button data-command="edit-global-script">Global script…</button><button disabled>Project settings</button></div>
         </details>
         <details>
           <summary>Help</summary>
@@ -468,13 +468,17 @@
         <p class="tool-note">Drag to add · double-click to insert</p>
       </aside>
       <section class="designer-area">
+        <nav class="workspace-tabs" role="tablist" aria-label="Workspace documents">
+          <button id="workspace-design-tab" role="tab" aria-selected="true" aria-controls="stage" data-workspace-tab="design">Design</button>
+          <button id="workspace-code-tab" role="tab" aria-selected="false" aria-controls="editor-dock" data-workspace-tab="code" hidden>Code</button>
+        </nav>
         <div class="breadcrumb">
           <img class="icon-svg" src="icons/house.svg" alt="" /><span
             id="form-name"
             >Form1</span
           ><span>›</span><span id="mode-label">Design</span>
         </div>
-        <div id="stage" class="stage">
+        <div id="stage" class="stage" role="tabpanel" aria-labelledby="workspace-design-tab">
           <div id="scaled-frame">
             <div id="form-frame">
               <div class="form-titlebar">
@@ -492,8 +496,7 @@
           aria-label="Nonvisual components"
           hidden
         ></div>
-        <div id="editor-dock" class="editor-dock" hidden>
-          <div id="editor-splitter" role="separator" aria-label="Resize code panel" aria-orientation="horizontal" aria-valuemin="180" aria-valuemax="600" aria-valuenow="300" tabindex="0"></div>
+        <div id="editor-dock" class="editor-dock" role="tabpanel" aria-labelledby="workspace-code-tab" hidden>
           <div id="editor-mount" aria-label="Component code editor"><p>Loading component editor…</p></div>
         </div>
       </section>
@@ -532,6 +535,12 @@
       ><span class="status-spacer"></span
       ><span id="coordinates">X: 0 &nbsp; Y: 0</span><span>Forma 0.1.0</span>
     </footer>
+    <div id="component-source-menu" class="component-source-menu" role="menu" aria-label="Component source" hidden>
+      <div id="component-source-name" class="source-menu-title"></div>
+      <button role="menuitem" data-source-command="view-css">View CSS <span>component.css</span></button>
+      <button role="menuitem" data-source-command="view-script">View Script <span>script.js</span></button>
+      <button role="menuitem" data-source-command="view-custom-properties">View Custom Properties <span>custom-properties.json</span></button>
+    </div>
     <script src="../Web/scripts/data-grid.js"></script>
     <script src="../Web/scripts/forma.js"></script>
     <script src="../Web/scripts/layout-properties.js"></script>

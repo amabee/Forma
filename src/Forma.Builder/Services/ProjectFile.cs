@@ -253,6 +253,9 @@ public static class ProjectFile
                 || node.Appearance.ValueKind != JsonValueKind.Object
             )
                 throw new InvalidDataException("Missing control properties or appearance.");
+            if (node.Appearance.TryGetProperty("GlobalScript", out var globalScript)
+                && (globalScript.ValueKind != JsonValueKind.String || globalScript.GetString()!.Length > 200_000))
+                throw new InvalidDataException("Invalid global script.");
             foreach (var property in new[] { "Dock", "Anchor" })
                 if (node.Appearance.TryGetProperty(property, out var layout)
                     && (layout.ValueKind != JsonValueKind.String || !(property == "Dock" ? Appearance.DockValues : Appearance.AnchorValues).Contains(layout.GetString()!)))

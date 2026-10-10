@@ -36,6 +36,8 @@
     <Compile Include="..\..\src\Forma.Builder\ViewModels\BuilderViewModel.cs" Link="BuilderViewModel.cs" />
     <Compile Include="..\..\src\Forma.Builder\Services\DesignerEditingService.cs" Link="DesignerEditingService.cs" />
     <Compile Include="..\..\src\Forma.Builder\Services\LayoutGeometry.cs" Link="LayoutGeometry.cs" />
+    <Compile Include="..\..\src\Forma.Builder\Services\RuntimePropertyService.cs" Link="RuntimePropertyService.cs" />
+    <EmbeddedResource Include="..\..\src\Forma.Builder\DesignerWeb\runtime-script-properties.json" LogicalName="Forma.RuntimeScriptProperties.json" />
     <Compile Include="..\..\src\Forma.Builder\Models\DesignerEditResult.cs" Link="DesignerEditResult.cs" />
   </ItemGroup>
 

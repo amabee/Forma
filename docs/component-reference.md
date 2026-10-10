@@ -6,6 +6,9 @@ This reference covers the 84 implemented toolbox entries plus Form. It was check
 
 - Inspector IDs are the field names stored in Builder state; C# model properties use PascalCase.
 - A property in the inspector is **not automatically supported by `forma.get` or `forma.set`**. See the JavaScript API table in the usage guide.
+  The [extended runtime property guide](runtime-properties.md) lists the shared
+  and component-specific fields now connected to get/set/bind, with read-only
+  status fields separated from setters.
 - Shared visual properties are in Builder `Appearance`, not automatically properties on every Core control.
 - C# defaults below are model constructor defaults. Builder may supply different initial geometry, colors, or text when you drop a control.
 - Image source is a read-only field filled by picker actions. File/folder selected paths can be edited or chosen. IDs are immutable.
