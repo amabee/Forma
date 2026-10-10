@@ -1,6 +1,6 @@
 namespace Forma.Builder;
 
-public sealed record DesignSnapshot(string Json, string? SelectedId);
+public sealed record DesignSnapshot(string Json, string? SelectedId, string? ActiveFormId = null);
 
 public sealed record DesignEdit(
     DesignSnapshot Before,

@@ -28,12 +28,12 @@ function fixture(t) {
   return { window, editor: window.formaCodeEditor, messages };
 }
 
-test('global editor shows only global-script.js and component editor uses script.js', async t => {
+test('global editor shows only main.js and component editor uses script.js', async t => {
   const { window, editor } = fixture(t);
   editor.receive({ action: 'source', globalScript: true, name: 'Global script', source: { css: '', behavior: 'forma.provide("app", {});', characteristics: '{}' } });
   assert.equal(window.document.getElementById('tab-css').hidden, true);
   assert.equal(window.document.getElementById('tab-characteristics').hidden, true);
-  assert.equal(window.document.querySelector('#tab-behavior span').textContent, 'global-script.js');
+  assert.equal(window.document.querySelector('#tab-behavior span').textContent, 'main.js');
   assert.equal(window.document.getElementById('editor-behavior').hidden, false);
   editor.receive({ action: 'source', globalScript: false, source: { css: '', behavior: '', characteristics: '{}' } });
   assert.equal(window.document.getElementById('tab-css').hidden, false);
@@ -145,4 +145,24 @@ test('requested source tabs preserve drafts, selection and undo when switching f
   assert.equal(window.document.querySelector('#tab-behavior').tabIndex, 0);
   editor.receive({ action: 'saved', source: editor.source() });
   assert.equal(window.document.querySelector('#tab-behavior .file-dirty').hidden, true);
+});
+
+
+test('standalone project CSS and JSON files format and save only their own content', async t => {
+  const { window, editor, messages } = fixture(t);
+  editor.receive({ action: 'source', name: 'settings.json', singleFileName: 'settings.json', singleDocument: 'characteristics', document: 'characteristics', source: { css: '', behavior: '[1,2]', characteristics: '{}' } });
+  assert.equal(window.document.getElementById('tab-css').hidden, true);
+  assert.equal(window.document.getElementById('tab-behavior').hidden, true);
+  assert.equal(window.document.getElementById('editor-file-name').textContent, 'settings.json');
+  await editor.command('save');
+  assert.deepEqual(JSON.parse(messages.at(-1).source.behavior), [1, 2]);
+  assert.equal(messages.at(-1).source.characteristics, '{}');
+  editor.receive({ action: 'saved', source: messages.at(-1).source });
+  assert.equal(window.document.getElementById('editor-dirty').textContent, 'Saved');
+  editor.receive({ action: 'source', name: 'styles.css', singleFileName: 'styles.css', singleDocument: 'css', document: 'css', source: { css: '', behavior: 'body{color:red}', characteristics: '{}' } });
+  assert.equal(window.document.getElementById('editor-css').hidden, false);
+  await editor.command('save'); assert.match(messages.at(-1).source.behavior, /color: red/);
+  assert.equal(messages.at(-1).source.css, '');
+  editor.receive({ action: 'file-name', name: 'theme.css', singleFileName: 'theme.css' });
+  assert.equal(window.document.getElementById('editor-file-name').textContent, 'theme.css');
 });

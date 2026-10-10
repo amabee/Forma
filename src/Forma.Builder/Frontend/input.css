@@ -1605,3 +1605,41 @@
     }
   }
 }
+
+@layer components {
+  #project-form-select { @apply max-w-64 rounded border border-slate-600 bg-transparent px-2 py-1 text-xs; }
+  #project-form-select option { @apply bg-slate-800 text-slate-100; }
+  [data-theme="light"] #project-form-select { @apply border-slate-300; }
+  [data-theme="light"] #project-form-select option { @apply bg-white text-slate-800; }
+}
+
+@layer components {
+  .left-sidebar { @apply flex w-[264px] min-h-0 shrink-0 flex-col border-r border-line bg-panel; }
+  .left-sidebar > .toolbox, .left-sidebar > .solution-explorer { @apply w-full min-h-0 flex-1 border-r-0; }
+  .left-panel-tabs { @apply flex shrink-0 border-b border-line; }
+  .left-panel-tabs button { @apply flex-1 border-b-2 border-transparent px-3 py-2.5 text-xs text-muted hover:text-ink; }
+  .left-panel-tabs [aria-selected="true"] { @apply border-accent text-ink; }
+  .solution-explorer { @apply overflow-hidden; }
+  .explorer-heading { @apply h-11 px-3 text-xs; }
+  .explorer-heading button { @apply rounded p-1.5 hover:bg-hover; }
+  .explorer-search { @apply mx-3 mb-2 shrink-0; }
+  #explorer-tree { @apply min-h-0 flex-1 overflow-auto px-1.5 pb-3 text-[13px]; }
+  #explorer-tree ul { @apply pl-3.5; }
+  .explorer-row { @apply flex h-8 cursor-pointer items-center gap-1.5 whitespace-nowrap rounded px-1 text-ink hover:bg-hover focus-visible:outline-1 focus-visible:outline-accent; }
+  .explorer-row[aria-selected="true"] { @apply bg-accent-soft text-accent-ink; }
+  .explorer-row[aria-disabled="true"] { @apply opacity-50; }
+  .explorer-chevron { @apply flex size-4 shrink-0 items-center justify-center; }
+  .explorer-chevron img { @apply size-3; }
+  .explorer-row > .icon-svg { @apply size-4 shrink-0; }
+  .explorer-label { @apply truncate; }
+  .explorer-lock { @apply ml-auto size-3 opacity-60; }
+  .explorer-empty { @apply px-3 py-2 text-xs text-muted; }
+  @media (max-width: 1100px) { .left-sidebar { @apply w-[220px]; } }
+}
+
+@layer components {
+  .explorer-context-menu { @apply fixed z-[1100] min-w-52 max-h-[90vh] overflow-y-auto rounded-lg border border-line bg-panel p-1 text-xs text-ink shadow-xl; }
+  .explorer-context-menu button { @apply block w-full rounded px-3 py-2 text-left hover:bg-accent-soft focus-visible:bg-accent-soft focus-visible:outline-none; }
+  .explorer-context-menu button:disabled { @apply opacity-40; }
+  .explorer-context-menu hr { @apply my-1 border-line; }
+}

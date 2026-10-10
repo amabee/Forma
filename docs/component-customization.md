@@ -55,8 +55,29 @@ methods, `forma.set("` for component names, and the second argument for supporte
 properties. For example, `forma.set("userAvatar", "` offers `source`, while
 `forma.get("nameInput", "` offers `value`. `component.properties.` suggests keys
 from the JSON tab. Arrow keys select suggestions; Enter accepts and Escape closes.
-CSS also has the language package's property suggestions. Suggestions are local,
-and use this form's component names. They do not provide full C# IntelliSense.
+JavaScript completion also uses a locally bundled TypeScript language service.
+It infers variables, function arguments, object members, strings, arrays and DOM
+APIs. For example, a module returned by `forma.use("timer")` suggests its exported
+members; a bound `enabled` ref suggests `.value` and `.subscribe`, and a numeric
+`.value` suggests number methods. `forma.on("keydown", event => ...)` gives
+keyboard-event properties such as `key` and `ctrlKey`.
+
+Hover identifiers or completion entries for types, signatures and documentation.
+Function argument hints appear while editing calls and emphasize the active
+argument. Nested custom JSON values and statically assigned `forma.shared` fields
+are inferred too. Inspector option lists supply component-specific enum choices.
+CSS retains property/value completion from its language package.
+
+Inference uses the current component draft and saved global script. The global
+editor uses its own draft. Literal `forma.provide` calls and top-level variables
+are inferred without executing scripts. Dynamic registration, runtime-loaded data,
+external packages and unknown object shapes cannot always supply member types;
+JSDoc annotations can add type information to local functions and objects. This
+is JavaScript assistance, not C# IntelliSense or an external package loader. Relative project imports are supported.
+
+Compiler declarations are bundled locally, with no CDN or source upload. Inference
+runs in a worker; switching away from an editor releases that worker while keeping
+its draft. Forma's existing syntax and runtime-property diagnostics remain active.
 
 Use the built-in editor directly, or click **External editor**. Forma finds
 VS Code when installed; **Choose editor…** selects another editor executable.
@@ -80,7 +101,7 @@ does not change a currently running preview. Start a new Preview to test it.
 
 ## Script API
 
-Use [global-script.js](global-scripts.md) for application-wide shared state and
+Use [main.js](global-scripts.md) for application-wide shared state and
 named modules. Component scripts access them through forma.shared or forma.use.
 
 `component` exposes `id`, `name`, `element` (the DOM element), and

@@ -98,7 +98,7 @@ public static class ComponentEditorService
     {
         var root = design.ProjectPath is string project
             ? Path.Combine(Path.GetDirectoryName(project)!, Path.GetFileNameWithoutExtension(project) + ".components")
-            : Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Forma", "ComponentEditors", design.Form!.Id);
+            : Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Forma", "ComponentEditors", design.ProjectRoot.Id);
         return Path.Combine(root, control.Id);
     }
 

@@ -137,3 +137,10 @@ test('navigation and layout properties are offered to scripts', async () => {
   assert.ok(!propertiesFor('toast', 'set').includes('dock'));
   assert.deepEqual(await diagnose('javascript', 'forma.set("stack", "orientation", "vertical"); forma.bind("nav", "selectedIndex");', [{ name: 'stack', kind: 'stackpanel' }, { name: 'nav', kind: 'sidenavigation' }]), []);
 });
+
+
+test('runtime enum suggestions use current inspector options for each component', async () => {
+  const { formaCompletions } = await load();
+  const result = formaCompletions(context('forma.set("userAvatar", "shape", "'), [{ name: 'userAvatar', kind: 'avatar', properties: [{ key: 'shape', options: ['circle', 'rounded', 'square'] }] }]);
+  assert.deepEqual(result.options.map(option => option.label), ['circle', 'rounded', 'square']);
+});

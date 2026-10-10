@@ -8,7 +8,7 @@ function fixture(behavior) {
   const { window } = new JSDOM('<button id="button"></button><input id="name" value=""><span id="label"></span>', { runScripts: 'outside-only' });
   const messages = []; window.log = [];
   window.forma = { send: message => messages.push(message) };
-  for (const file of ['reactivity.js', 'component-customization.js']) window.eval(fs.readFileSync(path.join(base, 'src/Forma.Builder/DesignerWeb', file), 'utf8'));
+  for (const file of ['reactivity.js', 'module-runtime.bundle.js', 'component-customization.js']) window.eval(fs.readFileSync(path.join(base, 'src/Forma.Builder/DesignerWeb', file), 'utf8'));
   const controls = [
     { id: 'button', name: 'submitButton', kind: 'button', enabled: true, visible: true, customization: { behavior } },
     { id: 'name', name: 'firstName', kind: 'textbox', enabled: true, visible: true, text: '' },

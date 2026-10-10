@@ -11,6 +11,17 @@ public sealed class ProjectDocument
     public string Format { get; set; } = "forma-project";
     public int Version { get; set; } = 1;
     public ProjectNode Root { get; set; } = new();
+    public List<ProjectNode> Forms { get; set; } = [];
+    public List<ProjectEntry> Files { get; set; } = [];
+}
+
+public sealed class ProjectEntry
+{
+    public string Id { get; set; } = Guid.NewGuid().ToString("N");
+    public string Name { get; set; } = "";
+    public string? ParentId { get; set; }
+    public bool IsFolder { get; set; }
+    public string Content { get; set; } = "";
 }
 
 public sealed class ProjectNode
@@ -216,8 +227,18 @@ public static class ProjectFile
         return new() { Root = Node(root) };
     }
 
-    public static string Serialize(ProjectDocument document) =>
-        JsonSerializer.Serialize(document, Options);
+    public static ProjectDocument CaptureProject(IEnumerable<Forma.Core.Form> forms, Func<FControl, JsonElement> appearance, bool embedImages = false)
+    {
+        var nodes = forms.Select(form => Capture(form, appearance, embedImages).Root).ToList();
+        if (nodes.Count == 0) throw new InvalidOperationException("No forms are open.");
+        return nodes.Count == 1 ? new() { Root = nodes[0] } : new() { Version = 2, Root = nodes[0], Forms = nodes };
+    }
+
+    public static string Serialize(ProjectDocument document) => document.Version == 3
+        ? JsonSerializer.Serialize(new { document.Format, document.Version, document.Forms, document.Files }, Options)
+        : document.Version == 2
+        ? JsonSerializer.Serialize(new { document.Format, document.Version, document.Forms }, Options)
+        : JsonSerializer.Serialize(new { document.Format, document.Version, document.Root }, Options);
 
     public static ProjectDocument Parse(string json)
     {
@@ -226,7 +247,7 @@ public static class ProjectFile
         var document =
             JsonSerializer.Deserialize<ProjectDocument>(json, Options)
             ?? throw new InvalidDataException("Empty project file.");
-        if (document.Format != "forma-project" || document.Version != 1)
+        if (document.Format != "forma-project" || document.Version is not (1 or 2 or 3))
             throw new InvalidDataException("This is not a supported Forma project version.");
         var ids = new HashSet<string>();
         var count = 0;
@@ -291,7 +312,19 @@ public static class ProjectFile
                 Validate(child, depth + 1);
             }
         }
-        Validate(document.Root, 0);
+        if (document.Version == 1) Validate(document.Root, 0);
+        else {
+            if (document.Forms is null || document.Forms.Count is < 1 or > 100) throw new InvalidDataException("A project needs 1–100 forms.");
+            var formNames = new HashSet<string>(StringComparer.Ordinal);
+            foreach (var form in document.Forms) {
+                Validate(form, 0);
+                if (!form.Properties.TryGetValue("Name", out var name) || name.ValueKind != JsonValueKind.String
+                    || string.IsNullOrWhiteSpace(name.GetString()) || !formNames.Add(name.GetString()!))
+                    throw new InvalidDataException("Forms must have unique names.");
+            }
+            document.Root = document.Forms[0];
+        }
+        if (document.Version == 3) ProjectEntryService.Validate(document.Files);
         return document;
     }
 
@@ -301,6 +334,7 @@ public static class ProjectFile
     {
         // Validate even documents passed directly by callers before building any tree.
         document = Parse(Serialize(document));
+        if (document.Version != 1) throw new InvalidDataException("Use RestoreProject to load all forms from a multi-form project.");
         var appearance = new Dictionary<string, JsonElement>();
         FControl Build(ProjectNode node)
         {
@@ -365,6 +399,19 @@ public static class ProjectFile
             return control;
         }
         return ((Forma.Core.Form)Build(document.Root), appearance);
+    }
+
+    public static (List<Forma.Core.Form> Forms, Dictionary<string, JsonElement> Appearance, List<ProjectEntry> Files) RestoreProject(ProjectDocument document)
+    {
+        document = Parse(Serialize(document));
+        var forms = new List<Forma.Core.Form>();
+        var appearance = new Dictionary<string, JsonElement>();
+        foreach (var root in document.Version == 1 ? new[] { document.Root } : document.Forms.ToArray()) {
+            var restored = Restore(new ProjectDocument { Root = root });
+            forms.Add(restored.Form);
+            foreach (var pair in restored.Appearance) appearance.Add(pair.Key, pair.Value);
+        }
+        return (forms, appearance, document.Files);
     }
 
     public static ProjectDocument Read(string path)

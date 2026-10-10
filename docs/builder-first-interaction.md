@@ -6,7 +6,7 @@ the web workspace: menus, toolbox, canvas, inspector and docked code editor.
 
 ## Build and test a small form
 
-1. Drag a Panel onto the form, then drop a TextBox, Label and Button inside it.
+1. Click **Toolbox** in the left sidebar, then drag a Panel onto the form, then drop a TextBox, Label and Button inside it.
    The children belong to the panel and move with it. Double-clicking a toolbox
    entry also inserts a control.
 2. Name them `nameInput`, `greetingLabel` and `greetButton` in Properties. Names
@@ -32,6 +32,21 @@ the web workspace: menus, toolbox, canvas, inspector and docked code editor.
    design and script reopen. Ctrl+Z/Ctrl+Y undo and redo design edits; focused
    text editors keep their own text undo behavior.
 
+## Browse the project
+
+The left sidebar switches between **Explorer** and **Toolbox**. Solution Explorer
+shows all forms, nested components, source files, the global script and image
+assets in use. Click a component to select it in Design, or expand it and click
+`script.js`, `component.css` or `custom-properties.json` to edit that source.
+See [Solution Explorer](solution-explorer.md) for search and keyboard navigation.
+
+## Add another form
+
+Choose **File → New form** or Ctrl+N. The new form belongs to the current project;
+use the form selector above the canvas to return to the first form. Save retains
+all forms in the same file. Use **File → New project** or Ctrl+Shift+N to start a
+separate project. Preview runs the currently selected form.
+
 ## Layout and properties
 
 Panel and GroupBox allow free positioning. Flow/stack/table layouts own child
@@ -46,7 +61,7 @@ Preview; Design keeps components selectable. Locked prevents design edits.
 The workspace theme toggle changes the editor, not your form's appearance.
 
 For live values outside events, use `forma.bind` and read `.value` when needed.
-For shared values, open **Project → Global script** and use
+For shared values, open **Project → Main script** and use
 `forma.provide`/`forma.use` or `forma.shared`. See the
 [script guide](components-and-scripting.md), [runtime property reference](runtime-properties.md)
 and [global script examples](global-scripts.md).

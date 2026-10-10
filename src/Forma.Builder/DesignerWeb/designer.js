@@ -1504,7 +1504,7 @@ document.addEventListener(
     }
     if (
       command &&
-      ["save", "save-as"].includes(command.dataset.command) &&
+      ["save", "save-as", "new", "new-project"].includes(command.dataset.command) &&
       !canSaveGridDrafts()
     )
       return;
@@ -1631,7 +1631,8 @@ document.addEventListener("keydown", (event) => {
   }
   if (event.ctrlKey && event.key.toLowerCase() === "n") {
     event.preventDefault();
-    send("command", d.rootId, { command: "new" });
+    if (!canSaveGridDrafts()) return;
+    send("command", d.rootId, { command: event.shiftKey ? "new-project" : "new" });
   }
   if (d.preview) return;
   if (event.key === "Delete") {

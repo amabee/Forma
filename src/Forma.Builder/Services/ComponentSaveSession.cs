@@ -5,6 +5,7 @@ public sealed class ComponentSaveSession(ComponentCustomization initial, Func<Co
 {
     private bool _hasApplied;
     public ComponentCustomization Current { get; private set; } = initial;
+    public void Synchronize(ComponentCustomization source) { Current = ComponentCustomization.Validate(source); _hasApplied = true; }
 
     public bool IsCurrent(ComponentCustomization source) => _hasApplied
         && source.Css == Current.Css && source.Behavior == Current.Behavior

@@ -65,6 +65,24 @@
     window.forma.send({ type: "designer", event: "editor-bounds", payload: { x: r.x, y: r.y, width: r.width, height: r.height } });
   };
   const measure = () => { if (!frame) frame = requestAnimationFrame(bounds); };
+  const formSelector = document.getElementById("project-form-select");
+  formSelector.addEventListener("change", () => {
+    if (typeof canSaveGridDrafts === "function" && !canSaveGridDrafts()) { formSelector.value = d.rootId; return; }
+    window.forma.send({ type: "designer", event: "select-form", payload: { id: formSelector.value } });
+  });
+  function updateForms(message) {
+    const forms = message.forms ?? [{ id: message.id, title: message.title }];
+    const signature = JSON.stringify(forms);
+    if (formSelector.dataset.forms !== signature) {
+      formSelector.replaceChildren(...forms.map(form => {
+        const option = document.createElement("option"); option.value = form.id;
+        option.textContent = form.title ? `${form.name ?? form.title} — ${form.title}` : form.name;
+        return option;
+      })); formSelector.dataset.forms = signature;
+    }
+    formSelector.value = message.id;
+    designTab.textContent = `${message.title ?? "Form"} · Design`;
+  }
   const themeToggle = document.getElementById("theme-toggle");
   let theme = "dark", hostThemeAnnounced = false;
   try { if (localStorage.getItem("forma.workspace.theme") === "light") theme = "light"; } catch {}
@@ -82,11 +100,13 @@
   themeToggle.addEventListener("click", () => applyTheme(theme === "dark" ? "light" : "dark", true));
   const receive = d.receive.bind(d);
   d.receive = message => {
+    if (message.action === "form-selected") { activateWorkspace("design"); return; }
     if (message.action === "editor-tabs") { renderEditorTabs(message); return; }
     if (message.action === "editor-open") { editorOpen = true; codeTab.hidden = false; codeTab.textContent = `${message.name ?? "Component"} · Code`; activateWorkspace("code"); return; }
     if (message.action === "editor-close") { editorOpen = false; codeTab.hidden = true; activateWorkspace("design"); return; }
     receive(message);
     if (message.action === "state") {
+      updateForms(message);
       // Repeat after the host's initial state: the page can load before its
       // native message bridge subscribes to WebMessageReceived.
       if (!hostThemeAnnounced) {

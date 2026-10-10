@@ -11,8 +11,10 @@
     <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.4129.50" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="DesignerWeb\**\*" Exclude="DesignerWeb\code-editor.bundle.js;DesignerWeb\code-editor.bundle.js.LICENSE.txt" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="DesignerWeb\**\*" Exclude="DesignerWeb\code-editor.bundle.js;DesignerWeb\code-editor.bundle.js.LICENSE.txt;DesignerWeb\javascript-worker.bundle.js;DesignerWeb\module-runtime.bundle.js" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="DesignerWeb\code-editor.bundle.js" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="DesignerWeb\module-runtime.bundle.js" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="DesignerWeb\javascript-worker.bundle.js" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
   <ItemGroup><EmbeddedResource Include="DesignerWeb\runtime-script-properties.json" LogicalName="Forma.RuntimeScriptProperties.json" /></ItemGroup>
   <Target Name="BuildDesignerAssets" BeforeTargets="BeforeBuild"

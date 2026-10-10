@@ -51,7 +51,7 @@ export function propertiesFor(kind, method) {
   return [...new Set(keys)];
 }
 const methods = {
-  provide: "provide(name, value) — publish a module from global-script.js",
+  provide: "provide(name, value) — publish a module from main.js",
   use: "use(name) — access a shared module from the global script",
   shared: "shared — reactive state shared for the current Preview session",
   on: "on(event, callback) — listen to this component's events",
@@ -81,6 +81,12 @@ export function formaCompletions(context, controls = [], customValues = {}, modu
   const result = (from, options) => ({ from, options, validFor: /^[\w$-]*$/ });
   const sharedModule = /(?:forma|api)\.use\(\s*["']([^"']*)$/.exec(prefix);
   if (sharedModule) return result(context.pos - sharedModule[1].length, modules.map(label => ({ label, type: "namespace" })));
+  const optionValue = /(?:forma|api)\.set\(\s*["']([^"']+)["']\s*,\s*["']([^"']+)["']\s*,\s*["']([^"']*)$/.exec(prefix);
+  if (optionValue) {
+    const control = controls.find(control => control.name === optionValue[1] || control.id === optionValue[1]);
+    const choices = control?.properties?.find(property => property.key === optionValue[2])?.options;
+    if (choices?.length) return result(context.pos - optionValue[3].length, choices.map(label => ({ label, type: "text", detail: `${control.kind} · ${optionValue[2]}` })));
+  }
   const layoutValue = /(?:forma|api)\.set\(\s*["'][^"']+["']\s*,\s*["'](dock|anchor)["']\s*,\s*["']([^"']*)$/.exec(prefix);
   if (layoutValue) return result(context.pos - layoutValue[2].length,
     (layoutValue[1] === "dock" ? ["none", "top", "bottom", "left", "right", "fill"]
@@ -128,13 +134,13 @@ function diagnostic(source, error) {
   pos = Math.min(pos, source.length);
   return { from: pos, to: Math.min(source.length, pos + 1), severity: "error", message: error.message.split("\n")[0] };
 }
-export async function diagnose(language, source, controls = []) {
+export async function diagnose(language, source, controls = [], requireObject = true) {
   let ast;
   try {
-    if (language === "javascript") ast = parse(source, { ecmaVersion: "latest", sourceType: "script", allowReturnOutsideFunction: true });
+    if (language === "javascript") ast = parse(source, { ecmaVersion: "latest", sourceType: "module", allowReturnOutsideFunction: true });
     else if (language === "json") {
       const value = JSON.parse(source);
-      if (!value || Array.isArray(value) || typeof value !== "object") throw new Error("Custom values must be a JSON object.");
+      if (requireObject && (!value || Array.isArray(value) || typeof value !== "object")) throw new Error("Custom values must be a JSON object.");
     } else if (source.trim()) await formatCode("css", source);
   } catch (error) { return [diagnostic(source, error)]; }
   if (!ast) return [];

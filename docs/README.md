@@ -5,10 +5,11 @@ Start with the [workspace walkthrough](builder-first-interaction.md), then
 
 | Guide | What it covers |
 | --- | --- |
+| [Solution Explorer](solution-explorer.md) | Project tree, forms, component sources, search and images in use |
 | [Component reference](component-reference.md) | Each component, inspector properties, ranges and options |
 | [Runtime properties](runtime-properties.md) | Supported `forma.get`, `forma.set` and `forma.bind` keys, types and restrictions |
 | [Custom Properties](component-customization.md) | CSS, `script.js`, custom JSON, editor tools, events and reactive state |
-| [Global scripts](global-scripts.md) | `global-script.js`, `forma.provide`, `forma.use`, shared state and scope lifetime |
+| [Global scripts](global-scripts.md) | `main.js`, `forma.provide`, `forma.use`, shared state and scope lifetime |
 | [Examples](examples) | Copyable JavaScript and C# recipes |
 | [Project files](project-files.md) | Save/Open, `.forma`, embedded sources/images and Undo/Redo |
 | [Inspector properties](properties-implementation.md) | Current inspector behavior and remaining property work |
@@ -19,8 +20,8 @@ Start with the [workspace walkthrough](builder-first-interaction.md), then
 ## Choose the right script scope
 
 Put a component's event handlers in its **Custom Properties → Script** tab
-(`script.js`). Open **Project → Global script** for shared application setup
-(`global-script.js`), which runs before component scripts.
+(`script.js`). Open **Project → Main script** for shared application setup
+(`main.js`), which runs before component scripts.
 
 For example, put this in the global script:
 

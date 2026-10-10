@@ -1,6 +1,6 @@
 import { EditorView, basicSetup } from "codemirror";
-import { EditorState, Compartment } from "@codemirror/state";
-import { keymap } from "@codemirror/view";
+import { EditorState, Compartment, StateField, StateEffect } from "@codemirror/state";
+import { keymap, hoverTooltip, showTooltip } from "@codemirror/view";
 import { indentWithTab } from "@codemirror/commands";
 import { javascript, localCompletionSource } from "@codemirror/lang-javascript";
 import { css } from "@codemirror/lang-css";
@@ -12,6 +12,8 @@ import { autocompletion } from "@codemirror/autocomplete";
 import { linter, lintGutter, openLintPanel, forEachDiagnostic, forceLinting } from "@codemirror/lint";
 import { syntaxTree } from "@codemirror/language";
 import { diagnose, formaCompletions } from "./code-assistance.mjs";
+import { createJavaScriptCompletionClient } from "./javascript-completion.mjs";
+const semanticCompletion = createJavaScriptCompletionClient();
 let completionContext = { controls: [] };
 document.body.classList.toggle("embedded-editor", new URLSearchParams(window.location.search).has("embedded"));
 
@@ -131,14 +133,14 @@ const lightHighlighting = syntaxHighlighting(HighlightStyle.define([
 const themeSlot = new Compartment(); let editorTheme = "dark";
 const themeExtensions = () => editorTheme === "light" ? [lightTheme, lightHighlighting] : [theme, highlighting];
 const savedSources = {};
-let globalDocument = false;
-const fileName = key => ({ css: "component.css", behavior: globalDocument ? "global-script.js" : "script.js", characteristics: "custom-properties.json" })[key];
+let globalDocument = false, singleDocument = null, singleFileName = null;
+const fileName = key => singleFileName ?? ({ css: "component.css", behavior: globalDocument ? "main.js" : "script.js", characteristics: "custom-properties.json" })[key];
 const views = new Map(); let active = "css", busy = false, dirty = false, populating = false;
-function source() { return Object.fromEntries([...views].map(([key, view]) => [key, view.state.doc.toString()])); }
+function source() { if (singleDocument) return { css: "", behavior: views.get(singleDocument).state.doc.toString(), characteristics: "{}" }; return Object.fromEntries([...views].map(([key, view]) => [key, view.state.doc.toString()])); }
 function markDirty(value) {
   for (const [key, view] of views) {
     const tab = document.querySelector(`[data-tab="${key}"]`);
-    const changed = view.state.doc.toString() !== (savedSources[key] ?? "");
+    const changed = singleDocument ? key === singleDocument && view.state.doc.toString() !== (savedSources.behavior ?? "") : view.state.doc.toString() !== (savedSources[key] ?? "");
     tab.querySelector(".file-dirty").hidden = !changed;
     tab.setAttribute("aria-label", `${fileName(key)}${changed ? ", unsaved changes" : ""}`);
   }
@@ -151,19 +153,70 @@ function cursor() {
   document.getElementById("editor-cursor").textContent = `Ln ${line.number}, Col ${pos - line.from + 1}`;
   const languageLabel = document.getElementById("editor-language"); if (languageLabel) languageLabel.textContent = definitions[active].title;
 }
+const signatureEffect = StateEffect.define();
+const signatureField = StateField.define({
+  create: () => null,
+  update(value, transaction) {
+    for (const effect of transaction.effects) if (effect.is(signatureEffect)) return effect.value;
+    return transaction.docChanged || transaction.selection ? null : value;
+  },
+  provide: field => showTooltip.from(field),
+});
+function completionData() {
+  let custom = {}; try { custom = JSON.parse(views.get("characteristics")?.state.doc.toString() ?? "{}"); } catch {}
+  return { context: completionContext, custom, globalScript: globalDocument };
+}
+function informationPanel(info) {
+  const dom = document.createElement("div"); dom.className = "completion-information";
+  const pre = document.createElement("pre"); pre.textContent = info.signature; dom.append(pre);
+  if (info.documentation) { const text = document.createElement("p"); text.textContent = info.documentation; dom.append(text); }
+  return dom;
+}
+async function updateSignature(view) {
+  const source = view.state.doc.toString(), position = view.state.selection.main.head;
+  // Avoid language-service requests for ordinary navigation outside calls.
+  if (!source.slice(0, position).includes("(")) return;
+  const info = await semanticCompletion.signature({ ...completionData(), source, position });
+  if (view.state.doc.toString() !== source || view.state.selection.main.head !== position) return;
+  const tooltip = info ? { pos: position, above: true, create() {
+    const dom = informationPanel({ signature: info.prefix, documentation: info.documentation });
+    const pre = dom.querySelector("pre");
+    info.parameters.forEach((parameter, index) => {
+      if (index) pre.append(info.separator);
+      if (index === info.active) { const strong = document.createElement("strong"); strong.textContent = parameter; pre.append(strong); }
+      else pre.append(parameter);
+    }); pre.append(info.suffix);
+    return { dom };
+  } } : null;
+  view.dispatch({ effects: signatureEffect.of(tooltip) });
+}
 function extensions(key) {
   return [basicSetup, definitions[key].extension, themeSlot.of(themeExtensions()), EditorState.tabSize.of(2),
-    lintGutter(), linter(view => diagnose(language(key), view.state.doc.toString(), completionContext.controls), { delay: 400 }),
-    ...(key === "behavior" ? [autocompletion({ override: [context => {
+    lintGutter(), linter(view => diagnose(language(key), view.state.doc.toString(), completionContext.controls, !singleDocument), { delay: 400 }),
+    ...(key === "behavior" ? [signatureField, hoverTooltip(async (view, position) => {
+      const source = view.state.doc.toString();
+      const info = await semanticCompletion.hover({ ...completionData(), source, position });
+      if (!info || view.state.doc.toString() !== source) return null;
+      return { pos: info.from, end: info.to, above: true, create: () => ({ dom: informationPanel(info) }) };
+    }), autocompletion({ override: [async context => {
       if (/Comment/.test(syntaxTree(context.state).resolveInner(context.pos, -1).name)) return null;
       let values = {}; try { values = JSON.parse(views.get("characteristics")?.state.doc.toString() ?? "{}"); } catch {}
-      return formaCompletions(context, completionContext.controls, values, completionContext.modules);
-    }, localCompletionSource] })] : []),
+      const fast = formaCompletions(context, completionContext.controls, values, completionContext.modules);
+      // Literal component names, events and runtime keys retain catalog validation.
+      if (fast && /["']/.test(context.state.doc.sliceString(Math.max(0, fast.from - 1), fast.from))) return fast;
+      const semantic = await semanticCompletion.complete(context, { context: completionContext, custom: values, globalScript: globalDocument });
+      if (!semantic) return fast ?? localCompletionSource(context);
+      if (fast && fast.from === semantic.from) {
+        const labels = new Set(semantic.options.map(option => option.label));
+        semantic.options.push(...fast.options.filter(option => !labels.has(option.label)));
+      }
+      return semantic;
+    }] })] : []),
     keymap.of([indentWithTab, { key: "Mod-s", run: () => { command("save"); return true; } },
       { key: "Mod-Shift-f", run: () => { command("format"); return true; } }]),
     EditorView.updateListener.of(update => {
-      if (update.docChanged && !populating) markDirty([...views].some(([name, view]) => view.state.doc.toString() !== (savedSources[name] ?? "")));
-      if (update.selectionSet || update.docChanged) cursor();
+      if (update.docChanged && !populating) markDirty(singleDocument ? views.get(singleDocument).state.doc.toString() !== (savedSources.behavior ?? "") : [...views].some(([name, view]) => view.state.doc.toString() !== (savedSources[name] ?? "")));
+      if (update.selectionSet || update.docChanged) { cursor(); if (key === "behavior" && !populating) updateSignature(update.view); }
       let count = 0; for (const [name, view] of views) {
         let fileCount = 0; forEachDiagnostic(view.state, () => { count++; fileCount++; });
         const tab = document.querySelector(`[data-tab="${name}"]`);
@@ -175,7 +228,7 @@ function extensions(key) {
 }
 for (const key of Object.keys(definitions)) views.set(key, new EditorView({ state: EditorState.create({ extensions: extensions(key) }), parent: document.getElementById(`editor-${key}`) }));
 function activate(key) {
-  if (!views.has(key) || (globalDocument && key !== "behavior")) return;
+  if (!views.has(key) || (globalDocument && key !== "behavior") || (singleDocument && key !== singleDocument)) return;
   active = key;
   document.body.dataset.document = key;
   document.getElementById("editor-file-name").textContent = fileName(key);
@@ -213,11 +266,12 @@ async function command(event) {
   setBusy(true);
   try {
     if (event === "format") { await formatKeys([active]); status("Document formatted. Ctrl+S saves and applies."); setBusy(false); return; }
-    if (document.getElementById("format-on-save").checked) await formatKeys(Object.keys(definitions));
+    if (document.getElementById("format-on-save").checked) await formatKeys(singleDocument ? [singleDocument] : Object.keys(definitions));
     send({ event, source: source() }); // Host acknowledges save/external or returns an error.
   } catch (error) { status(`Format failed: ${error.message}. Fix syntax or turn off Format on save.`); setBusy(false); }
 }
 function receive(message) {
+  if (message.action === "editor-active" && !message.active) semanticCompletion.dispose();
   if (message.theme) {
     editorTheme = message.theme === "light" ? "light" : "dark";
     document.documentElement.dataset.theme = editorTheme;
@@ -228,17 +282,19 @@ function receive(message) {
     if (message.action === "context") for (const view of views.values()) forceLinting(view);
   }
   if (message.name) document.getElementById("editor-component-name").textContent = message.name;
+  if (message.action === "file-name") { singleFileName = message.singleFileName; document.querySelector(`[data-tab="${singleDocument}"] span`).textContent = singleFileName; document.getElementById("editor-file-name").textContent = singleFileName; }
   if (message.action === "activate") activate(message.document);
   if (message.action === "source") {
-    globalDocument = !!message.globalScript;
+    globalDocument = !!message.globalScript; singleDocument = message.singleDocument ?? null; singleFileName = message.singleFileName ?? null;
     Object.assign(savedSources, message.source);
     if (message.document && views.has(message.document)) active = message.document;
-    document.querySelectorAll('[data-tab]').forEach(tab => { tab.hidden = !!message.globalScript && tab.dataset.tab !== "behavior"; });
-    document.querySelector('#tab-behavior span').textContent = message.globalScript ? "global-script.js" : "script.js";
-    if (message.globalScript) { active = "behavior"; document.getElementById("editor-component-name").textContent = "Global script"; }
+    document.querySelectorAll('[data-tab]').forEach(tab => { tab.hidden = singleDocument ? tab.dataset.tab !== singleDocument : !!message.globalScript && tab.dataset.tab !== "behavior"; });
+    document.querySelector('#tab-behavior span').textContent = message.globalScript ? "main.js" : "script.js";
+    if (message.globalScript) { active = "behavior"; document.getElementById("editor-component-name").textContent = "main.js"; }
     populating = true;
-    try { for (const [key, view] of views) view.setState(EditorState.create({ doc: message.source[key] ?? "", extensions: extensions(key) })); }
+    try { for (const [key, view] of views) view.setState(EditorState.create({ doc: (singleDocument ? key === singleDocument ? message.source.behavior : key === "characteristics" ? "{}" : "" : message.source[key]) ?? "", extensions: extensions(key) })); }
     finally { populating = false; }
+    if (singleDocument) { active = singleDocument; document.querySelector(`[data-tab="${singleDocument}"] span`).textContent = singleFileName; }
     markDirty(false); activate(active);
   }
   if (message.action === "saved") { Object.assign(savedSources, message.source); const current = source(); markDirty(Object.keys(definitions).some(key => current[key] !== message.source[key])); setBusy(false); }
@@ -261,6 +317,6 @@ window.chrome?.webview?.addEventListener("message", event => receive(event.data)
 window.addEventListener("keydown", event => {
   if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "s") { event.preventDefault(); command("save"); }
 });
-window.addEventListener("pagehide", () => { for (const view of views.values()) view.destroy(); });
+window.addEventListener("pagehide", () => { semanticCompletion.dispose(); for (const view of views.values()) view.destroy(); });
 window.formaCodeEditor = { command, receive, source, views, activate };
 send({ event: "ready" }); activate("css");

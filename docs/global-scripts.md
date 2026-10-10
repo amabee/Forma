@@ -6,14 +6,61 @@ when script.js does not exist. Saving writes script.js; the old file is not
 deleted. The legacy internal Behavior source field remains for file-format
 compatibility. CSS and custom-properties.json continue to work as before.
 
-Open **Project → Global script** to edit **global-script.js** in the docked code
+Open **Project → Main script** to edit **main.js** in the docked code
 editor. It uses the same formatting, diagnostics, Save/auto-apply and external
-editor actions. Global source is embedded in the .forma project and participates
+editor actions. The same global source is used when previewing each form in a multi-form project.
+Global source is embedded in the .forma project and participates
 in Save/Open and Undo/Redo. After saving, start a fresh Preview to test changes.
+
+## Split providers into project files
+
+Right-click **Files** in Solution Explorer, add a folder named `providers`, then
+add `counter.js` inside it. Put this in that file:
+
+```js
+/** @param {FormaApi} forma */
+export function createCounter(forma) {
+  const count = forma.ref(0);
+  return { count, increment() { count.value++; } };
+}
+```
+
+Open **main.js** and register the imported provider:
+
+```js
+import { createCounter } from "./providers/counter.js";
+forma.provide("counter", createCounter(forma));
+```
+
+A button's `script.js` can use the shared instance:
+
+```js
+const counter = forma.use("counter");
+forma.on("click", () => counter.increment());
+```
+
+Named/default exports, re-exports and side-effect imports are supported.
+Component scripts can import helpers directly too. Paths are relative to the
+importing project file; `main.js` and component scripts resolve from the **Files**
+root. Include `.js` explicitly; extensionless imports also resolve `.js` or
+`index.js`. JSON files may be imported as data. CSS is still edited/applied through
+component CSS, not JavaScript imports. Top-level await is unsupported.
+
+Each imported module executes once per Preview and shares its exported objects
+with all importers. Provider factories receive `forma` explicitly, keeping their
+runtime dependencies clear. Imported files also have the startup `forma` API
+available; a side-effect file imported by main.js can register a provider there.
+Keep component-specific event handlers in the component script. Save all changed
+files and start a fresh Preview to reload them. Completion follows imported
+exports and providers registered with literal names in main.js.
+
+The entry source is still embedded using the legacy project field so older
+projects reopen unchanged. New external editing copies use `main.js`; the reader
+accepts `global-script.js` when `main.js` is absent.
 
 ## Provide a shared module
 
-Put this in global-script.js:
+Put this in main.js:
 
 ```js
 const count = forma.ref(0);
@@ -51,8 +98,8 @@ forma.watch(app.count, value => {
 Both component scripts receive the same app object and ref. Local variables
 remain local: declaring const count in the global file does not inject a bare
 count identifier into other scripts. Export it with provide and access it with
-use. These are normal JavaScript functions, not a custom language or an ES-module
-import loader. They do not fetch packages or external URLs.
+use. Provide/use names are separate from JavaScript import/export names.
+Imports load project files only; packages and external URLs are unsupported.
 
 Module names must start with a letter and contain letters, digits, underscores,
 dots or hyphens, up to 64 characters. A name is provided once, from the global
@@ -61,7 +108,7 @@ Literal names from saved provide calls are suggested while typing forma.use.
 
 ## Use a simple shared namespace
 
-For small applications, modules are optional. Global script:
+For small applications, modules are optional. main.js:
 
 ```js
 forma.shared.userName = "";

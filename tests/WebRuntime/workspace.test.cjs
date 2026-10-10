@@ -114,3 +114,20 @@ test('multiple component tabs retain their identities, activate independently an
   assert.equal(doc.getElementById('stage').hidden, false);
   assert.equal(doc.querySelectorAll('[data-editor-key]').length, 0);
 });
+
+
+test('project form selector lists all forms and selects by stable ID without issuing New Project', t => {
+  const dom = new JSDOM(fs.readFileSync(path.join(base, 'index.html'), 'utf8'), { runScripts: 'outside-only', pretendToBeVisual: true });
+  t.after(() => dom.window.close());
+  const { window } = dom, messages = [], doc = window.document;
+  window.forma = { send: message => messages.push(message) }; window.formaDesigner = { receive() {} };
+  window.eval(fs.readFileSync(path.join(base, 'workspace.js'), 'utf8'));
+  window.formaDesigner.receive({ action: 'state', id: 'second-id', title: 'Settings', forms: [{ id: 'first-id', name: 'main', title: 'Main' }, { id: 'second-id', name: 'settings', title: 'Settings' }] });
+  const selector = doc.getElementById('project-form-select');
+  assert.equal(selector.options.length, 2); assert.equal(selector.value, 'second-id');
+  assert.equal(doc.getElementById('workspace-design-tab').textContent, 'Settings · Design');
+  selector.value = 'first-id'; selector.dispatchEvent(new window.Event('change'));
+  assert.equal(messages.at(-1).event, 'select-form'); assert.equal(messages.at(-1).payload.id, 'first-id');
+  assert.ok(doc.querySelector('[data-command="new-project"]'));
+  assert.ok(doc.querySelector('[data-command="new"]'));
+});

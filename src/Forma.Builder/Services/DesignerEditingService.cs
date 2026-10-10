@@ -31,7 +31,7 @@ public sealed class DesignerEditingService(BuilderViewModel viewModel)
         if (action == "global-script" && payload.ValueKind == JsonValueKind.Object && payload.TryGetProperty("script", out var global))
         {
             if (global.ValueKind != JsonValueKind.String || global.GetString()!.Length > 200_000) throw new ArgumentException("Global script must be under 200,000 characters.");
-            _viewModel.Appearance[form.Id].GlobalScript = global.GetString()!;
+            _viewModel.GlobalScript = global.GetString()!;
             return new("Global script saved");
         }
         if (action == "customize" && control is not null && !_viewModel.Appearance[control.Id].Locked)
@@ -627,6 +627,7 @@ public sealed class DesignerEditingService(BuilderViewModel viewModel)
                     !(char.IsLetter(name[0]) || name[0] == '_')
                     || name.Any(c => !char.IsLetterOrDigit(c) && c != '_')
                     || Walk(_viewModel.Form!).Any(c => c != control && c.Name == name)
+                    || control == _viewModel.Form && _viewModel.Forms.Any(form => form != control && form.Name == name)
                 )
                     throw new ArgumentException(
                         "Name must be a unique C# identifier using letters, digits, or underscores."

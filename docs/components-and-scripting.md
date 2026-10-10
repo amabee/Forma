@@ -79,7 +79,7 @@ In free-position containers, hold Alt while dragging to bypass alignment snaps.
 
 Component JavaScript is now script.js. For project-wide state/functions and
 forma.provide/use, see [global scripts and shared state](global-scripts.md).
-Open the shared file through Project → Global script.
+Open the shared file through Project → Main script.
 
 Select a component → **Custom Properties**, directly below Search properties. Edit:
 

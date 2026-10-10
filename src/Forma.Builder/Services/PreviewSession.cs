@@ -24,11 +24,15 @@ public sealed class PreviewSession : IDisposable
             control => JsonSerializer.SerializeToElement(design.Appearance[control.Id])));
         Form = copy.Form;
         Appearance = copy.Appearance.ToDictionary(pair => pair.Key, pair => pair.Value.Deserialize<Appearance>()!);
+        Appearance[Form.Id].GlobalScript = design.GlobalScript;
+        _projectFiles = ProjectEntryService.ModuleSources(design.Files);
     }
+
+    private readonly ProjectEntryService.ModuleSource[] _projectFiles;
 
     public object State() => new
     {
-        type = "designer", action = "runtime-preview", id = Form.Id, globalScript = Appearance[Form.Id].GlobalScript,
+        type = "designer", action = "runtime-preview", id = Form.Id, globalScript = Appearance[Form.Id].GlobalScript, projectFiles = _projectFiles.Select(file => new { path = file.Path, content = file.Content }).ToArray(),
         controls = Controls.Select(control =>
         {
             var item = JsonSerializer.Deserialize<Dictionary<string, object?>>(

@@ -7,6 +7,24 @@ namespace Forma.Tests;
 public class PreviewSessionTests
 {
     [Fact]
+    public void PreviewSnapshotsNestedModuleSourcesFromTheWholeProject()
+    {
+        var design = new BuilderViewModel(); design.CreateNew();
+        var folder = ProjectEntryService.Add(design.Files, null, "providers", true);
+        var source = ProjectEntryService.Add(design.Files, folder.Id, "counter.js", false);
+        source.Content = "export const count = 0;";
+        design.GlobalScript = "import { count } from './providers/counter.js';";
+        using var preview = new PreviewSession(design);
+        source.Content = "export const count = 99;";
+        ProjectEntryService.Rename(design.Files, folder.Id, "changed");
+        var state = JsonSerializer.SerializeToElement(preview.State());
+        var file = Assert.Single(state.GetProperty("projectFiles").EnumerateArray());
+        Assert.Equal("providers/counter.js", file.GetProperty("path").GetString());
+        Assert.Equal("export const count = 0;", file.GetProperty("content").GetString());
+        Assert.Equal("import { count } from './providers/counter.js';", state.GetProperty("globalScript").GetString());
+    }
+
+    [Fact]
     public void TimerIntervalIsTypedClampedAndRuntimeOnly()
     {
         var design = new BuilderViewModel(); design.CreateNew();

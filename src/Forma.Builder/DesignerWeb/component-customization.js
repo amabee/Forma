@@ -6,6 +6,7 @@
     failedBehaviors = new Map();
   let currentState;
   const modules = new Map();
+  let moduleSession;
   let sharedState, globalSignature, globalKey, globalFailed = false;
   const aliases = { doubleclick: "dblclick", mousewheel: "wheel" };
   const lifecycle = new Set([
@@ -182,7 +183,7 @@
     }
     const api = {
       provide(name, value) {
-        if (!item.globalElement) throw new Error("Define shared modules in global-script.js using forma.provide.");
+        if (!item.globalElement) throw new Error("Define shared modules in main.js using forma.provide.");
         if (typeof name !== "string" || !/^[A-Za-z][\w.-]{0,63}$/.test(name)) throw new Error("Use a nonempty module name, e.g. app.");
         if (modules.has(name)) throw new Error(`Module '${name}' is already provided.`);
         if (value === undefined) throw new Error("Provide a defined module value.");
@@ -190,7 +191,7 @@
         return value;
       },
       use(name) {
-        if (!modules.has(name)) throw new Error(`Shared module '${name}' was not provided by global-script.js.`);
+        if (!modules.has(name)) throw new Error(`Shared module '${name}' was not provided by main.js.`);
         return modules.get(name);
       },
       get shared() { return sharedState; },
@@ -479,11 +480,8 @@
     // The script-local forma API is separate from the internal window.forma bridge.
     // api remains an alias for existing saved projects.
     try {
-      new Function("forma", "component", "api", '"use strict";\n' + source)(
-        api,
-        component,
-        api,
-      );
+      if (moduleSession) moduleSession.execute(source, api, component, item.globalElement ? "main.js" : "script.js");
+      else new Function("forma", "component", "api", '"use strict";\n' + source)(api, component, api);
     } catch (error) {
       cleanupBehavior(item.id);
       throw error;
@@ -515,20 +513,21 @@
       if (runtime) {
         const root = { id: state.id ?? state.controls.find(item => item.kind === "form")?.id ?? document.querySelector('[data-forma-type="form"]')?.id ?? state.controls[0].id };
         const source = state.globalScript ?? "";
-        const signature = JSON.stringify([root?.id, source]);
+        const signature = JSON.stringify([root?.id, source, state.projectFiles ?? []]);
         if (signature !== globalSignature) {
           for (const id of [...behaviors.keys()].filter(id => id !== globalKey)) cleanupBehavior(id);
           if (globalKey) cleanupBehavior(globalKey);
           modules.clear(); sharedState = undefined; globalFailed = false; globalSignature = signature;
           globalKey = "__global__" + root.id;
+          moduleSession = window.formaModuleRuntime?.createModuleSession(state.projectFiles ?? []);
           try {
-            const record = installBehavior({ id: globalKey, ownerId: root.id, name: "Global script", kind: "form", enabled: true, visible: true, globalElement: document.createElement("div") }, state, source, "{}");
+            const record = installBehavior({ id: globalKey, ownerId: root.id, name: "main.js", kind: "form", enabled: true, visible: true, globalElement: document.createElement("div") }, state, source, "{}");
             pending.push(() => { for (const event of ["created", "mounted", "ready", "load"]) emit(record, event); });
           } catch (error) { globalFailed = true; modules.clear(); sharedState = undefined; report(root.id, error); }
         }
         live.add(globalKey);
       } else {
-        modules.clear(); sharedState = undefined; globalSignature = undefined; globalFailed = false;
+        moduleSession = undefined; modules.clear(); sharedState = undefined; globalSignature = undefined; globalFailed = false;
       }
       for (const map of [failedStyles, failedBehaviors])
         for (const id of map.keys()) if (!live.has(id)) map.delete(id);
@@ -646,7 +645,7 @@
     clear() {
       for (const id of [...behaviors.keys()].filter(id => id !== globalKey)) cleanupBehavior(id);
       if (globalKey) cleanupBehavior(globalKey);
-      modules.clear(); sharedState = undefined; globalSignature = undefined; globalKey = undefined; globalFailed = false;
+      moduleSession = undefined; modules.clear(); sharedState = undefined; globalSignature = undefined; globalKey = undefined; globalFailed = false;
       for (const record of styles.values()) record.element.remove();
       styles.clear();
       failedStyles.clear();
