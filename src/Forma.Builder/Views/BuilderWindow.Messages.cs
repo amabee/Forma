@@ -110,6 +110,9 @@ public sealed partial class BuilderWindow
                     case "new": await AddFormAsync(); return;
                     case "new-project": if (ConfirmDiscard()) await NewProjectAsync(); return;
                     case "about": ShowAbout(); return;
+                    case "start-page": await SendStartPageAsync(); return;
+                    case "open-recent": await OpenRecentAsync(String(payload, "path")); return;
+                    case "new-from-template": await NewFromTemplateAsync(String(payload, "template")); return;
                     case "edit-characteristics":
                     case "edit-custom-properties":
                     case "edit-global-script":

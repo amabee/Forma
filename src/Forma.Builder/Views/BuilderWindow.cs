@@ -77,6 +77,8 @@ public sealed partial class BuilderWindow : System.Windows.Forms.Form
             await NewProjectAsync();
             _ready = true;
             await StartRecoveryAsync();
+            // Offer recent projects and templates unless a recovered design was just restored.
+            if (_viewModel.ProjectPath is null && !_viewModel.IsMarkedUnsaved) await SendStartPageAsync();
         }
         catch (Exception error)
         {

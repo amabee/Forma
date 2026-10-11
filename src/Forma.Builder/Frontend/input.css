@@ -512,6 +512,50 @@
   .property-reset {
     @apply absolute top-1.5 left-[78px] size-5 rounded text-[12px] leading-none text-muted hover:bg-hover hover:text-ink;
   }
+  /* Start page: a dialog over the workspace with templates and recent projects */
+  .start-page {
+    @apply fixed inset-0 z-[1100] flex items-center justify-center bg-black/40 p-4;
+  }
+  .start-panel {
+    @apply flex max-h-[calc(100vh-32px)] w-[640px] max-w-full flex-col gap-5 overflow-y-auto rounded-2xl border border-line bg-raised p-6 text-ink;
+    box-shadow: 0 24px 64px -16px rgb(0 0 0 / 0.55);
+  }
+  .start-header {
+    @apply flex items-center justify-between;
+  }
+  .start-header h2 {
+    @apply text-lg font-semibold;
+  }
+  .start-close {
+    @apply size-8 rounded-md text-xl leading-none text-muted hover:bg-hover hover:text-ink;
+  }
+  .start-section h3 {
+    @apply mb-2 text-[12px] font-semibold tracking-wide text-muted uppercase;
+  }
+  .start-actions, .start-templates {
+    @apply grid grid-cols-2 gap-2 max-sm:grid-cols-1;
+  }
+  .start-templates {
+    @apply grid-cols-3 max-sm:grid-cols-1;
+  }
+  .start-action, .start-recent-item {
+    @apply flex w-full flex-col items-start gap-0.5 rounded-lg border border-line bg-panel px-3 py-2.5 text-left hover:border-accent hover:bg-hover disabled:opacity-50;
+  }
+  .start-action strong, .start-recent-item strong {
+    @apply text-[13px] font-semibold;
+  }
+  .start-action span, .start-recent-item span {
+    @apply text-[12px] leading-snug text-muted;
+  }
+  .start-recent {
+    @apply flex flex-col gap-1.5;
+  }
+  .start-recent-item span {
+    @apply max-w-full truncate;
+  }
+  .start-empty {
+    @apply text-[12px] text-faint;
+  }
   .css-override-summary {
     @apply mb-2 flex flex-col items-start gap-1.5 rounded-md bg-amber-500/10 px-3 py-2 text-[12px] leading-snug text-amber-300;
   }

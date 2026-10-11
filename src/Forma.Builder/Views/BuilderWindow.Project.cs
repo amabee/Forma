@@ -113,6 +113,7 @@ public sealed partial class BuilderWindow
             }
             foreach (var root in document.Version == 1 ? new[] { document.Root } : document.Forms.ToArray()) UseEmbeddedImages(root);
             _viewModel.ProjectPath = path; _viewModel.MarkSaved(); UpdateProjectTitle();
+            RecentProjects.Default.Add(path);
             _recovery?.Clear();
             _ = StateAsync(skippedImages.Count == 0 ? $"Saved {Path.GetFileName(path)}"
                 : $"Saved {Path.GetFileName(path)}; {skippedImages.Count} image(s) are missing or over 10 MB and stay linked, not embedded");
@@ -128,7 +129,10 @@ public sealed partial class BuilderWindow
         if (dialog.ShowDialog(this) != DialogResult.OK) return;
         try {
             if (await LoadProjectAsync(dialog.FileName, dialog.FileName, saved: true))
+            {
+                RecentProjects.Default.Add(dialog.FileName);
                 await StateAsync($"Opened {Path.GetFileName(_viewModel.ProjectPath)}");
+            }
         } catch (Exception error) {
             _ready = true;
             MessageBox.Show(this, error.Message, "Could not open design", MessageBoxButtons.OK, MessageBoxIcon.Error);
