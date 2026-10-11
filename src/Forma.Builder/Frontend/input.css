@@ -502,6 +502,18 @@
     outline: 2px solid rgb(59 130 246 / 0.85);
     outline-offset: 1px;
   }
+  .selection-path {
+    @apply mb-2 flex flex-wrap items-center gap-1 text-[12px] text-faint;
+  }
+  .selection-path button {
+    @apply max-w-32 truncate rounded px-1.5 py-0.5 text-muted hover:bg-hover hover:text-ink;
+  }
+  .selection-path button[aria-current="true"] {
+    @apply font-semibold text-ink;
+  }
+  .component-source-menu hr {
+    @apply my-1 border-line;
+  }
   #selection-marquee {
     @apply pointer-events-none absolute z-[900] border border-blue-500 bg-blue-500/10;
   }

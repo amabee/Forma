@@ -91,11 +91,14 @@
         <div class="toolbar-right">
           <span class="device" title="Form size"><img class="icon-svg" src="icons/monitor.svg" alt="" /><span id="device-caption">Desktop (640 × 440)</span></span>
           <label class="zoom-label" title="Canvas zoom"><img class="icon-svg" src="icons/search.svg" alt="" />
-            <select id="zoom" aria-label="Canvas zoom">
+            <select id="zoom" aria-label="Canvas zoom" title="Zoom (Ctrl+wheel, Ctrl+= / Ctrl+-, Ctrl+0 for 100%)">
+              <option value="fit">Fit</option>
+              <option value="0.5">50%</option>
               <option value="0.75">75%</option>
               <option value="1" selected>100%</option>
               <option value="1.25">125%</option>
               <option value="1.5">150%</option>
+              <option value="2">200%</option>
             </select>
           </label>
           <button class="primary" data-preview><img class="icon-svg" src="icons/play.svg" alt="" /><span id="preview-caption">Preview</span></button>
@@ -530,6 +533,7 @@
           <button class="close-panel" data-toggle="properties" aria-label="Hide properties" title="Hide properties"><img class="icon-svg" src="icons/x.svg" alt="" /></button>
         </div>
         <div class="inspector-body">
+          <nav id="selection-path" class="selection-path" aria-label="Selection path"></nav>
           <select id="selection" aria-label="Selected control"></select>
           <label class="search property-search"><img class="icon-svg" src="icons/search.svg" alt="" /><input id="property-search" placeholder="Search properties" aria-label="Search properties" /></label>
           <div class="property-actions" id="custom-properties-action"><button data-command="edit-custom-properties" disabled>Custom Properties…</button></div>
@@ -554,6 +558,15 @@
       <button role="menuitem" data-source-command="view-script">View Script <span>script.js</span></button>
       <button role="menuitem" data-source-command="view-events">View Events <span>event.js</span></button>
       <button role="menuitem" data-source-command="view-custom-properties">View Custom Properties <span>custom-properties.json</span></button>
+      <hr />
+      <button role="menuitem" data-selection-command="cut">Cut <span>Ctrl+X</span></button>
+      <button role="menuitem" data-selection-command="copy">Copy <span>Ctrl+C</span></button>
+      <button role="menuitem" data-selection-command="paste">Paste <span>Ctrl+V</span></button>
+      <button role="menuitem" data-selection-command="duplicate">Duplicate <span>Ctrl+D</span></button>
+      <button role="menuitem" data-selection-command="delete">Delete <span>Del</span></button>
+      <hr />
+      <button role="menuitem" data-source-command="bring-front">Bring to front</button>
+      <button role="menuitem" data-source-command="send-back">Send to back</button>
     </div>
     <script src="../Web/scripts/data-grid.js"></script>
     <script src="../Web/scripts/forma.js"></script>
@@ -570,6 +583,7 @@
     <script src="toolbox.js"></script>
     <script src="status.js"></script>
     <script src="selection.js"></script>
+    <script src="canvas.js"></script>
     <script src="solution-explorer.js"></script>
     <script src="event-inspector.bundle.js"></script>
   </body>

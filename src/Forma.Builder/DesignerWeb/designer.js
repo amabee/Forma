@@ -522,6 +522,7 @@ window.formaDesigner = {
     byId(id)?.classList.add("forma-selected");
     this.outline();
     window.formaSelection?.primaryChanged(id);
+    window.formaCanvas?.renderPath(id);
   },
   controlById(id) {
     const controls = this.state?.controls;

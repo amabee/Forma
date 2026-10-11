@@ -50,6 +50,8 @@ public sealed partial class BuilderWindow : System.Windows.Forms.Form
         try
         {
             await _preview.EnsureCoreWebView2Async();
+            // The designer has its own canvas zoom; page zoom would scale the whole UI instead.
+            _preview.CoreWebView2.Settings.IsZoomControlEnabled = false;
             var completion = new TaskCompletionSource<bool>();
             void Navigated(object? sender, CoreWebView2NavigationCompletedEventArgs e) =>
                 completion.TrySetResult(e.IsSuccess);
