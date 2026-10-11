@@ -1,0 +1,563 @@
+/* Source of the runtime stylesheet, src/Forma.WebView2/Web/css/forma.css (`npm run build`).
+   A Forma app has no Builder appearance data: its controls carry only position, so this sheet
+   gives every control the look it has when first dropped on the Builder canvas (see
+   ControlCatalog.cs), on top of the control styles the canvas itself uses (controls.css). */
+@layer theme, base, components, utilities;
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/preflight.css" layer(base);
+@import "./controls.css";
+
+/* Override these on :root to restyle an app without touching individual rules. */
+:root {
+  --forma-font: "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif;
+  --forma-text: #1f2937;
+  --forma-muted: #64748b;
+  --forma-surface: #ffffff;
+  --forma-tint: #f3f6fb;
+  --forma-bar: #f8fafc;
+  --forma-soft: #f1f5f9;
+  --forma-border: #d3deee;
+  --forma-border-strong: #a9bad3;
+  --forma-accent: #2878ff;
+  --forma-accent-hover: #1d68ea;
+  --forma-accent-pressed: #1858c8;
+  --forma-on-accent: #ffffff;
+  --forma-link: #2563eb;
+  --forma-focus: rgb(40 120 255 / 0.28);
+  --forma-radius: 6px;
+  --forma-field-height: 36px;
+  --forma-gap: 12px;
+  --forma-form-padding: 24px;
+}
+
+@layer base {
+  /* The browser's 16px root: rem-sized control parts (text-sm, gaps) land on the same 14px
+     scale as control text. The Builder canvas uses 12px, but there each control's own text
+     size comes from its Appearance instead. */
+  :root {
+    font-family: var(--forma-font);
+    font-size: 16px;
+    color-scheme: light;
+  }
+  html,
+  body {
+    height: 100%;
+  }
+  body {
+    margin: 0;
+    background: var(--forma-surface);
+  }
+  button,
+  input,
+  select,
+  textarea {
+    font: inherit;
+    color: inherit;
+  }
+  button {
+    cursor: pointer;
+  }
+  button:disabled,
+  .unavailable {
+    cursor: default;
+    opacity: 0.4;
+  }
+  :focus-visible {
+    outline: 2px solid var(--forma-accent);
+    outline-offset: 2px;
+  }
+  [hidden] {
+    display: none !important;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    ::before,
+    ::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+@layer components {
+  /* The form is the window. Controls without a position stack top to bottom; positioned
+     controls (X/Y) are placed absolutely and ignore the flow. */
+  .forma-form {
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--forma-gap);
+    min-width: 100%;
+    min-height: 100%;
+    padding: var(--forma-form-padding);
+    overflow: auto;
+    background: var(--forma-surface);
+    color: var(--forma-text);
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  /* On the canvas every control is positioned; flow controls must still contain their own
+     absolutely placed parts (avatar initials, popups, overlays). */
+  :where(.forma-form [data-forma-type]) {
+    position: relative;
+  }
+
+  /* The runtime always behaves like the Builder's preview. */
+  [data-forma-type][data-tab-add] {
+    display: none;
+  }
+  [data-forma-type="breakpointcontainer"] {
+    height: 200px;
+  }
+  [data-forma-type="breakpointcontainer"] > .layout-header {
+    display: none;
+  }
+
+  /* Buttons: a filled accent; the fill is the edge. */
+  :where(.forma-form)
+    :is(
+      [data-forma-type="button"],
+      [data-forma-type="togglebutton"],
+      [data-forma-type="iconbutton"],
+      [data-forma-type="floatingactionbutton"],
+      [data-forma-type="commandbutton"],
+      [data-forma-type="dropdownbutton"],
+      [data-forma-type="splitbutton"]
+    ) {
+    min-height: var(--forma-field-height);
+    border: 0;
+    border-radius: var(--forma-radius);
+    background: var(--forma-accent);
+    color: var(--forma-on-accent);
+    font-weight: 600;
+    transition: background-color 120ms ease, box-shadow 120ms ease;
+  }
+  :where(.forma-form) :is([data-forma-type="button"], [data-forma-type="togglebutton"]) {
+    padding: 0 16px;
+  }
+  :where(.forma-form)
+    :is(
+      [data-forma-type="button"],
+      [data-forma-type="togglebutton"],
+      [data-forma-type="iconbutton"],
+      [data-forma-type="floatingactionbutton"],
+      [data-forma-type="commandbutton"]
+    ):hover:not(:disabled) {
+    background: var(--forma-accent-hover);
+  }
+  :where(.forma-form)
+    :is(
+      [data-forma-type="button"],
+      [data-forma-type="togglebutton"],
+      [data-forma-type="iconbutton"],
+      [data-forma-type="floatingactionbutton"],
+      [data-forma-type="commandbutton"]
+    ):active:not(:disabled) {
+    background: var(--forma-accent-pressed);
+  }
+  :where(.forma-form) [data-forma-type="iconbutton"] {
+    min-width: 44px;
+    min-height: 44px;
+  }
+  :where(.forma-form) [data-forma-type="floatingactionbutton"] {
+    min-width: 56px;
+    min-height: 56px;
+    border-radius: 28px;
+    box-shadow: 0 6px 16px -4px rgb(40 120 255 / 0.5);
+  }
+  :where(.forma-form) [data-forma-type="commandbutton"] {
+    min-width: 240px;
+    min-height: 64px;
+    padding: 8px 16px;
+    border-radius: 8px;
+  }
+  /* Menu buttons draw their own popup, which must not be clipped. */
+  :where(.forma-form) :is([data-forma-type="dropdownbutton"], [data-forma-type="splitbutton"]) {
+    min-width: 160px;
+    min-height: 40px;
+    overflow: visible;
+  }
+
+  /* Text fields: white, a light edge that darkens on hover and turns accent on focus. */
+  :where(.forma-form)
+    :is(
+      [data-forma-type="textbox"],
+      [data-forma-type="maskedtextbox"],
+      [data-forma-type="searchbox"],
+      [data-forma-type="passwordbox"],
+      [data-forma-type="numericupdown"],
+      [data-forma-type="datepicker"],
+      [data-forma-type="timepicker"],
+      [data-forma-type="datetimepicker"],
+      [data-forma-type="combobox"]
+    ) {
+    box-sizing: border-box;
+    width: 240px;
+    max-width: 100%;
+    height: var(--forma-field-height);
+    padding: 0 10px;
+  }
+  :where(.forma-form) [data-forma-type="combobox"] {
+    width: 180px;
+  }
+  :where(.forma-form)
+    :is(
+      [data-forma-type="textbox"],
+      [data-forma-type="maskedtextbox"],
+      [data-forma-type="searchbox"],
+      [data-forma-type="passwordbox"],
+      [data-forma-type="numericupdown"],
+      [data-forma-type="datepicker"],
+      [data-forma-type="timepicker"],
+      [data-forma-type="datetimepicker"],
+      [data-forma-type="combobox"],
+      [data-forma-type="textarea"],
+      [data-forma-type="listbox"],
+      [data-forma-type="listview"],
+      [data-forma-type="checkedlistbox"],
+      [data-forma-type="treeview"],
+      [data-forma-type="richtextbox"],
+      [data-forma-type="datagridview"],
+      [data-forma-type="propertygrid"]
+    ) {
+    border: 1px solid var(--forma-border);
+    border-radius: var(--forma-radius);
+    background-color: var(--forma-surface);
+    color: var(--forma-text);
+    transition: border-color 120ms ease, box-shadow 120ms ease;
+  }
+  :where(.forma-form)
+    :is(
+      [data-forma-type="textbox"],
+      [data-forma-type="maskedtextbox"],
+      [data-forma-type="searchbox"],
+      [data-forma-type="passwordbox"],
+      [data-forma-type="numericupdown"],
+      [data-forma-type="datepicker"],
+      [data-forma-type="timepicker"],
+      [data-forma-type="datetimepicker"],
+      [data-forma-type="combobox"],
+      [data-forma-type="textarea"],
+      [data-forma-type="listbox"]
+    ):hover:not(:disabled):not(:focus) {
+    border-color: var(--forma-border-strong);
+  }
+  :where(.forma-form)
+    :is(
+      [data-forma-type="textbox"],
+      [data-forma-type="maskedtextbox"],
+      [data-forma-type="searchbox"],
+      [data-forma-type="passwordbox"],
+      [data-forma-type="numericupdown"],
+      [data-forma-type="datepicker"],
+      [data-forma-type="timepicker"],
+      [data-forma-type="datetimepicker"],
+      [data-forma-type="combobox"],
+      [data-forma-type="textarea"],
+      [data-forma-type="listbox"]
+    ):focus {
+    border-color: var(--forma-accent);
+    box-shadow: 0 0 0 3px var(--forma-focus);
+    outline: none;
+  }
+  /* Lists and multi-line fields get room to show a few rows. */
+  :where(.forma-form)
+    :is(
+      [data-forma-type="textarea"],
+      [data-forma-type="listbox"],
+      [data-forma-type="listview"],
+      [data-forma-type="checkedlistbox"]
+    ) {
+    box-sizing: border-box;
+    width: 180px;
+    min-height: 140px;
+    padding: 8px;
+  }
+  :where(.forma-form) [data-forma-type="textarea"] {
+    width: 240px;
+  }
+  :where(.forma-form) [data-forma-type="treeview"] {
+    width: 260px;
+    min-height: 200px;
+    padding: 8px;
+  }
+  :where(.forma-form) [data-forma-type="richtextbox"] {
+    width: 320px;
+    min-height: 180px;
+    padding: 8px;
+  }
+  :where(.forma-form) :is([data-forma-type="datagridview"], [data-forma-type="propertygrid"]) {
+    width: 320px;
+    max-width: 100%;
+    min-height: 180px;
+  }
+  :where(.forma-form) :is([data-forma-type="filepicker"], [data-forma-type="folderpicker"]) {
+    width: 320px;
+    max-width: 100%;
+    height: 40px;
+  }
+  :where(.forma-form) :is([data-forma-type="filepicker"], [data-forma-type="folderpicker"]) > input {
+    border-color: var(--forma-border);
+    border-radius: var(--forma-radius);
+  }
+  :where(.forma-form) :is([data-forma-type="filepicker"], [data-forma-type="folderpicker"]) > button {
+    border-radius: var(--forma-radius);
+    background: var(--forma-accent);
+    font-weight: 600;
+  }
+  :where(.forma-form) [data-forma-type="colorpicker"] {
+    width: 64px;
+    height: var(--forma-field-height);
+    padding: 2px;
+    border: 1px solid var(--forma-border);
+    border-radius: var(--forma-radius);
+    background: var(--forma-surface);
+  }
+
+  /* Text */
+  :where(.forma-form) [data-forma-type="label"] {
+    font-weight: 600;
+  }
+  :where(.forma-form) [data-forma-type="linklabel"] {
+    color: var(--forma-link);
+    cursor: pointer;
+    text-underline-offset: 2px;
+  }
+  :where(.forma-form) [data-forma-type="linklabel"].link-visited {
+    color: #6d28d9;
+  }
+
+  /* Choices use the accent for their checked state. */
+  :where(.forma-form) :is([data-forma-type="checkbox"], [data-forma-type="radiobutton"], [data-forma-type="toggleswitch"]) {
+    min-height: var(--forma-field-height);
+    cursor: pointer;
+  }
+  .forma-form :is([type="checkbox"], [type="radio"], [type="range"]) {
+    accent-color: var(--forma-accent);
+  }
+  .forma-form [data-forma-type="toggleswitch"] input:checked {
+    background-color: var(--forma-accent);
+  }
+  :where(.forma-form) [data-forma-type="slider"] {
+    width: 240px;
+    max-width: 100%;
+  }
+
+  /* Progress */
+  :where(.forma-form) [data-forma-type="progressbar"] {
+    width: 240px;
+    max-width: 100%;
+    height: 8px;
+  }
+  .forma-form progress::-webkit-progress-value {
+    background-color: var(--forma-accent);
+  }
+  :where(.forma-form) [data-forma-type="circularprogress"] {
+    width: 120px;
+    height: 120px;
+  }
+
+  /* Groups draw their own items, so the group itself has no box. */
+  :where(.forma-form)
+    :is([data-forma-type="radiogroup"], [data-forma-type="checkboxgroup"], [data-forma-type="chipgroup"], [data-forma-type="buttongroup"], [data-forma-type="rating"]) {
+    min-height: 44px;
+  }
+  :where(.forma-form) [data-forma-type="segmentedcontrol"] {
+    width: 280px;
+    max-width: 100%;
+    min-height: 44px;
+    padding: 4px;
+    border-radius: 10px;
+    background: var(--forma-soft);
+  }
+  :where(.forma-form) [data-forma-type="chip"] {
+    min-height: 36px;
+    border-radius: 18px;
+    background: var(--forma-soft);
+  }
+
+  /* Bars span the window and separate themselves from content with one edge. */
+  :where(.forma-form) :is([data-forma-type="menustrip"], [data-forma-type="toolbar"], [data-forma-type="toolstrip"], [data-forma-type="statusbar"]) {
+    box-sizing: border-box;
+    align-self: stretch;
+    min-height: 36px;
+    padding: 2px 4px;
+    background: var(--forma-bar);
+    color: var(--forma-text);
+  }
+  :where(.forma-form) :is([data-forma-type="menustrip"], [data-forma-type="toolbar"], [data-forma-type="toolstrip"]) {
+    border-bottom: 1px solid var(--forma-border);
+  }
+  /* Bars directly on the form run edge to edge, like a window's own menu and status bar. */
+  :where(.forma-form)
+    > :is([data-forma-type="menustrip"], [data-forma-type="toolbar"], [data-forma-type="toolstrip"], [data-forma-type="statusbar"]):not([style*="position: absolute"]) {
+    margin-inline: calc(-1 * var(--forma-form-padding));
+  }
+  :where(.forma-form)
+    > :is([data-forma-type="menustrip"], [data-forma-type="toolbar"], [data-forma-type="toolstrip"]):first-child:not([style*="position: absolute"]) {
+    margin-top: calc(-1 * var(--forma-form-padding));
+  }
+  :where(.forma-form) > [data-forma-type="statusbar"]:last-child:not([style*="position: absolute"]) {
+    margin-bottom: calc(-1 * var(--forma-form-padding));
+  }
+  /* The status bar settles at the bottom of the window when the content is short. */
+  :where(.forma-form) [data-forma-type="statusbar"] {
+    margin-top: auto;
+    padding: 2px 8px;
+    border-top: 1px solid var(--forma-border);
+  }
+  :where(.forma-form) [data-forma-type="sidenavigation"] {
+    width: 200px;
+    min-height: 220px;
+    padding: 8px;
+    border-right: 1px solid var(--forma-border);
+  }
+  :where(.forma-form) [data-forma-type="breadcrumb"] {
+    min-height: 40px;
+  }
+  :where(.forma-form) [data-forma-type="pagination"] {
+    width: 300px;
+    max-width: 100%;
+    min-height: 40px;
+  }
+
+  /* Containers */
+  :where(.forma-form) [data-forma-type="panel"] {
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    gap: var(--forma-gap);
+    min-width: min(360px, 100%);
+    padding: 16px;
+    border: 1px solid var(--forma-border);
+    border-radius: 8px;
+    background: var(--forma-tint);
+  }
+  /* A panel stacks its controls like a form: fields span its width. */
+  :where(.forma-form [data-forma-type="panel"])
+    > :is(
+      [data-forma-type="textbox"],
+      [data-forma-type="maskedtextbox"],
+      [data-forma-type="searchbox"],
+      [data-forma-type="passwordbox"],
+      [data-forma-type="numericupdown"],
+      [data-forma-type="datepicker"],
+      [data-forma-type="timepicker"],
+      [data-forma-type="datetimepicker"],
+      [data-forma-type="combobox"],
+      [data-forma-type="textarea"],
+      [data-forma-type="filepicker"],
+      [data-forma-type="folderpicker"],
+      [data-forma-type="slider"],
+      [data-forma-type="progressbar"]
+    ):not([style*="position: absolute"]) {
+    width: auto;
+  }
+  :where(.forma-form) [data-forma-type="card"] {
+    border: 1px solid var(--forma-border);
+    border-radius: 10px;
+    background: var(--forma-surface);
+    box-shadow: 0 1px 2px rgb(15 23 42 / 0.06), 0 4px 12px -4px rgb(15 23 42 / 0.1);
+  }
+  :where(.forma-form)
+    :is(
+      [data-forma-type="groupbox"],
+      [data-forma-type="splitcontainer"],
+      [data-forma-type="tabcontrol"],
+      [data-forma-type="flowlayoutpanel"],
+      [data-forma-type="tablelayoutpanel"],
+      [data-forma-type="accordion"],
+      [data-forma-type="scrollablepanel"]
+    ) {
+    border: 1px solid var(--forma-border);
+    border-radius: var(--forma-radius);
+    background: var(--forma-surface);
+  }
+  :where(.forma-form)
+    :is(
+      [data-forma-type="card"],
+      [data-forma-type="groupbox"],
+      [data-forma-type="splitcontainer"],
+      [data-forma-type="tabcontrol"],
+      [data-forma-type="flowlayoutpanel"],
+      [data-forma-type="tablelayoutpanel"],
+      [data-forma-type="accordion"],
+      [data-forma-type="scrollablepanel"]
+    ) {
+    min-width: min(300px, 100%);
+    min-height: 120px;
+  }
+  /* Layout containers stretch across their parent; their items set the height. Responsive
+     ones measure their width as soon as they are created, so it must be the full width
+     from the start, or they would show the narrow layout for a frame. */
+  :where(.forma-form)
+    :is(
+      [data-forma-type="appshell"],
+      [data-forma-type="responsivepanel"],
+      [data-forma-type="responsivegrid"],
+      [data-forma-type="responsivestack"],
+      [data-forma-type="breakpointcontainer"],
+      [data-forma-type="aspectratiocontainer"]
+    ) {
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+  }
+  :where(.forma-form)
+    :is(
+      [data-forma-type="sidebar"],
+      [data-forma-type="appshell"],
+      [data-forma-type="responsivepanel"],
+      [data-forma-type="responsivegrid"],
+      [data-forma-type="responsivestack"],
+      [data-forma-type="breakpointcontainer"],
+      [data-forma-type="aspectratiocontainer"],
+      [data-forma-type="stackpanel"],
+      [data-forma-type="hstack"],
+      [data-forma-type="vstack"],
+      [data-forma-type="wrappanel"],
+      [data-forma-type="centerpanel"]
+    ) {
+    align-self: stretch;
+  }
+
+  /* Media and decoration */
+  :where(.forma-form) :is([data-forma-type="image"], [data-forma-type="picturebox"]):not([src]) {
+    width: 180px;
+    height: 120px;
+    border-radius: var(--forma-radius);
+    background: var(--forma-tint);
+    color: transparent; /* the alt text stays for screen readers, without the broken-image look */
+  }
+  :where(.forma-form) :is([data-forma-type="badge"], [data-forma-type="avatar"], [data-forma-type="spinner"]) {
+    color: #475569;
+  }
+  :where(.forma-form) [data-forma-type="avatar"] {
+    width: 64px;
+    height: 64px;
+    font-size: 22px;
+  }
+  :where(.forma-form) [data-forma-type="divider"] {
+    align-self: stretch;
+    min-height: 24px;
+    color: #475569;
+  }
+  :where(.forma-form) :is([data-forma-type="icon"], [data-forma-type="emptystate"], [data-forma-type="skeleton"]) {
+    color: var(--forma-muted);
+  }
+  :where(.forma-form) [data-forma-type="icon"] {
+    width: 32px;
+    height: 32px;
+  }
+  :where(.forma-form) [data-forma-type="emptystate"] {
+    width: 280px;
+    min-height: 180px;
+  }
+  :where(.forma-form) [data-forma-type="skeleton"] {
+    width: 280px;
+    min-height: 90px;
+  }
+}

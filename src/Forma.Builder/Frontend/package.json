@@ -2,7 +2,7 @@
   "name": "forma-builder-ui",
   "private": true,
   "scripts": {
-    "build": "node build.cjs && tailwindcss -i input.css -o ../DesignerWeb/designer.css --minify && tailwindcss -i editor.css -o ../DesignerWeb/code-editor.css --minify",
+    "build": "node build.cjs && tailwindcss -i input.css -o ../DesignerWeb/designer.css --minify && tailwindcss -i editor.css -o ../DesignerWeb/code-editor.css --minify && tailwindcss -i runtime.css -o ../../Forma.WebView2/Web/css/forma.css",
     "watch": "tailwindcss -i input.css -o ../DesignerWeb/designer.css --watch"
   },
   "devDependencies": {
