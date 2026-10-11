@@ -1,28 +1,7 @@
 name: Documentation site
 
 on:
-  push:
-    paths:
-      - '.github/workflows/docs-site.yml'
-      - 'docs-site/**'
-      - 'docs/**'
-      - 'src/Forma.Core/**'
-      - 'src/Forma.Builder/Models/Appearance.cs'
-      - 'src/Forma.Builder/Services/InspectorCatalog.cs'
-      - 'src/Forma.Builder/DesignerWeb/index.html'
-      - 'src/Forma.Builder/DesignerWeb/runtime-script-properties.json'
-      - 'src/Forma.Builder/Frontend/**'
-  pull_request:
-    paths:
-      - '.github/workflows/docs-site.yml'
-      - 'docs-site/**'
-      - 'docs/**'
-      - 'src/Forma.Core/**'
-      - 'src/Forma.Builder/Models/Appearance.cs'
-      - 'src/Forma.Builder/Services/InspectorCatalog.cs'
-      - 'src/Forma.Builder/DesignerWeb/index.html'
-      - 'src/Forma.Builder/DesignerWeb/runtime-script-properties.json'
-      - 'src/Forma.Builder/Frontend/**'
+  # Automatic runs resume after the documentation sources are migrated.
   workflow_dispatch:
 
 permissions:
@@ -48,6 +27,12 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           persist-credentials: false
+      - name: Require documentation sources
+        run: |
+          if [ ! -f ../docs/component-reference.md ]; then
+            echo 'Documentation sources were removed; site migration is pending.' >&2
+            exit 1
+          fi
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with:
           node-version: '24'

@@ -1397,7 +1397,7 @@ test('inspector selection options stay intact until names or membership change',
 });
 
 
-test('documented JavaScript recipes run against the current preview API', () => {
+test('JavaScript recipe fixtures run against the current preview API', () => {
   for (const filename of ['greet-button.js', 'live-input.js', 'busy-button.js', 'grid-selection.js']) {
     const { window, document, create, messages } = fixture('preview.html'); window.formaDesigner.preview = true;
     const pending = []; window.setTimeout = callback => { pending.push(callback); return pending.length; }; window.clearTimeout = () => {};
@@ -1405,7 +1405,7 @@ test('documented JavaScript recipes run against the current preview API', () => 
     for (const [id, kind] of Object.entries(kinds)) create(id, kind, 'root', { text: '', rows: [['Ada']], columns: ['Name'], selectedRow: -1 });
     const source = filename === 'live-input.js' ? 'nameInput' : filename === 'grid-selection.js' ? 'grid' : 'action';
     window.formaCustomization.apply({ controls: Object.entries(kinds).map(([id, kind]) => ({
-      id, name: id, kind, enabled: true, visible: true, customization: id === source ? { behavior: fs.readFileSync(path.join(base, 'docs/examples', filename), 'utf8') } : null
+      id, name: id, kind, enabled: true, visible: true, customization: id === source ? { behavior: fs.readFileSync(path.join(__dirname, 'fixtures/recipes', filename), 'utf8') } : null
     })) }, true);
     document.getElementById('nameInput').value = 'Ada';
     if (filename === 'grid-selection.js') window.forma.update({ id: 'grid', properties: { selectedRow: 0 } });
@@ -1424,13 +1424,13 @@ test('documented JavaScript recipes run against the current preview API', () => 
 });
 
 
-test('documented picker path recipe reads nested values after native selection', () => {
+test('picker path recipe fixture reads nested values after native selection', () => {
   const { window, document, create, messages } = fixture('preview.html'); window.formaDesigner.preview = true;
   const kinds = { inputFile: 'filepicker', outputFolder: 'folderpicker', pathLabel: 'label', readButton: 'button' };
   for (const [id, kind] of Object.entries(kinds)) create(id, kind, 'root');
   window.formaCustomization.apply({ controls: Object.entries(kinds).map(([id, kind]) => ({
     id, name: id, kind, enabled: true, visible: true,
-    customization: id === 'readButton' ? { behavior: fs.readFileSync(path.join(base, 'docs/examples/read-picker-paths.js'), 'utf8') } : null
+    customization: id === 'readButton' ? { behavior: fs.readFileSync(path.join(__dirname, 'fixtures/recipes/read-picker-paths.js'), 'utf8') } : null
   })) }, true);
   document.getElementById('readButton').click();
   assert.equal(messages.at(-1).payload.value, 'File: None\nFolder: None');

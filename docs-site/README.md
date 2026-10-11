@@ -1,5 +1,12 @@
 # Forma documentation website
 
+> **Migration pending:** the root `docs/` sources have been removed from this
+> repository. Site generation and builds are unavailable until the guides are
+> restored in the future documentation repository and generator paths are
+> updated. GitHub docs CI is temporarily manual-only. The existing deployed site
+> remains available; this cleanup does not change Vercel dashboard settings.
+> Recover the removed sources from Git history when preparing the migration.
+
 An Astro + Tailwind static documentation site for the current Forma Builder.
 Every implemented Toolbox component and Form has its own reference page, with
 setup, a JavaScript recipe, inspector fields, runtime get/set/bind support, and
@@ -47,9 +54,9 @@ Verify these settings on the existing Vercel project:
 command. Every Vercel build runs `npm run check` before building and validating
 generated pages. A failed build does not replace the existing production site.
 
-`.github/workflows/docs-site.yml` runs on pushes and pull requests affecting
-the site, canonical guides, or model/inspector/completion sources, and can also
-be started manually. It installs locked dependencies, checks Astro, builds all
+`.github/workflows/docs-site.yml` is currently manual-only while migration is
+pending and reports the missing documentation sources before installing
+dependencies. Once restored, it installs locked dependencies, checks Astro, builds all
 references, verifies links/assets, and tests desktop/mobile interactions with
 Playwright Chromium. It does not modify files or deploy independently.
 
