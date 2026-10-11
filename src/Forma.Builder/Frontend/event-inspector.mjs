@@ -1,4 +1,4 @@
-import { eventsFor, inspectHandlers, normalizeEvent } from "./event-handlers.mjs";
+import { defaultEvent, eventsFor, inspectHandlers, normalizeEvent } from "./event-handlers.mjs";
 const d = window.formaDesigner;
 const panel = document.getElementById("event-editors"), search = document.getElementById("event-search");
 let rendered = null;
@@ -55,3 +55,15 @@ const receive = d.receive.bind(d);
 d.receive = message => { receive(message); if (["state", "select", "initialize"].includes(message.action) && !document.getElementById("events-inspector").hidden) render(); };
 const select = d.select.bind(d);
 d.select = id => { select(id); if (!document.getElementById("events-inspector").hidden) render(); };
+// Double-clicking a control in the designer opens (creating if needed) its default event handler.
+document.addEventListener("dblclick", event => {
+  if (d.preview || event.target.closest?.("[data-kind], [data-handle], [data-tab-index], [data-tab-add]")) return;
+  const root = d.root();
+  const element = event.target.closest?.("[data-component]")
+    ?? (event.target.closest?.(".form-titlebar") ? root : root?.contains(event.target) ? event.target.closest("[data-forma-type]") : null);
+  const item = element && d.state?.controls.find(control => control.id === element.id);
+  if (!item || item.locked) return;
+  if (element.closest('[data-forma-type="richtextbox"]')?.dataset.editing === "true") return;
+  event.preventDefault();
+  window.forma.send({ type: "designer", event: "command", id: item.id, payload: { command: "edit-event", eventName: defaultEvent(item) } });
+});

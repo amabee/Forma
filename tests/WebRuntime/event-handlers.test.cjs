@@ -43,3 +43,10 @@ test('nonvisual components offer lifecycle and their own events, not mouse event
   assert.ok(eventsFor({ kind: 'button' }).Mouse.includes('Click'));
   assert.deepEqual(eventsFor({ kind: 'datagridview' }).Component, ['row-selection']);
 });
+
+test('designer double-click opens each control kind\'s default event, like WinForms', async () => {
+  const { defaultEvent } = await load();
+  const cases = { form: 'Load', button: 'Click', textbox: 'Input', checkbox: 'Change', combobox: 'Change', timer: 'Tick', datagridview: 'row-selection', splitbutton: 'primary-click', panel: 'Click' };
+  for (const [kind, expected] of Object.entries(cases)) assert.equal(defaultEvent({ kind }), expected, kind);
+  assert.equal(defaultEvent({ kind: 'backgroundworker', component: true }), 'PropertyChanged');
+});

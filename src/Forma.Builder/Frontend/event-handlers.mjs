@@ -14,6 +14,19 @@ export const eventGroups = {
 };
 export const normalizeEvent = name => ({ doubleclick: "dblclick", mousewheel: "wheel" })[String(name).toLowerCase()] ?? String(name).toLowerCase();
 const special = { timer: ["Tick"], datagridview: ["row-selection"], chip: ["chip-remove"], menustrip: ["command-item"], contextmenu: ["command-item"], contextmenustrip: ["command-item"], dropdownbutton: ["command-item"], splitbutton: ["primary-click", "command-item"], breadcrumb: ["navigate"], sidenavigation: ["navigate"] };
+const inputKinds = new Set(["textbox", "maskedtextbox", "searchbox", "passwordbox", "textarea", "richtextbox"]);
+const changeKinds = new Set(["checkbox", "radiobutton", "toggleswitch", "togglebutton", "combobox", "listbox", "listview", "checkedlistbox",
+  "radiogroup", "checkboxgroup", "segmentedcontrol", "rating", "chipgroup", "slider", "numericupdown", "datepicker", "timepicker",
+  "datetimepicker", "colorpicker", "filepicker", "folderpicker", "tabcontrol", "accordion", "treeview", "pagination", "propertygrid"]);
+/** The event a designer double-click opens, like WinForms' default events (Button.Click, Form.Load). */
+export function defaultEvent(control) {
+  if (control.kind === "form") return "Load";
+  if (special[control.kind]) return special[control.kind][0];
+  if (control.component) return "PropertyChanged";
+  if (inputKinds.has(control.kind)) return "Input";
+  if (changeKinds.has(control.kind)) return "Change";
+  return "Click";
+}
 export function eventsFor(control) {
   const groups = control.component ? { Lifecycle: eventGroups.Lifecycle, State: eventGroups.State } : { ...eventGroups };
   if (special[control.kind]) groups.Component = special[control.kind];
