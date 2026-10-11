@@ -2,518 +2,19 @@
 @source "../DesignerWeb/index.html";
 @source "../DesignerWeb/designer.js";
 @source "../DesignerWeb/workspace.js";
-@layer components {
-  [data-forma-type="breadcrumb"],
-  [data-forma-type="sidenavigation"] {
-    @apply flex gap-2 overflow-auto;
-  }
-  [data-forma-type="breadcrumb"] {
-    @apply flex-wrap items-center;
-  }
-  [data-forma-type="breadcrumb"] button {
-    @apply bg-transparent border-0 text-blue-700;
-  }
-  [data-forma-type="breadcrumb"] button:not(:last-child)::after {
-    content: "/";
-    @apply ml-3 text-slate-400;
-  }
-  [data-forma-type="breadcrumb"] button[aria-current="page"] {
-    @apply text-slate-700 font-semibold;
-  }
-  [data-forma-type="sidenavigation"] {
-    @apply flex-col;
-  }
-  [data-forma-type="sidenavigation"][data-orientation="horizontal"] {
-    @apply flex-row;
-  }
-  [data-forma-type="sidenavigation"] button {
-    @apply rounded px-3 py-2 border-0 bg-transparent text-inherit text-left;
-  }
-  [data-forma-type="sidenavigation"] button.selected {
-    @apply bg-blue-600 text-white;
-  }
-  [data-forma-type="sidenavigation"] button:focus-visible,
-  [data-forma-type="breadcrumb"] button:focus-visible {
-    @apply outline-2 outline-blue-600 outline-offset-2;
-  }
-  [data-forma-type="dropdownbutton"],
-  [data-forma-type="splitbutton"] {
-    @apply inline-flex items-stretch overflow-visible;
-  }
-  [data-forma-type="dropdownbutton"] > .action-menu {
-    @apply w-full;
-  }
-  [data-forma-type="dropdownbutton"] > .action-menu > summary,
-  [data-forma-type="splitbutton"] > .action-menu > summary {
-    @apply flex h-full items-center justify-center text-inherit;
-  }
-  [data-forma-type="splitbutton"] .split-primary {
-    @apply flex-1 bg-transparent text-inherit border-0 py-1 px-3;
-  }
-  [data-forma-type="splitbutton"] > .action-menu {
-    @apply border-l border-current/30;
-  }
-  [data-forma-type="dropdownbutton"] .command-popup,
-  [data-forma-type="splitbutton"] .command-popup {
-    @apply text-sm;
-  }
-  [data-forma-type="splitbutton"] > .action-menu > .command-popup {
-    @apply left-auto right-0;
-  }
-  [data-forma-type="commandbutton"] {
-    @apply inline-flex items-center justify-start gap-3 overflow-hidden;
-  }
-  [data-forma-type="commandbutton"] > svg {
-    @apply size-6 shrink-0;
-  }
-  .command-button-content {
-    @apply flex flex-col items-start text-left min-w-0;
-  }
-  .command-button-title {
-    @apply font-semibold truncate max-w-full;
-  }
-  .command-button-description {
-    @apply text-xs opacity-80 truncate max-w-full;
-  }
-  [data-forma-type="commandbutton"][data-show-text="false"]
-    .command-button-content {
-    @apply hidden;
-  }
-  [data-forma-type="iconbutton"],
-  [data-forma-type="floatingactionbutton"] {
-    @apply inline-flex items-center justify-center gap-2 overflow-hidden;
-  }
-  [data-forma-type="iconbutton"] > svg,
-  [data-forma-type="floatingactionbutton"] > svg {
-    @apply size-5 shrink-0;
-  }
-  [data-forma-type="iconbutton"][data-show-text="false"] .icon-button-label,
-  [data-forma-type="floatingactionbutton"][data-show-text="false"]
-    .icon-button-label {
-    @apply hidden;
-  }
-  [data-forma-type="floatingactionbutton"] {
-    @apply shadow-lg;
-  }
-  [data-forma-type="chip"] {
-    @apply inline-flex items-center overflow-hidden;
-  }
-  [data-forma-type="chip"] button {
-    @apply border-0 bg-transparent text-inherit px-2 py-1;
-  }
-  [data-forma-type="chip"] .chip-toggle {
-    @apply flex-1 truncate;
-  }
-  [data-forma-type="chip"][data-checked="true"] .chip-toggle {
-    @apply font-semibold underline;
-  }
-  [data-forma-type="chip"][data-variant="info"] button {
-    @apply bg-blue-100 text-blue-800;
-  }
-  [data-forma-type="chip"][data-variant="success"] button {
-    @apply bg-emerald-100 text-emerald-800;
-  }
-  [data-forma-type="chip"][data-variant="warning"] button {
-    @apply bg-amber-100 text-amber-800;
-  }
-  [data-forma-type="chip"][data-variant="danger"] button {
-    @apply bg-red-100 text-red-800;
-  }
-  [data-forma-type="chipgroup"],
-  [data-forma-type="buttongroup"] {
-    @apply flex flex-wrap items-center gap-2 overflow-auto;
-  }
-  [data-forma-type="chipgroup"][data-orientation="vertical"],
-  [data-forma-type="buttongroup"][data-orientation="vertical"] {
-    @apply flex-col items-stretch flex-nowrap;
-  }
-  [data-forma-type="chipgroup"] button {
-    @apply rounded-full border-0 bg-slate-100 px-3 py-1 font-medium text-slate-700 hover:bg-slate-200;
-  }
-  [data-forma-type="chipgroup"] button.selected {
-    @apply bg-blue-600 text-white hover:bg-blue-700;
-  }
-  /* Button group: one joined bar; neighbours share a border instead of doubling it. */
-  [data-forma-type="buttongroup"] {
-    @apply gap-0;
-  }
-  [data-forma-type="buttongroup"] button {
-    @apply -ml-px flex-1 rounded-none border border-slate-300 bg-white px-3 py-1 font-medium text-slate-700 first:ml-0 first:rounded-l-md last:rounded-r-md hover:bg-slate-50;
-  }
-  [data-forma-type="buttongroup"][data-orientation="vertical"] button {
-    @apply ml-0 -mt-px first:mt-0 first:rounded-t-md first:rounded-bl-none last:rounded-b-md last:rounded-tr-none;
-  }
-  [data-forma-type="buttongroup"] button.selected {
-    @apply relative z-10 border-blue-600 bg-blue-600 text-white hover:bg-blue-700;
-  }
-  [data-forma-type="chipgroup"] button:focus-visible,
-  [data-forma-type="buttongroup"] button:focus-visible,
-  [data-forma-type="chip"] button:focus-visible {
-    @apply outline-2 outline-blue-600 outline-offset-2;
-  }
-  [data-forma-type="radiogroup"],
-  [data-forma-type="checkboxgroup"],
-  [data-forma-type="segmentedcontrol"] {
-    @apply flex flex-wrap items-center gap-2 overflow-auto;
-  }
-  [data-forma-type="radiogroup"][data-orientation="vertical"],
-  [data-forma-type="checkboxgroup"][data-orientation="vertical"],
-  [data-forma-type="segmentedcontrol"][data-orientation="vertical"] {
-    @apply flex-col items-stretch flex-nowrap;
-  }
-  [data-forma-type="radiogroup"] label,
-  [data-forma-type="checkboxgroup"] label {
-    @apply inline-flex items-center gap-2 cursor-pointer;
-  }
-  [data-forma-type="radiogroup"] input,
-  [data-forma-type="checkboxgroup"] input {
-    @apply accent-blue-600;
-  }
-  /* Segmented control: a soft track with the selected segment raised on it. */
-  [data-forma-type="segmentedcontrol"] {
-    @apply flex-nowrap gap-1;
-  }
-  [data-forma-type="segmentedcontrol"] button {
-    @apply flex-1 rounded-md border-0 bg-transparent px-3 py-1 font-medium text-slate-600 hover:text-slate-900;
-  }
-  [data-forma-type="segmentedcontrol"] button.selected {
-    @apply bg-white text-slate-900 shadow-sm;
-  }
-  [data-forma-type="rating"] {
-    @apply flex items-center gap-1 overflow-auto;
-  }
-  [data-forma-type="rating"] button {
-    @apply text-2xl text-slate-300 bg-transparent p-0 border-0;
-  }
-  [data-forma-type="rating"] button.filled {
-    @apply text-amber-500;
-  }
-  [data-forma-type="rating"] button:focus-visible,
-  [data-forma-type="segmentedcontrol"] button:focus-visible {
-    @apply outline-2 outline-blue-600 outline-offset-2;
-  }
-  
-  
-  
+@import "./controls.css";
 
-}
-
-@layer base {
-  :root {
-    font-family: "Segoe UI", sans-serif;
-    font-size: 12px;
-    --blue: #2878ff;
-  }
-  body {
-    @apply m-0 flex h-screen flex-col overflow-hidden bg-slate-50 text-slate-800;
-  }
-  button,
-  input,
-  select,
-  textarea {
-    font: inherit;
-    color: inherit;
-  }
-  button {
-    @apply cursor-pointer;
-  }
-  button:disabled,
-  .unavailable {
-    @apply cursor-default opacity-40;
-  }
-  button:focus-visible,
-  input:focus-visible,
-  select:focus-visible,
-  summary:focus-visible {
-    @apply outline-2 outline-offset-2 outline-blue-500;
-  }
-  [hidden] {
-    display: none !important;
-  }
-}
+/* Design canvas: selection, snapping, placeholders and the Builder's dialogs. */
 @layer components {
-  .forma-form [data-forma-type="treeview"] {
-    @apply overflow-auto text-left;
-  }
-  .forma-form [data-forma-type="treeview"] ul {
-    @apply list-none pl-3;
-  }
-  .tree-row {
-    @apply flex items-center gap-1;
-  }
-  .forma-form .tree-row button {
-    @apply rounded border-0 bg-transparent px-1 py-0.5 text-left font-normal;
-  }
-  .forma-form .tree-row .tree-selected {
-    @apply bg-blue-100 text-blue-700;
-  }
-  .forma-form [data-forma-type="pagination"] {
-    @apply flex items-center justify-between gap-2;
-  }
-  .forma-form [data-forma-type="pagination"] button {
-    @apply rounded-md border-slate-200 bg-white px-3 font-medium text-slate-700 hover:bg-slate-50;
-  }
-  .forma-form [data-forma-type="richtextbox"] {
-    @apply flex flex-col overflow-hidden;
-  }
-  .rich-toolbar {
-    @apply flex shrink-0 flex-wrap gap-1 border-b border-slate-200 pb-1;
-  }
-  .forma-form .rich-toolbar button {
-    @apply h-6 rounded border border-slate-200 bg-slate-50 px-1.5 text-[11px] font-normal text-slate-800;
-  }
-  .rich-content {
-    @apply min-h-0 flex-1 overflow-auto whitespace-pre-wrap p-2 text-left;
-    counter-reset: rich-list;
-  }
-  .rich-content[contenteditable="true"] {
-    @apply cursor-text select-text;
-  }
-  .rich-content p {
-    @apply min-h-[1.5em];
-  }
-  .rich-content [data-kind="bullet"]::before {
-    content: "• ";
-  }
-  .rich-content [data-kind="number"] {
-    counter-increment: rich-list;
-  }
-  .rich-content [data-kind="number"]::before {
-    content: counter(rich-list) ". ";
-  }
-  .forma-form [data-forma-type="linklabel"] {
-    @apply flex items-center underline;
-  }
-  .forma-form [data-forma-type="checkedlistbox"] {
-    @apply overflow-auto;
-  }
-  .forma-form [data-forma-type="checkedlistbox"] label {
-    @apply flex items-center gap-2 py-1 text-left;
-  }
-  .forma-form textarea {
-    @apply resize-none rounded border border-slate-300 p-2;
-  }
-  /* Progress: a rounded fill on a soft track instead of the browser's default bar. */
-  .forma-form progress {
-    @apply appearance-none overflow-hidden rounded-full;
-  }
-  .forma-form progress::-webkit-progress-bar {
-    @apply rounded-full bg-slate-200;
-  }
-  .forma-form progress::-webkit-progress-value {
-    @apply rounded-full bg-blue-500 transition-[width];
-  }
-  .forma-form [type="range"] {
-    @apply accent-blue-500;
-  }
-  .forma-form [data-forma-type="circularprogress"] {
-    @apply grid place-items-center rounded-full font-semibold;
-    background: conic-gradient(#2878ff var(--progress, 0deg), #e2e8f0 0);
-  }
-  .forma-form [data-forma-type="toggleswitch"] {
-    @apply flex items-center gap-2;
-  }
-  .forma-form [data-forma-type="toggleswitch"] input {
-    @apply h-[18px] w-[33px] appearance-none rounded-full border-0 bg-slate-300 p-0;
-    background-image: radial-gradient(
-      circle at 9px 9px,
-      white 6px,
-      transparent 7px
-    );
-  }
-  .forma-form [data-forma-type="toggleswitch"] input:checked {
-    @apply bg-blue-500;
-    background-image: radial-gradient(
-      circle at 24px 9px,
-      white 6px,
-      transparent 7px
-    );
-  }
-  .forma-form .toggle-active {
-    @apply ring-2 ring-blue-700 ring-offset-2;
-  }
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
   .forma-form {
-    @apply relative overflow-hidden bg-white;
     width: 640px;
     height: 440px;
   }
   .forma-form [data-forma-type] {
     @apply box-border cursor-move touch-none select-none;
   }
-  /* Baseline for form elements. :where() keeps these at the lowest specificity so every
-     control-specific rule below (chips, stars, segments, toolbar items...) wins over them. */
-  :where(.forma-form) button {
-    @apply overflow-hidden text-ellipsis whitespace-nowrap rounded border border-blue-600 px-2 py-1 font-semibold;
-  }
-  :where(.forma-form) input,
-  :where(.forma-form) select {
-    @apply rounded border border-slate-300 px-2.5 py-2;
-  }
-  /* Placeholders follow the field's Foreground color, just lighter. */
-  .forma-form input::placeholder,
-  .forma-form textarea::placeholder {
-    color: currentColor;
-    opacity: 0.5;
-  }
-  .forma-form [data-forma-type="label"] {
-    @apply flex items-center overflow-hidden whitespace-nowrap font-semibold;
-  }
-  .forma-form [data-forma-type="panel"] {
-    @apply relative border border-slate-300;
-  }
-  [data-forma-type="filepicker"],
-  [data-forma-type="folderpicker"] {
-    @apply flex items-stretch gap-1;
-  }
-  [data-forma-type="filepicker"] > input,
-  [data-forma-type="folderpicker"] > input {
-    @apply min-w-0 flex-1 rounded border border-slate-200 px-2 text-sm;
-  }
-  [data-forma-type="filepicker"] > button,
-  [data-forma-type="folderpicker"] > button {
-    @apply shrink-0 rounded bg-blue-600 px-3 text-sm text-white disabled:opacity-50;
-  }
-  [data-forma-type="propertygrid"] {
-    @apply overflow-auto;
-  }
-  [data-forma-type="propertygrid"] table {
-    @apply w-full border-collapse text-sm;
-  }
-  [data-forma-type="propertygrid"] th,
-  [data-forma-type="propertygrid"] td {
-    @apply border-b border-slate-200 px-2 py-1 text-left;
-  }
   [data-forma-type="propertygrid"] .property-category {
     @apply bg-slate-100 font-semibold;
-  }
-  [data-forma-type="propertygrid"] input {
-    @apply w-full min-w-0 rounded border border-slate-200 px-1 py-1 font-normal read-only:bg-slate-50;
-  }
-  [data-forma-type="menustrip"],
-  [data-forma-type="toolbar"],
-  [data-forma-type="toolstrip"] {
-    @apply flex items-center gap-1 overflow-visible;
-  }
-  [data-forma-type="toolbar"][data-orientation="vertical"],
-  [data-forma-type="toolstrip"][data-orientation="vertical"] {
-    @apply flex-col items-stretch;
-  }
-  [data-forma-type="menustrip"] button,
-  [data-forma-type="toolbar"] button,
-  [data-forma-type="toolstrip"] button,
-  .command-menu > summary {
-    @apply cursor-pointer list-none whitespace-nowrap rounded border-0 bg-transparent px-2 py-1 text-sm font-normal text-inherit hover:bg-slate-900/5 focus-visible:outline-blue-500 disabled:cursor-default disabled:opacity-40;
-  }
-  .command-menu {
-    @apply relative;
-  }
-  .command-menu > summary[aria-disabled="true"] {
-    @apply cursor-default opacity-40;
-  }
-  .command-popup {
-    @apply absolute left-0 top-full z-50 flex min-w-36 flex-col gap-1 rounded border border-slate-200 bg-white p-1 text-slate-800 shadow-lg;
-  }
-  .command-popup .command-popup {
-    @apply left-full top-0;
-  }
-  .command-popup button {
-    @apply text-left;
-  }
-  [data-forma-type="menustrip"] hr,
-  [data-forma-type="toolbar"] hr,
-  [data-forma-type="toolstrip"] hr {
-    @apply mx-1 h-5 border-l border-slate-300;
-  }
-  .command-popup hr {
-    @apply my-1 h-0 w-full border-b border-l-0;
-  }
-  [data-forma-type="statusbar"] {
-    @apply flex items-center justify-between gap-2 overflow-hidden text-sm;
-  }
-  .status-primary,
-  .status-secondary {
-    @apply truncate;
-  }
-  .forma-context-popup {
-    @apply fixed z-[10000] flex min-w-40 flex-col gap-1 rounded border border-slate-200 bg-white p-1 text-sm text-slate-800 shadow-lg;
-  }
-  .forma-context-popup > button {
-    @apply rounded px-2 py-1 text-left hover:bg-blue-100 focus-visible:outline-blue-500 disabled:opacity-40;
-  }
-  .forma-context-popup > hr {
-    @apply my-1 border-slate-200;
-  }
-  .forma-dialog-popup {
-    @apply m-auto w-96 max-w-[90vw] rounded-xl border border-slate-200 bg-white p-5 text-slate-800 shadow-xl;
-  }
-  .forma-dialog-popup::backdrop {
-    @apply bg-slate-900/40;
-  }
-  .forma-dialog-popup h2 {
-    @apply mb-3 text-lg font-semibold;
-  }
-  .forma-dialog-popup p {
-    @apply mb-5 whitespace-pre-wrap break-words text-sm;
-  }
-  .dialog-buttons {
-    @apply flex justify-end gap-2;
-  }
-  .dialog-buttons button {
-    @apply rounded bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-700 focus-visible:outline-blue-500;
-  }
-  .forma-form [data-forma-type="checkbox"],
-  .forma-form [data-forma-type="radiobutton"] {
-    @apply flex items-center gap-2;
-  }
-  .forma-form [type="checkbox"],
-  .forma-form [type="radio"] {
-    @apply h-4 w-4 shrink-0 accent-blue-500;
-  }
-  .forma-form [data-forma-type="image"]:not([src]) {
-    @apply bg-slate-100 object-contain;
   }
   .forma-selected,
   .forma-form [data-forma-type]:focus {
@@ -593,50 +94,196 @@
   .shortcut-group dd {
     @apply text-muted;
   }
-
-  /* Start page: a dialog over the workspace with templates and recent projects */
+  /* Start screen: a full-window view built from the Builder's own tokens, so it follows the
+     light/dark theme. The one bold moment is the Forma mark "selected" on a design canvas. */
+  /* Until the start screen is up, keep the designer from showing for a moment first. */
+  .is-launching body > :not(.start-page) {
+    visibility: hidden;
+  }
+  .start-loading {
+    @apply py-6 text-[13px] text-faint;
+  }
   .start-page {
-    @apply fixed inset-0 z-[1100] flex items-center justify-center bg-black/40 p-4;
+    @apply fixed inset-0 z-[1100] flex bg-app text-ink;
+    font-family: var(--font-chrome);
   }
-  .start-panel {
-    @apply flex max-h-[calc(100vh-32px)] w-[640px] max-w-full flex-col gap-5 overflow-y-auto rounded-2xl border border-line bg-raised p-6 text-ink;
-    box-shadow: 0 24px 64px -16px rgb(0 0 0 / 0.55);
+  .start-rail {
+    @apply flex w-60 shrink-0 flex-col gap-1 border-r border-line bg-panel px-3 py-5 max-[1100px]:w-52;
   }
-  .start-header {
-    @apply flex items-center justify-between;
+  .start-brand {
+    @apply mb-6 flex items-center gap-2.5 px-2 text-[17px] font-semibold tracking-tight;
   }
-  .start-header h2 {
-    @apply text-lg font-semibold;
+  .start-brand img {
+    @apply h-7 w-auto;
   }
-  .start-close {
-    @apply size-8 rounded-md text-xl leading-none text-muted hover:bg-hover hover:text-ink;
+  .start-nav {
+    @apply flex h-9 items-center gap-3 rounded-lg px-2.5 text-left text-[13px] text-muted hover:bg-hover hover:text-ink;
   }
-  .start-section h3 {
-    @apply mb-2 text-[12px] font-semibold tracking-wide text-muted uppercase;
+  .start-nav .icon-svg {
+    @apply size-4 opacity-80;
   }
-  .start-actions, .start-templates {
-    @apply grid grid-cols-2 gap-2 max-sm:grid-cols-1;
+  .start-rail-foot {
+    @apply mt-auto flex flex-col gap-3 px-1;
   }
-  .start-templates {
-    @apply grid-cols-3 max-sm:grid-cols-1;
+  .start-resume {
+    @apply h-9 rounded-lg border border-line px-3 text-[13px] text-ink hover:bg-hover;
   }
-  .start-action, .start-recent-item {
-    @apply flex w-full flex-col items-start gap-0.5 rounded-lg border border-line bg-panel px-3 py-2.5 text-left hover:border-accent hover:bg-hover disabled:opacity-50;
+  .start-version {
+    @apply px-1.5 text-[12px] text-faint;
   }
-  .start-action strong, .start-recent-item strong {
-    @apply text-[13px] font-semibold;
+  .start-main {
+    @apply flex min-w-0 flex-1 flex-col gap-10 overflow-y-auto px-14 pt-14 pb-10 max-[1100px]:px-8 max-[1100px]:pt-10;
   }
-  .start-action span, .start-recent-item span {
-    @apply text-[12px] leading-snug text-muted;
+  .start-hero {
+    @apply grid items-center gap-12;
+    grid-template-columns: minmax(0, 1fr) minmax(260px, 380px);
   }
-  .start-recent {
-    @apply flex flex-col gap-1.5;
+  .start-intro {
+    @apply flex max-w-[34rem] flex-col gap-5;
   }
-  .start-recent-item span {
-    @apply max-w-full truncate;
+  .start-intro h1 {
+    @apply text-[52px] leading-[1.02] font-semibold max-[1100px]:text-[42px];
+    font-family: "Segoe UI Variable Display", var(--font-chrome);
+    letter-spacing: -0.035em;
+    text-wrap: balance;
+  }
+  .start-lead {
+    @apply max-w-[28rem] text-[15px] leading-relaxed text-muted;
+  }
+  .start-cta {
+    @apply mt-2 flex flex-wrap gap-3;
+  }
+  .start-primary,
+  .start-secondary {
+    @apply inline-flex h-10 items-center gap-2 rounded-lg px-4 text-[13px] font-semibold;
+  }
+  .start-primary {
+    @apply bg-accent-strong text-white hover:bg-accent;
+  }
+  .start-primary .icon-svg {
+    filter: brightness(0) invert(1);
+  }
+  .start-secondary {
+    @apply border border-line bg-raised text-ink hover:bg-hover;
+  }
+  /* The design canvas: the stage's dot grid, the mark, the Builder's selection handles. */
+  .start-canvas {
+    @apply relative grid aspect-[4/3] place-items-center rounded-2xl border border-line bg-panel max-[900px]:hidden;
+    background-image: radial-gradient(var(--c-dot) 1px, transparent 1.2px);
+    background-size: 16px 16px;
+  }
+  .start-specimen {
+    @apply relative;
+    outline: 1.5px solid var(--c-accent);
+    outline-offset: 10px;
+  }
+  .start-specimen img {
+    @apply block h-36 w-auto;
+    filter: drop-shadow(0 18px 30px rgb(91 75 255 / 0.35));
+  }
+  .start-handle {
+    @apply absolute size-2.5 border-[1.5px] border-accent bg-raised;
+    margin: -15px;
+  }
+  .start-handle.nw { left: 0; top: 0; } .start-handle.n { left: 50%; top: 0; } .start-handle.ne { right: 0; top: 0; }
+  .start-handle.e { right: 0; top: 50%; } .start-handle.se { right: 0; bottom: 0; } .start-handle.s { left: 50%; bottom: 0; }
+  .start-handle.sw { left: 0; bottom: 0; } .start-handle.w { left: 0; top: 50%; }
+  .start-handle.n, .start-handle.s { margin-left: -5px; }
+  .start-handle.e, .start-handle.w { margin-top: -5px; }
+  .start-readout {
+    @apply absolute right-4 bottom-3 text-[11px] text-faint tabular-nums whitespace-pre;
+  }
+  .start-grid {
+    @apply grid min-h-0 gap-10;
+    grid-template-columns: minmax(0, 1fr) minmax(280px, 380px);
+  }
+  .start-main h2 {
+    @apply mb-3 text-[14px] font-semibold text-ink;
+  }
+  /* Recent projects: rows, not cards, so the list reads as a list. */
+  .start-recent-list {
+    @apply flex flex-col border-t border-line-soft;
+  }
+  .start-recent-row {
+    @apply relative border-b border-line-soft;
+  }
+  .start-recent-item {
+    @apply grid w-full items-center gap-3 rounded-lg px-2 py-2.5 pr-11 text-left hover:bg-hover disabled:cursor-default disabled:opacity-50;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+  }
+  .start-recent-item .icon-svg {
+    @apply size-4 opacity-70;
+  }
+  .start-recent-text {
+    @apply flex min-w-0 flex-col;
+  }
+  .start-recent-text strong {
+    @apply truncate text-[13px] font-semibold;
+  }
+  .start-recent-folder {
+    @apply truncate text-[12px] text-faint;
+  }
+  .start-recent-time {
+    @apply text-[12px] whitespace-nowrap text-muted tabular-nums;
+  }
+  .start-recent-remove {
+    @apply absolute top-1/2 right-1.5 grid size-7 -translate-y-1/2 place-items-center rounded-md opacity-0 hover:bg-raised focus-visible:opacity-100;
+  }
+  .start-recent-row:hover .start-recent-remove {
+    @apply opacity-60 hover:opacity-100;
+  }
+  .start-recent-remove .icon-svg {
+    @apply size-3.5;
   }
   .start-empty {
-    @apply text-[12px] text-faint;
+    @apply flex flex-col items-start gap-3 py-6 text-[13px] text-muted;
+  }
+  .start-side {
+    @apply flex flex-col gap-8;
+  }
+  .start-template-list {
+    @apply flex flex-col gap-2;
+  }
+  .start-template {
+    @apply flex items-center gap-3.5 rounded-xl border border-line bg-panel p-2.5 text-left hover:border-accent;
+  }
+  .start-wireframe {
+    @apply h-11 w-16 shrink-0 rounded-md bg-app;
+    fill: var(--c-line);
+  }
+  .start-wireframe .field {
+    fill: var(--c-raised);
+    stroke: var(--c-line);
+    stroke-width: 0.8;
+  }
+  .start-wireframe .fill {
+    fill: var(--c-accent);
+  }
+  .start-template-text {
+    @apply flex min-w-0 flex-col gap-0.5;
+  }
+  .start-template-text strong {
+    @apply text-[13px] font-semibold;
+  }
+  .start-template-text span {
+    @apply text-[12px] leading-snug text-muted;
+  }
+  .start-keys dl {
+    @apply grid items-center gap-x-4 gap-y-2.5 text-[13px];
+    grid-template-columns: auto 1fr;
+  }
+  .start-keys dt {
+    @apply flex gap-1 justify-self-start;
+  }
+  .start-keys kbd {
+    @apply rounded-md border border-b-2 border-line bg-raised px-1.5 py-0.5 text-[11px] font-semibold text-ink;
+    font-family: var(--font-chrome);
+  }
+  .start-keys dd {
+    @apply text-muted;
+  }
+  @media (max-width: 1000px) {
+    .start-grid { grid-template-columns: minmax(0, 1fr); }
   }
   .css-override-summary {
     @apply mb-2 flex flex-col items-start gap-1.5 rounded-md bg-amber-500/10 px-3 py-2 text-[12px] leading-snug text-amber-300;
@@ -702,28 +349,6 @@
   .design-muted {
     @apply opacity-50;
   }
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
   .snap-guide {
     @apply pointer-events-none absolute border-blue-500;
     z-index: 9999;
@@ -759,15 +384,9 @@
   .dimension.vertical::after {
     @apply bottom-0;
   }
-  
-  
-  
-  
-  
   body.preview-mode .forma-form [data-forma-type] {
     @apply cursor-auto select-auto;
   }
-  
   #form-frame:has(.forma-form.forma-selected) {
     @apply border-transparent;
   }
@@ -806,22 +425,6 @@
     @apply -right-1 cursor-ew-resize;
     top: calc(50% - 4px);
   }
-  .layout-content {
-    @apply relative h-full min-h-0 overflow-auto;
-  }
-  [data-forma-type="responsivegrid"] > .layout-content > [data-forma-type],
-  [data-forma-type="responsivestack"] > .layout-content[data-direction="vertical"] > [data-forma-type] {
-    width: auto !important;
-    @apply min-w-0;
-    box-sizing: border-box;
-  }
-  [data-forma-type="responsivegrid"] > .layout-content {
-    @apply grid items-start;
-    grid-auto-rows: max-content;
-  }
-  [data-forma-type="breakpointcontainer"] > .layout-header {
-    @apply pointer-events-none absolute top-1 right-1 z-10 rounded bg-blue-50 px-2 text-[10px] leading-5 text-blue-600;
-  }
   .preview-mode [data-forma-type="breakpointcontainer"] > .layout-header { display: none; }
   body:not(.preview-mode) [data-forma-type="responsivegrid"] > .layout-content {
     background-image: linear-gradient(to right, transparent calc(100% - 1px), #3b82f626 0);
@@ -831,59 +434,11 @@
     @apply pointer-events-none absolute top-1 right-1 rounded bg-blue-50 px-2 text-[10px] leading-5 text-blue-600;
     content: attr(data-grid-label);
   }
-  [data-forma-type="aspectratiocontainer"] {
-    box-sizing: border-box;
-  }
-  [data-forma-type="sidebar"] > .layout-content {
-    @apply overflow-x-hidden overflow-y-auto;
-  }
-  [data-forma-type="appshell"]
-    > .layout-content
-    > [data-forma-type]:not(:first-child) {
-    @apply min-w-0 flex-1;
-    width: auto !important;
-  }
-  [data-forma-type="appshell"][data-narrow="false"][data-orientation="horizontal"]
-    > .layout-content
-    > [data-forma-type]:not([data-forma-type="aspectratiocontainer"]) {
-    height: 100% !important;
-  }
-  [data-forma-type="appshell"][data-narrow="true"]
-    > .layout-content
-    > [data-forma-type],
-  [data-forma-type="responsivepanel"][data-narrow="true"]
-    > .layout-content
-    > [data-forma-type] {
-    width: 100% !important;
-    @apply shrink-0;
-  }
-  [data-forma-type="accordion"] > .layout-header {
-    @apply flex h-full flex-col overflow-auto;
-  }
-  [data-forma-type="accordion"] > .layout-header > button {
-    @apply min-h-9 shrink-0 border-b border-slate-200 bg-slate-50 px-3 text-left text-slate-700;
-  }
-  [data-forma-type="accordion"]
-    > .layout-header
-    > button[aria-expanded="true"] {
-    @apply bg-blue-50 text-blue-700;
-  }
-  [data-forma-type="accordion"] > .layout-header > .layout-content {
-    @apply min-h-20 flex-1 shrink-0;
-    height: auto;
-  }
   body.standalone-preview {
     @apply m-0 block h-screen overflow-auto bg-white;
   }
   body.standalone-preview .forma-form {
     @apply min-w-full min-h-screen;
-  }
-  .layout-pane,
-  .layout-cell {
-    @apply relative min-h-0 min-w-0 overflow-auto;
-  }
-  .layout-pane {
-    @apply border border-slate-300;
   }
   body:not(.preview-mode) .layout-pane::before {
     content: attr(aria-label);
@@ -899,309 +454,49 @@
   .layout-insertion {
     @apply outline-2 outline-blue-500;
   }
-  [data-forma-type="flowlayoutpanel"] > .layout-content > [data-forma-type] {
-    @apply shrink-0;
-  }
-  [data-forma-type="groupbox"] > .layout-header {
-    @apply h-7 border-b border-slate-200 px-2 py-1 font-semibold;
-  }
-  [data-forma-type="groupbox"] > .layout-content {
-    height: calc(100% - 28px);
-  }
-  [data-forma-type="tabcontrol"] > .layout-header {
-    @apply flex h-9 border-b border-slate-200 bg-slate-50;
-  }
-  [data-forma-type="tabcontrol"] > .layout-header button {
-    @apply rounded-none border-0 bg-transparent px-3 text-slate-600;
-  }
-  [data-forma-type="tabcontrol"] > .layout-header .tab-active {
-    @apply border-b-2 border-blue-500 text-blue-600;
-  }
-  [data-forma-type="tabcontrol"] > .layout-content {
-    height: calc(100% - 36px);
-  }
-  [data-forma-type="tabcontrol"][data-orientation="vertical"] {
-    @apply flex;
-  }
-  [data-forma-type="tabcontrol"][data-orientation="vertical"] > .layout-header {
-    @apply h-full w-[120px] shrink-0 flex-col overflow-auto border-b-0 border-r;
-  }
-  [data-forma-type="tabcontrol"][data-orientation="vertical"]
-    > .layout-header
-    button {
-    @apply min-h-9 shrink-0 text-left;
-  }
-  [data-forma-type="tabcontrol"][data-orientation="vertical"]
-    > .layout-header
-    .tab-active {
-    @apply border-b-0 border-l-2;
-  }
-  [data-forma-type="tabcontrol"][data-orientation="vertical"]
-    > .layout-content {
-    @apply h-full min-w-0 flex-1;
-  }
   body.preview-mode [data-tab-add] {
     @apply hidden;
   }
-  [data-forma-type="datagridview"] {
-    @apply overflow-auto;
-  }
-  [data-forma-type="datagridview"] table {
-    @apply w-full border-collapse text-left text-xs;
-  }
-  [data-forma-type="datagridview"] .grid-filter {
-    @apply sticky top-0 z-10 mb-2 w-full rounded border border-slate-300 bg-white px-2 py-1 text-sm;
-  }
-  [data-forma-type="datagridview"] th button {
-    @apply w-full rounded-none border-0 bg-transparent px-2 py-1 text-left text-slate-700 hover:bg-slate-200 disabled:opacity-100;
-  }
-  [data-forma-type="datagridview"] tr[aria-selected="true"] {
-    @apply bg-blue-100;
-  }
-  [data-forma-type="datagridview"] tbody tr:focus-visible {
-    @apply outline-2 outline-blue-500;
-  }
-  [data-forma-type="datagridview"] .grid-empty {
-    @apply py-4 text-center text-slate-400;
-  }
-  .forma-tooltip-popup {
-    @apply pointer-events-none fixed z-[10001] max-w-72 whitespace-pre-wrap rounded bg-slate-800 px-3 py-2 text-left text-sm text-white shadow-lg;
-  }
-  [data-forma-type="datagridview"] th {
-    @apply border-b border-slate-300 bg-slate-100 p-2 font-semibold;
-  }
-  [data-forma-type="datagridview"] td {
-    @apply border-b border-slate-200 p-2;
-  }
-  
-  
-  
+}
 
+@layer base {
+  :root {
+    font-family: "Segoe UI", sans-serif;
+    font-size: 12px;
+    --blue: #2878ff;
+  }
+  body {
+    @apply m-0 flex h-screen flex-col overflow-hidden bg-slate-50 text-slate-800;
+  }
+  button,
+  input,
+  select,
+  textarea {
+    font: inherit;
+    color: inherit;
+  }
+  button {
+    @apply cursor-pointer;
+  }
+  button:disabled,
+  .unavailable {
+    @apply cursor-default opacity-40;
+  }
+  button:focus-visible,
+  input:focus-visible,
+  select:focus-visible,
+  summary:focus-visible {
+    @apply outline-2 outline-offset-2 outline-blue-500;
+  }
+  [hidden] {
+    display: none !important;
+  }
 }
 
 
-@layer components {
-  [data-forma-type="card"] > .layout-header {
-    @apply h-14 px-4 py-2 overflow-hidden border-b border-slate-200;
-  }
-  .card-title {
-    @apply block font-semibold text-sm truncate;
-  }
-  .card-description {
-    @apply block text-xs text-slate-500 truncate;
-  }
-  [data-forma-type="badge"] {
-    @apply flex items-center justify-center;
-  }
-  .badge-content {
-    @apply flex h-full w-full items-center justify-center rounded-full px-2 truncate;
-  }
-  [data-forma-type="badge"][data-variant="info"] .badge-content {
-    @apply bg-blue-100 text-blue-700;
-  }
-  [data-forma-type="badge"][data-variant="success"] .badge-content {
-    @apply bg-emerald-100 text-emerald-700;
-  }
-  [data-forma-type="badge"][data-variant="warning"] .badge-content {
-    @apply bg-amber-100 text-amber-800;
-  }
-  [data-forma-type="badge"][data-variant="danger"] .badge-content {
-    @apply bg-red-100 text-red-700;
-  }
-  [data-forma-type="badge"][data-variant="neutral"] .badge-content {
-    @apply bg-slate-100 text-slate-700;
-  }
-  [data-forma-type="avatar"] {
-    @apply overflow-hidden;
-  }
-  [data-forma-type="avatar"][data-shape="circle"] {
-    border-radius: 9999px !important;
-  }
-  [data-forma-type="avatar"][data-shape="rounded"] {
-    border-radius: 12px !important;
-  }
-  [data-forma-type="avatar"][data-shape="square"] {
-    border-radius: 0 !important;
-  }
-  [data-forma-type="avatar"] img,
-  .avatar-initials {
-    @apply absolute inset-0 h-full w-full;
-  }
-  .avatar-initials {
-    @apply flex items-center justify-center bg-blue-100 text-blue-700 font-semibold;
-  }
-  [data-forma-type="divider"] {
-    @apply flex items-center gap-2;
-  }
-  [data-forma-type="divider"][data-orientation="vertical"] {
-    @apply flex-col;
-  }
-  .divider-line {
-    @apply flex-1 w-full;
-  }
-  [data-orientation="vertical"] > .divider-line {
-    @apply w-0;
-  }
-  .divider-caption {
-    @apply text-xs whitespace-nowrap;
-  }
-  [data-forma-type="spinner"] {
-    @apply flex items-center justify-center gap-2;
-  }
-  .modern-spinner {
-    @apply inline-block shrink-0 size-5 rounded-full border-2 border-current border-r-transparent motion-safe:animate-spin;
-  }
-  .forma-loading-popup {
-    @apply fixed z-[10000] flex flex-col items-center justify-center gap-3 bg-white/85 text-slate-700 shadow-sm backdrop-blur-sm;
-  }
-  .forma-toast-popup {
-    @apply fixed z-[10002] flex items-center gap-3 min-w-[200px] max-w-[320px] rounded-lg border border-slate-200 bg-white p-3 text-sm text-slate-700 shadow-lg;
-  }
-  .forma-toast-popup[data-position$="right"] {
-    @apply right-4;
-  }
-  .forma-toast-popup[data-position$="left"] {
-    @apply left-4;
-  }
-  .toast-message {
-    @apply flex-1 break-words;
-  }
-  .forma-toast-popup button {
-    @apply shrink-0 rounded px-2 py-1 text-lg hover:bg-black/5 focus-visible:outline-2 focus-visible:outline-blue-500;
-  }
-  .forma-toast-popup[data-variant="info"] {
-    @apply border-blue-600 bg-blue-600 text-white;
-  }
-  .forma-toast-popup[data-variant="success"] {
-    @apply border-emerald-700 bg-emerald-700 text-white;
-  }
-  .forma-toast-popup[data-variant="warning"] {
-    @apply border-amber-700 bg-amber-700 text-white;
-  }
-  .forma-toast-popup[data-variant="caution"] {
-    @apply border-orange-700 bg-orange-700 text-white;
-  }
-  .forma-toast-popup[data-variant="error"] {
-    @apply border-red-600 bg-red-600 text-white;
-  }
-  .forma-toast-popup[data-variant="danger"] {
-    @apply border-red-600 bg-red-600 text-white;
-  }
 
-}
-
-@layer components {
-  [data-forma-type="icon"] {
-    @apply flex items-center justify-center;
-  }
-  [data-forma-type="icon"] > svg {
-    @apply h-full w-full;
-  }
-  [data-forma-type="emptystate"] {
-    @apply flex flex-col items-center justify-center gap-2 overflow-hidden px-3;
-  }
-  .empty-state-icon {
-    @apply block shrink-0 size-10;
-  }
-  .empty-state-icon svg {
-    @apply h-full w-full;
-  }
-  .empty-state-title {
-    @apply block max-w-full font-semibold break-words;
-    font-size: inherit;
-  }
-  .empty-state-description {
-    @apply block max-w-full opacity-75 break-words;
-    font-size: 0.85em;
-  }
-  .skeleton-bars {
-    @apply flex h-full w-full flex-col gap-2 overflow-hidden;
-  }
-  .skeleton-bar {
-    @apply block flex-1 min-h-0 shrink-0 rounded bg-slate-200;
-  }
-  .skeleton-bars[data-shape="text"] .skeleton-bar:last-child {
-    @apply w-2/3;
-  }
-  .skeleton-bars[data-shape="circle"] {
-    @apply items-start;
-  }
-  .skeleton-bars[data-shape="circle"] .skeleton-bar {
-    @apply flex-none h-full aspect-square rounded-full;
-  }
-  .skeleton-bars[data-animated="true"] {
-    @apply motion-safe:animate-pulse;
-  }
-
-}
 
 /* Workspace chrome. Component appearance remains controlled by the model. */
-@layer components {
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  .forma-form {
-    color-scheme: light;
-  }
-  
-
-}
 
 
 

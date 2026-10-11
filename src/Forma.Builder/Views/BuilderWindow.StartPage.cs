@@ -12,6 +12,8 @@ public sealed partial class BuilderWindow
             name = Path.GetFileNameWithoutExtension(path),
             folder = Path.GetDirectoryName(path) ?? "",
             exists = File.Exists(path),
+            // Last saved time, so the page can say "Edited 2 hours ago".
+            edited = File.Exists(path) ? File.GetLastWriteTimeUtc(path).ToString("o") : null,
         }).ToArray();
         return _bridge.SendAsync(new
         {
@@ -46,6 +48,13 @@ public sealed partial class BuilderWindow
             _ready = true;
             MessageBox.Show(this, error.Message, "Could not open design", MessageBoxButtons.OK, MessageBoxIcon.Error);
         }
+    }
+
+    private async Task RemoveRecentAsync(string? path)
+    {
+        if (path is null || !RecentProjects.Default.Contains(path)) return;
+        RecentProjects.Default.Remove(path);
+        await SendStartPageAsync();
     }
 
     private async Task NewFromTemplateAsync(string? id)

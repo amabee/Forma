@@ -16,38 +16,76 @@ function fixture() {
   window.formaDesigner.receive({ action: 'initialize', id: 'root' });
   const show = () => window.forma.receive({ type: 'designer', action: 'start-page',
     templates: [{ id: 'login', name: 'Login form', description: 'Fields and a button' }],
-    recent: [{ path: 'C:/Designs/App.forma', name: 'App', folder: 'C:/Designs', exists: true }, { path: 'C:/Gone.forma', name: 'Gone', folder: 'C:/', exists: false }] });
+    recent: [{ path: 'C:/Designs/App.forma', name: 'App', folder: 'C:/Designs', exists: true, edited: new Date(Date.now() - 2 * 3600e3).toISOString() }, { path: 'C:/Gone.forma', name: 'Gone', folder: 'C:/', exists: false }] });
   return { window, document: window.document, messages, show };
 }
 
-test('the start page lists templates and recent projects and sends the chosen action', () => {
+test('the start screen lists recent projects with edit times and sends the chosen action', () => {
   const { document, messages, show } = fixture();
   show();
   const page = document.querySelector('.start-page');
-  assert.ok(page);
   assert.equal(page.getAttribute('role'), 'dialog');
+  assert.equal(page.getAttribute('aria-labelledby'), 'start-title');
   const recent = [...document.querySelectorAll('.start-recent-item')];
   assert.deepEqual(recent.map(item => item.querySelector('strong').textContent), ['App', 'Gone']);
+  assert.match(recent[0].textContent, /Edited 2 hours ago/);
   assert.equal(recent[1].disabled, true, 'missing files cannot be opened');
+  assert.match(recent[1].textContent, /Not found/);
   recent[0].click();
   assert.deepEqual(plain(messages.at(-1).payload), { command: 'open-recent', path: 'C:/Designs/App.forma' });
-  assert.equal(document.querySelector('.start-page'), null, 'choosing closes the page');
+  assert.equal(document.querySelector('.start-page'), null, 'choosing closes the screen');
   show();
-  [...document.querySelectorAll('.start-action')].find(button => button.textContent.includes('Login form')).click();
+  document.querySelector('.start-template').click();
   assert.deepEqual(plain(messages.at(-1).payload), { command: 'new-from-template', template: 'login' });
+  show();
+  document.querySelector('.start-recent-remove').click();
+  assert.deepEqual(plain(messages.at(-1).payload), { command: 'remove-recent', path: 'C:/Designs/App.forma' });
+  assert.ok(document.querySelector('.start-page'), 'removing keeps the screen open');
 });
 
-test('Escape, Blank form and using the toolbox dismiss the start page', () => {
+test('New project, Escape, the rail and the toolbox all leave the start screen sensibly', () => {
   const { window, document, show, messages } = fixture();
+  show();
+  assert.equal(document.activeElement.textContent, 'New project', 'the primary action has focus');
+  document.querySelector('.start-primary').click();
+  assert.equal(messages.at(-1).payload.command, 'new-project');
+  assert.equal(document.querySelector('.start-page'), null);
   show();
   document.body.dispatchEvent(new window.KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
   assert.equal(document.querySelector('.start-page'), null);
   show();
   const count = messages.length;
-  document.querySelector('.start-action').click();
+  document.querySelector('.start-resume').click();
   assert.equal(document.querySelector('.start-page'), null);
-  assert.equal(messages.length, count, 'Blank form just closes the page');
+  assert.equal(messages.length, count, 'Go to the designer just closes the screen');
   show();
   document.querySelector('[data-kind="button"]').dispatchEvent(new window.MouseEvent('dblclick', { bubbles: true }));
   assert.equal(document.querySelector('.start-page'), null);
+});
+
+test('the designer opens on a pending start screen until the host sends its data', () => {
+  const { document, messages, show, window } = fixture();
+  const page = document.querySelector('.start-page');
+  assert.ok(page, 'shown from the first frame');
+  assert.equal(document.documentElement.classList.contains('is-launching'), false);
+  assert.equal(page.getAttribute('aria-busy'), 'true');
+  assert.equal(document.querySelector('.start-primary').disabled, true, 'actions wait for the host');
+  assert.equal(document.querySelector('.start-resume').disabled, false);
+  assert.match(document.querySelector('.start-loading').textContent, /Loading/);
+  show();
+  assert.equal(document.querySelectorAll('.start-page').length, 1);
+  assert.equal(document.querySelector('.start-page').hasAttribute('aria-busy'), false);
+  assert.equal(document.querySelector('.start-primary').disabled, false);
+  const count = messages.length;
+  window.forma.receive({ type: 'designer', action: 'start-page-close' });
+  assert.equal(document.querySelector('.start-page'), null, 'a restored design closes it');
+  assert.equal(messages.length, count);
+});
+
+test('an empty recent list invites opening a project', () => {
+  const { window, document, messages } = fixture();
+  window.forma.receive({ type: 'designer', action: 'start-page', templates: [], recent: [] });
+  assert.match(document.querySelector('.start-empty').textContent, /will show up here/);
+  document.querySelector('.start-empty button').click();
+  assert.equal(messages.at(-1).payload.command, 'open');
 });

@@ -40,6 +40,9 @@ public sealed partial class BuilderWindow : System.Windows.Forms.Form
         };
         // The exe's embedded Forma icon also brands the title bar and taskbar.
         Icon = Icon.ExtractAssociatedIcon(Application.ExecutablePath);
+        // Match the start screen while WebView2 starts, instead of flashing white.
+        BackColor = Color.FromArgb(20, 23, 29);
+        _preview.DefaultBackgroundColor = BackColor;
         ClientSize = new Size(1280, 840);
         MinimumSize = new Size(1000, 650);
         StartPosition = FormStartPosition.CenterScreen;
@@ -78,9 +81,12 @@ public sealed partial class BuilderWindow : System.Windows.Forms.Form
             await _renderer.InitializeAsync();
             await NewProjectAsync();
             _ready = true;
+            // The page opens on the start screen; fill it in as soon as commands can be handled.
+            await SendStartPageAsync();
             await StartRecoveryAsync();
-            // Offer recent projects and templates unless a recovered design was just restored.
-            if (_viewModel.ProjectPath is null && !_viewModel.IsMarkedUnsaved) await SendStartPageAsync();
+            // Restoring a crashed session goes straight to that design.
+            if (_viewModel.ProjectPath is not null || _viewModel.IsMarkedUnsaved)
+                await _bridge.SendAsync(new { type = "designer", action = "start-page-close" });
         }
         catch (Exception error)
         {
