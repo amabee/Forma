@@ -37,6 +37,17 @@ public sealed partial class BuilderWindow
     private async Task HandleExplorerActionAsync(JsonElement payload)
     {
         var action = String(payload, "action"); var key = String(payload, "key") ?? "";
+        if (action == "toggle-lock") {
+            // Lock or unlock a component from the explorer, switching to its form first.
+            var controlId = String(payload, "controlId");
+            var lockOwner = _viewModel.Forms.FirstOrDefault(form => Walk(form).Any(control => control.Id == controlId));
+            if (lockOwner is null || controlId is null || !_viewModel.Appearance.TryGetValue(controlId, out var appearance)) return;
+            if (_viewModel.Form != lockOwner) await SwitchFormAsync(lockOwner.Id);
+            _viewModel.ExecuteEdit("select", controlId, default);
+            _viewModel.ExecuteEdit("property", controlId, JsonSerializer.SerializeToElement(new { property = "locked", value = !appearance.Locked }));
+            await StateAsync(appearance.Locked ? "Component locked" : "Component unlocked");
+            return;
+        }
         var item = key.StartsWith("file:", StringComparison.Ordinal) ? _viewModel.Files.FirstOrDefault(file => file.Id == key[5..]) : null;
         if (action is "open-project-file" or "rename-item" or "delete-item") {
             if (item is null) throw new ArgumentException("Project item not found.");

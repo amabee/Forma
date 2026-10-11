@@ -657,6 +657,20 @@
   .component-source-menu hr {
     @apply my-1 border-line;
   }
+  /* View > Show grid / Show tab order */
+  .forma-form.show-grid {
+    background-image: radial-gradient(rgb(100 116 139 / 0.45) 1px, transparent 1.2px);
+    background-size: 8px 8px;
+  }
+  .tab-order-layer {
+    @apply pointer-events-none absolute inset-0 z-[950];
+  }
+  .tab-order-badge {
+    @apply absolute flex h-5 min-w-5 -translate-x-1.5 -translate-y-1.5 items-center justify-center rounded-full bg-amber-500 px-1 text-[11px] font-bold text-black shadow;
+  }
+  .view-check {
+    @apply inline-block w-4 text-accent;
+  }
   #selection-marquee {
     @apply pointer-events-none absolute z-[900] border border-blue-500 bg-blue-500/10;
   }
@@ -1901,6 +1915,10 @@
   .explorer-row > .icon-svg { @apply size-4 shrink-0; }
   .explorer-label { @apply truncate; }
   .explorer-lock { @apply ml-auto size-3 opacity-60; }
+  .explorer-lock-toggle { @apply ml-auto flex size-5 items-center justify-center rounded opacity-0 hover:bg-hover; }
+  .explorer-lock-toggle img { @apply size-3; }
+  .explorer-row:hover .explorer-lock-toggle, .explorer-row:focus .explorer-lock-toggle, .explorer-lock-toggle[aria-pressed="true"] { @apply opacity-70; }
+  .explorer-lock-toggle[aria-pressed="true"]:hover { @apply opacity-100; }
   .explorer-empty { @apply px-3 py-2 text-xs text-muted; }
   @media (max-width: 1100px) { .left-sidebar { @apply w-[220px]; } }
 }

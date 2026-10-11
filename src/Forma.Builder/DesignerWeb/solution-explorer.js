@@ -80,7 +80,15 @@
       } else { chevron.disabled = true; chevron.setAttribute("aria-hidden", "true"); }
       const label = document.createElement("span"); label.className = "explorer-label"; label.textContent = node.name;
       row.append(chevron, icon(node.kind), label);
-      if (node.locked) { const lock = icon("lock"); lock.classList.add("explorer-lock"); row.append(lock); }
+      if (node.kind === "component" && node.controlId) {
+        // Lock toggle: always visible when locked, on hover/focus otherwise.
+        const lock = document.createElement("button"); lock.type = "button"; lock.tabIndex = -1;
+        lock.className = "explorer-lock-toggle"; lock.setAttribute("aria-pressed", String(!!node.locked));
+        lock.setAttribute("aria-label", `${node.locked ? "Unlock" : "Lock"} ${node.name}`); lock.title = node.locked ? "Unlock" : "Lock";
+        lock.append(icon("lock"));
+        lock.addEventListener("click", event => { event.stopPropagation(); explorerAction(node, "toggle-lock"); });
+        row.append(lock);
+      } else if (node.locked) { const lock = icon("lock"); lock.classList.add("explorer-lock"); row.append(lock); }
       li.append(row);
       if (children.length) {
         const group = document.createElement("ul"); group.setAttribute("role", "group"); group.hidden = !open;

@@ -1617,8 +1617,10 @@ document.addEventListener("pointermove", (event) => {
       siblings,
       6 / d.zoom,
     );
-    drag.left = snapped.x;
-    drag.top = snapped.y;
+    // With View > Show grid on, axes no alignment guide claimed snap to the grid.
+    const gridded = window.formaView?.snap(snapped.x, snapped.y, snapped.guides) ?? snapped;
+    drag.left = gridded.x;
+    drag.top = gridded.y;
     d.showGuides(snapped.guides, parent);
   } else d.clearGuides();
   if (drag.managed) {
