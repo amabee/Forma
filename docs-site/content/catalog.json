@@ -130,6 +130,29 @@
         "childOnly": true
       },
       {
+        "id": "borderSides",
+        "label": "Border sides",
+        "category": "Appearance",
+        "editor": "select",
+        "min": null,
+        "max": null,
+        "options": [
+          "all",
+          "none",
+          "top",
+          "bottom",
+          "left",
+          "right",
+          "top,bottom",
+          "left,right",
+          "top,left,right",
+          "bottom,left,right"
+        ],
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
         "id": "borderRadius",
         "label": "Radius",
         "category": "Appearance",
@@ -790,6 +813,16 @@
     ],
     "methods": [
       {
+        "name": "GetRenderState",
+        "parameters": []
+      },
+      {
+        "name": "HandleRuntimeEvent",
+        "parameters": [
+          "runtimeEvent"
+        ]
+      },
+      {
         "name": "Add",
         "parameters": [
           "child"
@@ -943,6 +976,29 @@
         "min": 0,
         "max": 10,
         "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "borderSides",
+        "label": "Border sides",
+        "category": "Appearance",
+        "editor": "select",
+        "min": null,
+        "max": null,
+        "options": [
+          "all",
+          "none",
+          "top",
+          "bottom",
+          "left",
+          "right",
+          "top,bottom",
+          "left,right",
+          "top,left,right",
+          "bottom,left,right"
+        ],
         "kind": null,
         "readOnly": false,
         "childOnly": true
@@ -1599,6 +1655,16 @@
     ],
     "methods": [
       {
+        "name": "GetRenderState",
+        "parameters": []
+      },
+      {
+        "name": "HandleRuntimeEvent",
+        "parameters": [
+          "runtimeEvent"
+        ]
+      },
+      {
         "name": "Add",
         "parameters": [
           "child"
@@ -1752,6 +1818,29 @@
         "min": 0,
         "max": 10,
         "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "borderSides",
+        "label": "Border sides",
+        "category": "Appearance",
+        "editor": "select",
+        "min": null,
+        "max": null,
+        "options": [
+          "all",
+          "none",
+          "top",
+          "bottom",
+          "left",
+          "right",
+          "top,bottom",
+          "left,right",
+          "top,left,right",
+          "bottom,left,right"
+        ],
         "kind": null,
         "readOnly": false,
         "childOnly": true
@@ -2381,6 +2470,16 @@
     ],
     "methods": [
       {
+        "name": "GetRenderState",
+        "parameters": []
+      },
+      {
+        "name": "HandleRuntimeEvent",
+        "parameters": [
+          "runtimeEvent"
+        ]
+      },
+      {
         "name": "Add",
         "parameters": [
           "child"
@@ -2562,6 +2661,29 @@
         "min": 0,
         "max": 10,
         "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "borderSides",
+        "label": "Border sides",
+        "category": "Appearance",
+        "editor": "select",
+        "min": null,
+        "max": null,
+        "options": [
+          "all",
+          "none",
+          "top",
+          "bottom",
+          "left",
+          "right",
+          "top,bottom",
+          "left,right",
+          "top,left,right",
+          "bottom,left,right"
+        ],
         "kind": null,
         "readOnly": false,
         "childOnly": true
@@ -3186,6 +3308,16 @@
     ],
     "methods": [
       {
+        "name": "GetRenderState",
+        "parameters": []
+      },
+      {
+        "name": "HandleRuntimeEvent",
+        "parameters": [
+          "runtimeEvent"
+        ]
+      },
+      {
         "name": "Add",
         "parameters": [
           "child"
@@ -3424,6 +3556,16 @@
         "parameters": []
       },
       {
+        "name": "GetRenderState",
+        "parameters": []
+      },
+      {
+        "name": "HandleRuntimeEvent",
+        "parameters": [
+          "runtimeEvent"
+        ]
+      },
+      {
         "name": "Add",
         "parameters": [
           "child"
@@ -3595,6 +3737,29 @@
         "min": 0,
         "max": 10,
         "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "borderSides",
+        "label": "Border sides",
+        "category": "Appearance",
+        "editor": "select",
+        "min": null,
+        "max": null,
+        "options": [
+          "all",
+          "none",
+          "top",
+          "bottom",
+          "left",
+          "right",
+          "top,bottom",
+          "left,right",
+          "top,left,right",
+          "bottom,left,right"
+        ],
         "kind": null,
         "readOnly": false,
         "childOnly": true
@@ -4173,6 +4338,16 @@
     ],
     "methods": [
       {
+        "name": "GetRenderState",
+        "parameters": []
+      },
+      {
+        "name": "HandleRuntimeEvent",
+        "parameters": [
+          "runtimeEvent"
+        ]
+      },
+      {
         "name": "Add",
         "parameters": [
           "child"
@@ -4326,6 +4501,29 @@
         "min": 0,
         "max": 10,
         "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "borderSides",
+        "label": "Border sides",
+        "category": "Appearance",
+        "editor": "select",
+        "min": null,
+        "max": null,
+        "options": [
+          "all",
+          "none",
+          "top",
+          "bottom",
+          "left",
+          "right",
+          "top,bottom",
+          "left,right",
+          "top,left,right",
+          "bottom,left,right"
+        ],
         "kind": null,
         "readOnly": false,
         "childOnly": true
@@ -4939,6 +5137,16 @@
     ],
     "methods": [
       {
+        "name": "GetRenderState",
+        "parameters": []
+      },
+      {
+        "name": "HandleRuntimeEvent",
+        "parameters": [
+          "runtimeEvent"
+        ]
+      },
+      {
         "name": "Add",
         "parameters": [
           "child"
@@ -5092,6 +5300,29 @@
         "min": 0,
         "max": 10,
         "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "borderSides",
+        "label": "Border sides",
+        "category": "Appearance",
+        "editor": "select",
+        "min": null,
+        "max": null,
+        "options": [
+          "all",
+          "none",
+          "top",
+          "bottom",
+          "left",
+          "right",
+          "top,bottom",
+          "left,right",
+          "top,left,right",
+          "bottom,left,right"
+        ],
         "kind": null,
         "readOnly": false,
         "childOnly": true
@@ -5721,6 +5952,16 @@
     ],
     "methods": [
       {
+        "name": "GetRenderState",
+        "parameters": []
+      },
+      {
+        "name": "HandleRuntimeEvent",
+        "parameters": [
+          "runtimeEvent"
+        ]
+      },
+      {
         "name": "Add",
         "parameters": [
           "child"
@@ -5894,6 +6135,29 @@
         "min": 0,
         "max": 10,
         "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "borderSides",
+        "label": "Border sides",
+        "category": "Appearance",
+        "editor": "select",
+        "min": null,
+        "max": null,
+        "options": [
+          "all",
+          "none",
+          "top",
+          "bottom",
+          "left",
+          "right",
+          "top,bottom",
+          "left,right",
+          "top,left,right",
+          "bottom,left,right"
+        ],
         "kind": null,
         "readOnly": false,
         "childOnly": true
@@ -6479,6 +6743,16 @@
         "parameters": []
       },
       {
+        "name": "GetRenderState",
+        "parameters": []
+      },
+      {
+        "name": "HandleRuntimeEvent",
+        "parameters": [
+          "runtimeEvent"
+        ]
+      },
+      {
         "name": "Add",
         "parameters": [
           "child"
@@ -6632,6 +6906,29 @@
         "min": 0,
         "max": 10,
         "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "borderSides",
+        "label": "Border sides",
+        "category": "Appearance",
+        "editor": "select",
+        "min": null,
+        "max": null,
+        "options": [
+          "all",
+          "none",
+          "top",
+          "bottom",
+          "left",
+          "right",
+          "top,bottom",
+          "left,right",
+          "top,left,right",
+          "bottom,left,right"
+        ],
         "kind": null,
         "readOnly": false,
         "childOnly": true
@@ -7266,6 +7563,16 @@
     ],
     "methods": [
       {
+        "name": "GetRenderState",
+        "parameters": []
+      },
+      {
+        "name": "HandleRuntimeEvent",
+        "parameters": [
+          "runtimeEvent"
+        ]
+      },
+      {
         "name": "Add",
         "parameters": [
           "child"
@@ -7443,6 +7750,29 @@
         "min": 0,
         "max": 10,
         "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "borderSides",
+        "label": "Border sides",
+        "category": "Appearance",
+        "editor": "select",
+        "min": null,
+        "max": null,
+        "options": [
+          "all",
+          "none",
+          "top",
+          "bottom",
+          "left",
+          "right",
+          "top,bottom",
+          "left,right",
+          "top,left,right",
+          "bottom,left,right"
+        ],
         "kind": null,
         "readOnly": false,
         "childOnly": true
@@ -8066,6 +8396,16 @@
     ],
     "methods": [
       {
+        "name": "GetRenderState",
+        "parameters": []
+      },
+      {
+        "name": "HandleRuntimeEvent",
+        "parameters": [
+          "runtimeEvent"
+        ]
+      },
+      {
         "name": "Add",
         "parameters": [
           "child"
@@ -8219,6 +8559,29 @@
         "min": 0,
         "max": 10,
         "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "borderSides",
+        "label": "Border sides",
+        "category": "Appearance",
+        "editor": "select",
+        "min": null,
+        "max": null,
+        "options": [
+          "all",
+          "none",
+          "top",
+          "bottom",
+          "left",
+          "right",
+          "top,bottom",
+          "left,right",
+          "top,left,right",
+          "bottom,left,right"
+        ],
         "kind": null,
         "readOnly": false,
         "childOnly": true
@@ -8857,6 +9220,16 @@
     ],
     "methods": [
       {
+        "name": "GetRenderState",
+        "parameters": []
+      },
+      {
+        "name": "HandleRuntimeEvent",
+        "parameters": [
+          "runtimeEvent"
+        ]
+      },
+      {
         "name": "Add",
         "parameters": [
           "child"
@@ -9010,6 +9383,29 @@
         "min": 0,
         "max": 10,
         "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "borderSides",
+        "label": "Border sides",
+        "category": "Appearance",
+        "editor": "select",
+        "min": null,
+        "max": null,
+        "options": [
+          "all",
+          "none",
+          "top",
+          "bottom",
+          "left",
+          "right",
+          "top,bottom",
+          "left,right",
+          "top,left,right",
+          "bottom,left,right"
+        ],
         "kind": null,
         "readOnly": false,
         "childOnly": true
@@ -9601,6 +9997,16 @@
     ],
     "methods": [
       {
+        "name": "GetRenderState",
+        "parameters": []
+      },
+      {
+        "name": "HandleRuntimeEvent",
+        "parameters": [
+          "runtimeEvent"
+        ]
+      },
+      {
         "name": "Add",
         "parameters": [
           "child"
@@ -9754,6 +10160,29 @@
         "min": 0,
         "max": 10,
         "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "borderSides",
+        "label": "Border sides",
+        "category": "Appearance",
+        "editor": "select",
+        "min": null,
+        "max": null,
+        "options": [
+          "all",
+          "none",
+          "top",
+          "bottom",
+          "left",
+          "right",
+          "top,bottom",
+          "left,right",
+          "top,left,right",
+          "bottom,left,right"
+        ],
         "kind": null,
         "readOnly": false,
         "childOnly": true
@@ -10395,6 +10824,16 @@
         ]
       },
       {
+        "name": "GetRenderState",
+        "parameters": []
+      },
+      {
+        "name": "HandleRuntimeEvent",
+        "parameters": [
+          "runtimeEvent"
+        ]
+      },
+      {
         "name": "Add",
         "parameters": [
           "child"
@@ -10548,6 +10987,29 @@
         "min": 0,
         "max": 10,
         "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "borderSides",
+        "label": "Border sides",
+        "category": "Appearance",
+        "editor": "select",
+        "min": null,
+        "max": null,
+        "options": [
+          "all",
+          "none",
+          "top",
+          "bottom",
+          "left",
+          "right",
+          "top,bottom",
+          "left,right",
+          "top,left,right",
+          "bottom,left,right"
+        ],
         "kind": null,
         "readOnly": false,
         "childOnly": true
@@ -11168,6 +11630,16 @@
         ]
       },
       {
+        "name": "GetRenderState",
+        "parameters": []
+      },
+      {
+        "name": "HandleRuntimeEvent",
+        "parameters": [
+          "runtimeEvent"
+        ]
+      },
+      {
         "name": "Add",
         "parameters": [
           "child"
@@ -11339,6 +11811,29 @@
         "min": 0,
         "max": 10,
         "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "borderSides",
+        "label": "Border sides",
+        "category": "Appearance",
+        "editor": "select",
+        "min": null,
+        "max": null,
+        "options": [
+          "all",
+          "none",
+          "top",
+          "bottom",
+          "left",
+          "right",
+          "top,bottom",
+          "left,right",
+          "top,left,right",
+          "bottom,left,right"
+        ],
         "kind": null,
         "readOnly": false,
         "childOnly": true
@@ -11969,6 +12464,16 @@
         "parameters": []
       },
       {
+        "name": "GetRenderState",
+        "parameters": []
+      },
+      {
+        "name": "HandleRuntimeEvent",
+        "parameters": [
+          "runtimeEvent"
+        ]
+      },
+      {
         "name": "Add",
         "parameters": [
           "child"
@@ -12122,6 +12627,29 @@
         "min": 0,
         "max": 10,
         "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "borderSides",
+        "label": "Border sides",
+        "category": "Appearance",
+        "editor": "select",
+        "min": null,
+        "max": null,
+        "options": [
+          "all",
+          "none",
+          "top",
+          "bottom",
+          "left",
+          "right",
+          "top,bottom",
+          "left,right",
+          "top,left,right",
+          "bottom,left,right"
+        ],
         "kind": null,
         "readOnly": false,
         "childOnly": true
@@ -12763,6 +13291,16 @@
         ]
       },
       {
+        "name": "GetRenderState",
+        "parameters": []
+      },
+      {
+        "name": "HandleRuntimeEvent",
+        "parameters": [
+          "runtimeEvent"
+        ]
+      },
+      {
         "name": "Add",
         "parameters": [
           "child"
@@ -12916,6 +13454,29 @@
         "min": 0,
         "max": 10,
         "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "borderSides",
+        "label": "Border sides",
+        "category": "Appearance",
+        "editor": "select",
+        "min": null,
+        "max": null,
+        "options": [
+          "all",
+          "none",
+          "top",
+          "bottom",
+          "left",
+          "right",
+          "top,bottom",
+          "left,right",
+          "top,left,right",
+          "bottom,left,right"
+        ],
         "kind": null,
         "readOnly": false,
         "childOnly": true
@@ -13543,6 +14104,16 @@
     ],
     "methods": [
       {
+        "name": "GetRenderState",
+        "parameters": []
+      },
+      {
+        "name": "HandleRuntimeEvent",
+        "parameters": [
+          "runtimeEvent"
+        ]
+      },
+      {
         "name": "Add",
         "parameters": [
           "child"
@@ -13696,6 +14267,29 @@
         "min": 0,
         "max": 10,
         "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "borderSides",
+        "label": "Border sides",
+        "category": "Appearance",
+        "editor": "select",
+        "min": null,
+        "max": null,
+        "options": [
+          "all",
+          "none",
+          "top",
+          "bottom",
+          "left",
+          "right",
+          "top,bottom",
+          "left,right",
+          "top,left,right",
+          "bottom,left,right"
+        ],
         "kind": null,
         "readOnly": false,
         "childOnly": true
@@ -14287,6 +14881,16 @@
     ],
     "methods": [
       {
+        "name": "GetRenderState",
+        "parameters": []
+      },
+      {
+        "name": "HandleRuntimeEvent",
+        "parameters": [
+          "runtimeEvent"
+        ]
+      },
+      {
         "name": "Add",
         "parameters": [
           "child"
@@ -14440,6 +15044,29 @@
         "min": 0,
         "max": 10,
         "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "borderSides",
+        "label": "Border sides",
+        "category": "Appearance",
+        "editor": "select",
+        "min": null,
+        "max": null,
+        "options": [
+          "all",
+          "none",
+          "top",
+          "bottom",
+          "left",
+          "right",
+          "top,bottom",
+          "left,right",
+          "top,left,right",
+          "bottom,left,right"
+        ],
         "kind": null,
         "readOnly": false,
         "childOnly": true
@@ -15053,6 +15680,16 @@
     ],
     "methods": [
       {
+        "name": "GetRenderState",
+        "parameters": []
+      },
+      {
+        "name": "HandleRuntimeEvent",
+        "parameters": [
+          "runtimeEvent"
+        ]
+      },
+      {
         "name": "Add",
         "parameters": [
           "child"
@@ -15243,6 +15880,29 @@
         "min": 0,
         "max": 10,
         "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "borderSides",
+        "label": "Border sides",
+        "category": "Appearance",
+        "editor": "select",
+        "min": null,
+        "max": null,
+        "options": [
+          "all",
+          "none",
+          "top",
+          "bottom",
+          "left",
+          "right",
+          "top,bottom",
+          "left,right",
+          "top,left,right",
+          "bottom,left,right"
+        ],
         "kind": null,
         "readOnly": false,
         "childOnly": true
@@ -15858,6 +16518,16 @@
         "parameters": []
       },
       {
+        "name": "GetRenderState",
+        "parameters": []
+      },
+      {
+        "name": "HandleRuntimeEvent",
+        "parameters": [
+          "runtimeEvent"
+        ]
+      },
+      {
         "name": "Add",
         "parameters": [
           "child"
@@ -16138,6 +16808,16 @@
         ]
       },
       {
+        "name": "GetRenderState",
+        "parameters": []
+      },
+      {
+        "name": "HandleRuntimeEvent",
+        "parameters": [
+          "runtimeEvent"
+        ]
+      },
+      {
         "name": "Add",
         "parameters": [
           "child"
@@ -16375,6 +17055,16 @@
         "name": "InvokeItem",
         "parameters": [
           "id"
+        ]
+      },
+      {
+        "name": "GetRenderState",
+        "parameters": []
+      },
+      {
+        "name": "HandleRuntimeEvent",
+        "parameters": [
+          "runtimeEvent"
         ]
       },
       {
@@ -16618,6 +17308,16 @@
         ]
       },
       {
+        "name": "GetRenderState",
+        "parameters": []
+      },
+      {
+        "name": "HandleRuntimeEvent",
+        "parameters": [
+          "runtimeEvent"
+        ]
+      },
+      {
         "name": "Add",
         "parameters": [
           "child"
@@ -16771,6 +17471,29 @@
         "min": 0,
         "max": 10,
         "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "borderSides",
+        "label": "Border sides",
+        "category": "Appearance",
+        "editor": "select",
+        "min": null,
+        "max": null,
+        "options": [
+          "all",
+          "none",
+          "top",
+          "bottom",
+          "left",
+          "right",
+          "top,bottom",
+          "left,right",
+          "top,left,right",
+          "bottom,left,right"
+        ],
         "kind": null,
         "readOnly": false,
         "childOnly": true
@@ -17539,6 +18262,16 @@
         ]
       },
       {
+        "name": "GetRenderState",
+        "parameters": []
+      },
+      {
+        "name": "HandleRuntimeEvent",
+        "parameters": [
+          "runtimeEvent"
+        ]
+      },
+      {
         "name": "Add",
         "parameters": [
           "child"
@@ -17692,6 +18425,29 @@
         "min": 0,
         "max": 10,
         "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "borderSides",
+        "label": "Border sides",
+        "category": "Appearance",
+        "editor": "select",
+        "min": null,
+        "max": null,
+        "options": [
+          "all",
+          "none",
+          "top",
+          "bottom",
+          "left",
+          "right",
+          "top,bottom",
+          "left,right",
+          "top,left,right",
+          "bottom,left,right"
+        ],
         "kind": null,
         "readOnly": false,
         "childOnly": true
@@ -18283,6 +19039,16 @@
     ],
     "methods": [
       {
+        "name": "GetRenderState",
+        "parameters": []
+      },
+      {
+        "name": "HandleRuntimeEvent",
+        "parameters": [
+          "runtimeEvent"
+        ]
+      },
+      {
         "name": "Add",
         "parameters": [
           "child"
@@ -18436,6 +19202,29 @@
         "min": 0,
         "max": 10,
         "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "borderSides",
+        "label": "Border sides",
+        "category": "Appearance",
+        "editor": "select",
+        "min": null,
+        "max": null,
+        "options": [
+          "all",
+          "none",
+          "top",
+          "bottom",
+          "left",
+          "right",
+          "top,bottom",
+          "left,right",
+          "top,left,right",
+          "bottom,left,right"
+        ],
         "kind": null,
         "readOnly": false,
         "childOnly": true
@@ -19027,6 +19816,16 @@
     ],
     "methods": [
       {
+        "name": "GetRenderState",
+        "parameters": []
+      },
+      {
+        "name": "HandleRuntimeEvent",
+        "parameters": [
+          "runtimeEvent"
+        ]
+      },
+      {
         "name": "Add",
         "parameters": [
           "child"
@@ -19307,6 +20106,16 @@
         ]
       },
       {
+        "name": "GetRenderState",
+        "parameters": []
+      },
+      {
+        "name": "HandleRuntimeEvent",
+        "parameters": [
+          "runtimeEvent"
+        ]
+      },
+      {
         "name": "Add",
         "parameters": [
           "child"
@@ -19488,6 +20297,29 @@
         "min": 0,
         "max": 10,
         "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "borderSides",
+        "label": "Border sides",
+        "category": "Appearance",
+        "editor": "select",
+        "min": null,
+        "max": null,
+        "options": [
+          "all",
+          "none",
+          "top",
+          "bottom",
+          "left",
+          "right",
+          "top,bottom",
+          "left,right",
+          "top,left,right",
+          "bottom,left,right"
+        ],
         "kind": null,
         "readOnly": false,
         "childOnly": true
@@ -20093,6 +20925,16 @@
     ],
     "methods": [
       {
+        "name": "GetRenderState",
+        "parameters": []
+      },
+      {
+        "name": "HandleRuntimeEvent",
+        "parameters": [
+          "runtimeEvent"
+        ]
+      },
+      {
         "name": "Add",
         "parameters": [
           "child"
@@ -20246,6 +21088,29 @@
         "min": 0,
         "max": 10,
         "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "borderSides",
+        "label": "Border sides",
+        "category": "Appearance",
+        "editor": "select",
+        "min": null,
+        "max": null,
+        "options": [
+          "all",
+          "none",
+          "top",
+          "bottom",
+          "left",
+          "right",
+          "top,bottom",
+          "left,right",
+          "top,left,right",
+          "bottom,left,right"
+        ],
         "kind": null,
         "readOnly": false,
         "childOnly": true
@@ -20853,6 +21718,16 @@
         ]
       },
       {
+        "name": "GetRenderState",
+        "parameters": []
+      },
+      {
+        "name": "HandleRuntimeEvent",
+        "parameters": [
+          "runtimeEvent"
+        ]
+      },
+      {
         "name": "Add",
         "parameters": [
           "child"
@@ -21043,6 +21918,29 @@
         "min": 0,
         "max": 10,
         "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "borderSides",
+        "label": "Border sides",
+        "category": "Appearance",
+        "editor": "select",
+        "min": null,
+        "max": null,
+        "options": [
+          "all",
+          "none",
+          "top",
+          "bottom",
+          "left",
+          "right",
+          "top,bottom",
+          "left,right",
+          "top,left,right",
+          "bottom,left,right"
+        ],
         "kind": null,
         "readOnly": false,
         "childOnly": true
@@ -21627,6 +22525,16 @@
     ],
     "methods": [
       {
+        "name": "GetRenderState",
+        "parameters": []
+      },
+      {
+        "name": "HandleRuntimeEvent",
+        "parameters": [
+          "runtimeEvent"
+        ]
+      },
+      {
         "name": "Add",
         "parameters": [
           "child"
@@ -21780,6 +22688,29 @@
         "min": 0,
         "max": 10,
         "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "borderSides",
+        "label": "Border sides",
+        "category": "Appearance",
+        "editor": "select",
+        "min": null,
+        "max": null,
+        "options": [
+          "all",
+          "none",
+          "top",
+          "bottom",
+          "left",
+          "right",
+          "top,bottom",
+          "left,right",
+          "top,left,right",
+          "bottom,left,right"
+        ],
         "kind": null,
         "readOnly": false,
         "childOnly": true
@@ -22412,6 +23343,16 @@
         "parameters": []
       },
       {
+        "name": "GetRenderState",
+        "parameters": []
+      },
+      {
+        "name": "HandleRuntimeEvent",
+        "parameters": [
+          "runtimeEvent"
+        ]
+      },
+      {
         "name": "Add",
         "parameters": [
           "child"
@@ -22590,6 +23531,29 @@
         "min": 0,
         "max": 10,
         "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "borderSides",
+        "label": "Border sides",
+        "category": "Appearance",
+        "editor": "select",
+        "min": null,
+        "max": null,
+        "options": [
+          "all",
+          "none",
+          "top",
+          "bottom",
+          "left",
+          "right",
+          "top,bottom",
+          "left,right",
+          "top,left,right",
+          "bottom,left,right"
+        ],
         "kind": null,
         "readOnly": false,
         "childOnly": true
@@ -23199,6 +24163,16 @@
         "parameters": []
       },
       {
+        "name": "GetRenderState",
+        "parameters": []
+      },
+      {
+        "name": "HandleRuntimeEvent",
+        "parameters": [
+          "runtimeEvent"
+        ]
+      },
+      {
         "name": "Add",
         "parameters": [
           "child"
@@ -23352,6 +24326,29 @@
         "min": 0,
         "max": 10,
         "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "borderSides",
+        "label": "Border sides",
+        "category": "Appearance",
+        "editor": "select",
+        "min": null,
+        "max": null,
+        "options": [
+          "all",
+          "none",
+          "top",
+          "bottom",
+          "left",
+          "right",
+          "top,bottom",
+          "left,right",
+          "top,left,right",
+          "bottom,left,right"
+        ],
         "kind": null,
         "readOnly": false,
         "childOnly": true
@@ -23990,6 +24987,16 @@
     ],
     "methods": [
       {
+        "name": "GetRenderState",
+        "parameters": []
+      },
+      {
+        "name": "HandleRuntimeEvent",
+        "parameters": [
+          "runtimeEvent"
+        ]
+      },
+      {
         "name": "Add",
         "parameters": [
           "child"
@@ -24143,6 +25150,29 @@
         "min": 0,
         "max": 10,
         "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "borderSides",
+        "label": "Border sides",
+        "category": "Appearance",
+        "editor": "select",
+        "min": null,
+        "max": null,
+        "options": [
+          "all",
+          "none",
+          "top",
+          "bottom",
+          "left",
+          "right",
+          "top,bottom",
+          "left,right",
+          "top,left,right",
+          "bottom,left,right"
+        ],
         "kind": null,
         "readOnly": false,
         "childOnly": true
@@ -24757,6 +25787,16 @@
         "parameters": []
       },
       {
+        "name": "GetRenderState",
+        "parameters": []
+      },
+      {
+        "name": "HandleRuntimeEvent",
+        "parameters": [
+          "runtimeEvent"
+        ]
+      },
+      {
         "name": "Add",
         "parameters": [
           "child"
@@ -25159,6 +26199,16 @@
     ],
     "methods": [
       {
+        "name": "GetRenderState",
+        "parameters": []
+      },
+      {
+        "name": "HandleRuntimeEvent",
+        "parameters": [
+          "runtimeEvent"
+        ]
+      },
+      {
         "name": "Add",
         "parameters": [
           "child"
@@ -25312,6 +26362,29 @@
         "min": 0,
         "max": 10,
         "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "borderSides",
+        "label": "Border sides",
+        "category": "Appearance",
+        "editor": "select",
+        "min": null,
+        "max": null,
+        "options": [
+          "all",
+          "none",
+          "top",
+          "bottom",
+          "left",
+          "right",
+          "top,bottom",
+          "left,right",
+          "top,left,right",
+          "bottom,left,right"
+        ],
         "kind": null,
         "readOnly": false,
         "childOnly": true
@@ -25923,6 +26996,16 @@
     ],
     "methods": [
       {
+        "name": "GetRenderState",
+        "parameters": []
+      },
+      {
+        "name": "HandleRuntimeEvent",
+        "parameters": [
+          "runtimeEvent"
+        ]
+      },
+      {
         "name": "Add",
         "parameters": [
           "child"
@@ -26076,6 +27159,29 @@
         "min": 0,
         "max": 10,
         "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "borderSides",
+        "label": "Border sides",
+        "category": "Appearance",
+        "editor": "select",
+        "min": null,
+        "max": null,
+        "options": [
+          "all",
+          "none",
+          "top",
+          "bottom",
+          "left",
+          "right",
+          "top,bottom",
+          "left,right",
+          "top,left,right",
+          "bottom,left,right"
+        ],
         "kind": null,
         "readOnly": false,
         "childOnly": true
@@ -26714,6 +27820,16 @@
     ],
     "methods": [
       {
+        "name": "GetRenderState",
+        "parameters": []
+      },
+      {
+        "name": "HandleRuntimeEvent",
+        "parameters": [
+          "runtimeEvent"
+        ]
+      },
+      {
         "name": "Add",
         "parameters": [
           "child"
@@ -26904,6 +28020,29 @@
         "min": 0,
         "max": 10,
         "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "borderSides",
+        "label": "Border sides",
+        "category": "Appearance",
+        "editor": "select",
+        "min": null,
+        "max": null,
+        "options": [
+          "all",
+          "none",
+          "top",
+          "bottom",
+          "left",
+          "right",
+          "top,bottom",
+          "left,right",
+          "top,left,right",
+          "bottom,left,right"
+        ],
         "kind": null,
         "readOnly": false,
         "childOnly": true
@@ -27507,6 +28646,16 @@
     ],
     "methods": [
       {
+        "name": "GetRenderState",
+        "parameters": []
+      },
+      {
+        "name": "HandleRuntimeEvent",
+        "parameters": [
+          "runtimeEvent"
+        ]
+      },
+      {
         "name": "Add",
         "parameters": [
           "child"
@@ -27685,6 +28834,29 @@
         "min": 0,
         "max": 10,
         "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "borderSides",
+        "label": "Border sides",
+        "category": "Appearance",
+        "editor": "select",
+        "min": null,
+        "max": null,
+        "options": [
+          "all",
+          "none",
+          "top",
+          "bottom",
+          "left",
+          "right",
+          "top,bottom",
+          "left,right",
+          "top,left,right",
+          "bottom,left,right"
+        ],
         "kind": null,
         "readOnly": false,
         "childOnly": true
@@ -28294,6 +29466,16 @@
         "parameters": []
       },
       {
+        "name": "GetRenderState",
+        "parameters": []
+      },
+      {
+        "name": "HandleRuntimeEvent",
+        "parameters": [
+          "runtimeEvent"
+        ]
+      },
+      {
         "name": "Add",
         "parameters": [
           "child"
@@ -28447,6 +29629,29 @@
         "min": 0,
         "max": 10,
         "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "borderSides",
+        "label": "Border sides",
+        "category": "Appearance",
+        "editor": "select",
+        "min": null,
+        "max": null,
+        "options": [
+          "all",
+          "none",
+          "top",
+          "bottom",
+          "left",
+          "right",
+          "top,bottom",
+          "left,right",
+          "top,left,right",
+          "bottom,left,right"
+        ],
         "kind": null,
         "readOnly": false,
         "childOnly": true
@@ -29059,6 +30264,16 @@
     ],
     "methods": [
       {
+        "name": "GetRenderState",
+        "parameters": []
+      },
+      {
+        "name": "HandleRuntimeEvent",
+        "parameters": [
+          "runtimeEvent"
+        ]
+      },
+      {
         "name": "Add",
         "parameters": [
           "child"
@@ -29212,6 +30427,29 @@
         "min": 0,
         "max": 10,
         "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "borderSides",
+        "label": "Border sides",
+        "category": "Appearance",
+        "editor": "select",
+        "min": null,
+        "max": null,
+        "options": [
+          "all",
+          "none",
+          "top",
+          "bottom",
+          "left",
+          "right",
+          "top,bottom",
+          "left,right",
+          "top,left,right",
+          "bottom,left,right"
+        ],
         "kind": null,
         "readOnly": false,
         "childOnly": true
@@ -29784,6 +31022,16 @@
     ],
     "methods": [
       {
+        "name": "GetRenderState",
+        "parameters": []
+      },
+      {
+        "name": "HandleRuntimeEvent",
+        "parameters": [
+          "runtimeEvent"
+        ]
+      },
+      {
         "name": "Add",
         "parameters": [
           "child"
@@ -29937,6 +31185,29 @@
         "min": 0,
         "max": 10,
         "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "borderSides",
+        "label": "Border sides",
+        "category": "Appearance",
+        "editor": "select",
+        "min": null,
+        "max": null,
+        "options": [
+          "all",
+          "none",
+          "top",
+          "bottom",
+          "left",
+          "right",
+          "top,bottom",
+          "left,right",
+          "top,left,right",
+          "bottom,left,right"
+        ],
         "kind": null,
         "readOnly": false,
         "childOnly": true
@@ -30538,6 +31809,16 @@
         "parameters": []
       },
       {
+        "name": "GetRenderState",
+        "parameters": []
+      },
+      {
+        "name": "HandleRuntimeEvent",
+        "parameters": [
+          "runtimeEvent"
+        ]
+      },
+      {
         "name": "Add",
         "parameters": [
           "child"
@@ -30691,6 +31972,29 @@
         "min": 0,
         "max": 10,
         "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "borderSides",
+        "label": "Border sides",
+        "category": "Appearance",
+        "editor": "select",
+        "min": null,
+        "max": null,
+        "options": [
+          "all",
+          "none",
+          "top",
+          "bottom",
+          "left",
+          "right",
+          "top,bottom",
+          "left,right",
+          "top,left,right",
+          "bottom,left,right"
+        ],
         "kind": null,
         "readOnly": false,
         "childOnly": true
@@ -31304,6 +32608,16 @@
     ],
     "methods": [
       {
+        "name": "GetRenderState",
+        "parameters": []
+      },
+      {
+        "name": "HandleRuntimeEvent",
+        "parameters": [
+          "runtimeEvent"
+        ]
+      },
+      {
         "name": "Add",
         "parameters": [
           "child"
@@ -31457,6 +32771,29 @@
         "min": 0,
         "max": 10,
         "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "borderSides",
+        "label": "Border sides",
+        "category": "Appearance",
+        "editor": "select",
+        "min": null,
+        "max": null,
+        "options": [
+          "all",
+          "none",
+          "top",
+          "bottom",
+          "left",
+          "right",
+          "top,bottom",
+          "left,right",
+          "top,left,right",
+          "bottom,left,right"
+        ],
         "kind": null,
         "readOnly": false,
         "childOnly": true
@@ -32070,6 +33407,16 @@
     ],
     "methods": [
       {
+        "name": "GetRenderState",
+        "parameters": []
+      },
+      {
+        "name": "HandleRuntimeEvent",
+        "parameters": [
+          "runtimeEvent"
+        ]
+      },
+      {
         "name": "Add",
         "parameters": [
           "child"
@@ -32274,6 +33621,16 @@
     ],
     "methods": [
       {
+        "name": "GetRenderState",
+        "parameters": []
+      },
+      {
+        "name": "HandleRuntimeEvent",
+        "parameters": [
+          "runtimeEvent"
+        ]
+      },
+      {
         "name": "Add",
         "parameters": [
           "child"
@@ -32427,6 +33784,29 @@
         "min": 0,
         "max": 10,
         "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "borderSides",
+        "label": "Border sides",
+        "category": "Appearance",
+        "editor": "select",
+        "min": null,
+        "max": null,
+        "options": [
+          "all",
+          "none",
+          "top",
+          "bottom",
+          "left",
+          "right",
+          "top,bottom",
+          "left,right",
+          "top,left,right",
+          "bottom,left,right"
+        ],
         "kind": null,
         "readOnly": false,
         "childOnly": true
@@ -33205,6 +34585,16 @@
         ]
       },
       {
+        "name": "GetRenderState",
+        "parameters": []
+      },
+      {
+        "name": "HandleRuntimeEvent",
+        "parameters": [
+          "runtimeEvent"
+        ]
+      },
+      {
         "name": "Add",
         "parameters": [
           "child"
@@ -33358,6 +34748,29 @@
         "min": 0,
         "max": 10,
         "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "borderSides",
+        "label": "Border sides",
+        "category": "Appearance",
+        "editor": "select",
+        "min": null,
+        "max": null,
+        "options": [
+          "all",
+          "none",
+          "top",
+          "bottom",
+          "left",
+          "right",
+          "top,bottom",
+          "left,right",
+          "top,left,right",
+          "bottom,left,right"
+        ],
         "kind": null,
         "readOnly": false,
         "childOnly": true
@@ -34040,6 +35453,16 @@
         ]
       },
       {
+        "name": "GetRenderState",
+        "parameters": []
+      },
+      {
+        "name": "HandleRuntimeEvent",
+        "parameters": [
+          "runtimeEvent"
+        ]
+      },
+      {
         "name": "Add",
         "parameters": [
           "child"
@@ -34193,6 +35616,29 @@
         "min": 0,
         "max": 10,
         "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "borderSides",
+        "label": "Border sides",
+        "category": "Appearance",
+        "editor": "select",
+        "min": null,
+        "max": null,
+        "options": [
+          "all",
+          "none",
+          "top",
+          "bottom",
+          "left",
+          "right",
+          "top,bottom",
+          "left,right",
+          "top,left,right",
+          "bottom,left,right"
+        ],
         "kind": null,
         "readOnly": false,
         "childOnly": true
@@ -34832,6 +36278,16 @@
     ],
     "methods": [
       {
+        "name": "GetRenderState",
+        "parameters": []
+      },
+      {
+        "name": "HandleRuntimeEvent",
+        "parameters": [
+          "runtimeEvent"
+        ]
+      },
+      {
         "name": "Add",
         "parameters": [
           "child"
@@ -34985,6 +36441,29 @@
         "min": 0,
         "max": 10,
         "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "borderSides",
+        "label": "Border sides",
+        "category": "Appearance",
+        "editor": "select",
+        "min": null,
+        "max": null,
+        "options": [
+          "all",
+          "none",
+          "top",
+          "bottom",
+          "left",
+          "right",
+          "top,bottom",
+          "left,right",
+          "top,left,right",
+          "bottom,left,right"
+        ],
         "kind": null,
         "readOnly": false,
         "childOnly": true
@@ -35618,6 +37097,16 @@
     ],
     "methods": [
       {
+        "name": "GetRenderState",
+        "parameters": []
+      },
+      {
+        "name": "HandleRuntimeEvent",
+        "parameters": [
+          "runtimeEvent"
+        ]
+      },
+      {
         "name": "Add",
         "parameters": [
           "child"
@@ -35771,6 +37260,29 @@
         "min": 0,
         "max": 10,
         "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "borderSides",
+        "label": "Border sides",
+        "category": "Appearance",
+        "editor": "select",
+        "min": null,
+        "max": null,
+        "options": [
+          "all",
+          "none",
+          "top",
+          "bottom",
+          "left",
+          "right",
+          "top,bottom",
+          "left,right",
+          "top,left,right",
+          "bottom,left,right"
+        ],
         "kind": null,
         "readOnly": false,
         "childOnly": true
@@ -36343,6 +37855,16 @@
     ],
     "methods": [
       {
+        "name": "GetRenderState",
+        "parameters": []
+      },
+      {
+        "name": "HandleRuntimeEvent",
+        "parameters": [
+          "runtimeEvent"
+        ]
+      },
+      {
         "name": "Add",
         "parameters": [
           "child"
@@ -36496,6 +38018,29 @@
         "min": 0,
         "max": 10,
         "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "borderSides",
+        "label": "Border sides",
+        "category": "Appearance",
+        "editor": "select",
+        "min": null,
+        "max": null,
+        "options": [
+          "all",
+          "none",
+          "top",
+          "bottom",
+          "left",
+          "right",
+          "top,bottom",
+          "left,right",
+          "top,left,right",
+          "bottom,left,right"
+        ],
         "kind": null,
         "readOnly": false,
         "childOnly": true
@@ -37226,6 +38771,16 @@
         ]
       },
       {
+        "name": "GetRenderState",
+        "parameters": []
+      },
+      {
+        "name": "HandleRuntimeEvent",
+        "parameters": [
+          "runtimeEvent"
+        ]
+      },
+      {
         "name": "Add",
         "parameters": [
           "child"
@@ -37379,6 +38934,29 @@
         "min": 0,
         "max": 10,
         "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "borderSides",
+        "label": "Border sides",
+        "category": "Appearance",
+        "editor": "select",
+        "min": null,
+        "max": null,
+        "options": [
+          "all",
+          "none",
+          "top",
+          "bottom",
+          "left",
+          "right",
+          "top,bottom",
+          "left,right",
+          "top,left,right",
+          "bottom,left,right"
+        ],
         "kind": null,
         "readOnly": false,
         "childOnly": true
@@ -37991,6 +39569,16 @@
     ],
     "methods": [
       {
+        "name": "GetRenderState",
+        "parameters": []
+      },
+      {
+        "name": "HandleRuntimeEvent",
+        "parameters": [
+          "runtimeEvent"
+        ]
+      },
+      {
         "name": "Add",
         "parameters": [
           "child"
@@ -38144,6 +39732,29 @@
         "min": 0,
         "max": 10,
         "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "borderSides",
+        "label": "Border sides",
+        "category": "Appearance",
+        "editor": "select",
+        "min": null,
+        "max": null,
+        "options": [
+          "all",
+          "none",
+          "top",
+          "bottom",
+          "left",
+          "right",
+          "top,bottom",
+          "left,right",
+          "top,left,right",
+          "bottom,left,right"
+        ],
         "kind": null,
         "readOnly": false,
         "childOnly": true
@@ -38771,6 +40382,16 @@
     ],
     "methods": [
       {
+        "name": "GetRenderState",
+        "parameters": []
+      },
+      {
+        "name": "HandleRuntimeEvent",
+        "parameters": [
+          "runtimeEvent"
+        ]
+      },
+      {
         "name": "Add",
         "parameters": [
           "child"
@@ -38924,6 +40545,29 @@
         "min": 0,
         "max": 10,
         "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "borderSides",
+        "label": "Border sides",
+        "category": "Appearance",
+        "editor": "select",
+        "min": null,
+        "max": null,
+        "options": [
+          "all",
+          "none",
+          "top",
+          "bottom",
+          "left",
+          "right",
+          "top,bottom",
+          "left,right",
+          "top,left,right",
+          "bottom,left,right"
+        ],
         "kind": null,
         "readOnly": false,
         "childOnly": true
@@ -39553,6 +41197,16 @@
         ]
       },
       {
+        "name": "GetRenderState",
+        "parameters": []
+      },
+      {
+        "name": "HandleRuntimeEvent",
+        "parameters": [
+          "runtimeEvent"
+        ]
+      },
+      {
         "name": "Add",
         "parameters": [
           "child"
@@ -39706,6 +41360,29 @@
         "min": 0,
         "max": 10,
         "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "borderSides",
+        "label": "Border sides",
+        "category": "Appearance",
+        "editor": "select",
+        "min": null,
+        "max": null,
+        "options": [
+          "all",
+          "none",
+          "top",
+          "bottom",
+          "left",
+          "right",
+          "top,bottom",
+          "left,right",
+          "top,left,right",
+          "bottom,left,right"
+        ],
         "kind": null,
         "readOnly": false,
         "childOnly": true
@@ -40297,6 +41974,16 @@
     ],
     "methods": [
       {
+        "name": "GetRenderState",
+        "parameters": []
+      },
+      {
+        "name": "HandleRuntimeEvent",
+        "parameters": [
+          "runtimeEvent"
+        ]
+      },
+      {
         "name": "Add",
         "parameters": [
           "child"
@@ -40450,6 +42137,29 @@
         "min": 0,
         "max": 10,
         "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "borderSides",
+        "label": "Border sides",
+        "category": "Appearance",
+        "editor": "select",
+        "min": null,
+        "max": null,
+        "options": [
+          "all",
+          "none",
+          "top",
+          "bottom",
+          "left",
+          "right",
+          "top,bottom",
+          "left,right",
+          "top,left,right",
+          "bottom,left,right"
+        ],
         "kind": null,
         "readOnly": false,
         "childOnly": true
@@ -41084,6 +42794,16 @@
     ],
     "methods": [
       {
+        "name": "GetRenderState",
+        "parameters": []
+      },
+      {
+        "name": "HandleRuntimeEvent",
+        "parameters": [
+          "runtimeEvent"
+        ]
+      },
+      {
         "name": "Add",
         "parameters": [
           "child"
@@ -41237,6 +42957,29 @@
         "min": 0,
         "max": 10,
         "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "borderSides",
+        "label": "Border sides",
+        "category": "Appearance",
+        "editor": "select",
+        "min": null,
+        "max": null,
+        "options": [
+          "all",
+          "none",
+          "top",
+          "bottom",
+          "left",
+          "right",
+          "top,bottom",
+          "left,right",
+          "top,left,right",
+          "bottom,left,right"
+        ],
         "kind": null,
         "readOnly": false,
         "childOnly": true
@@ -41876,6 +43619,16 @@
     ],
     "methods": [
       {
+        "name": "GetRenderState",
+        "parameters": []
+      },
+      {
+        "name": "HandleRuntimeEvent",
+        "parameters": [
+          "runtimeEvent"
+        ]
+      },
+      {
         "name": "Add",
         "parameters": [
           "child"
@@ -42029,6 +43782,29 @@
         "min": 0,
         "max": 10,
         "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "borderSides",
+        "label": "Border sides",
+        "category": "Appearance",
+        "editor": "select",
+        "min": null,
+        "max": null,
+        "options": [
+          "all",
+          "none",
+          "top",
+          "bottom",
+          "left",
+          "right",
+          "top,bottom",
+          "left,right",
+          "top,left,right",
+          "bottom,left,right"
+        ],
         "kind": null,
         "readOnly": false,
         "childOnly": true
@@ -42700,6 +44476,16 @@
     ],
     "methods": [
       {
+        "name": "GetRenderState",
+        "parameters": []
+      },
+      {
+        "name": "HandleRuntimeEvent",
+        "parameters": [
+          "runtimeEvent"
+        ]
+      },
+      {
         "name": "Add",
         "parameters": [
           "child"
@@ -42853,6 +44639,29 @@
         "min": 0,
         "max": 10,
         "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "borderSides",
+        "label": "Border sides",
+        "category": "Appearance",
+        "editor": "select",
+        "min": null,
+        "max": null,
+        "options": [
+          "all",
+          "none",
+          "top",
+          "bottom",
+          "left",
+          "right",
+          "top,bottom",
+          "left,right",
+          "top,left,right",
+          "bottom,left,right"
+        ],
         "kind": null,
         "readOnly": false,
         "childOnly": true
@@ -43509,6 +45318,16 @@
     ],
     "methods": [
       {
+        "name": "GetRenderState",
+        "parameters": []
+      },
+      {
+        "name": "HandleRuntimeEvent",
+        "parameters": [
+          "runtimeEvent"
+        ]
+      },
+      {
         "name": "Add",
         "parameters": [
           "child"
@@ -43662,6 +45481,29 @@
         "min": 0,
         "max": 10,
         "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "borderSides",
+        "label": "Border sides",
+        "category": "Appearance",
+        "editor": "select",
+        "min": null,
+        "max": null,
+        "options": [
+          "all",
+          "none",
+          "top",
+          "bottom",
+          "left",
+          "right",
+          "top,bottom",
+          "left,right",
+          "top,left,right",
+          "bottom,left,right"
+        ],
         "kind": null,
         "readOnly": false,
         "childOnly": true
@@ -44339,6 +46181,16 @@
     ],
     "methods": [
       {
+        "name": "GetRenderState",
+        "parameters": []
+      },
+      {
+        "name": "HandleRuntimeEvent",
+        "parameters": [
+          "runtimeEvent"
+        ]
+      },
+      {
         "name": "Add",
         "parameters": [
           "child"
@@ -44492,6 +46344,29 @@
         "min": 0,
         "max": 10,
         "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "borderSides",
+        "label": "Border sides",
+        "category": "Appearance",
+        "editor": "select",
+        "min": null,
+        "max": null,
+        "options": [
+          "all",
+          "none",
+          "top",
+          "bottom",
+          "left",
+          "right",
+          "top,bottom",
+          "left,right",
+          "top,left,right",
+          "bottom,left,right"
+        ],
         "kind": null,
         "readOnly": false,
         "childOnly": true
@@ -45119,6 +46994,16 @@
         ]
       },
       {
+        "name": "GetRenderState",
+        "parameters": []
+      },
+      {
+        "name": "HandleRuntimeEvent",
+        "parameters": [
+          "runtimeEvent"
+        ]
+      },
+      {
         "name": "Add",
         "parameters": [
           "child"
@@ -45272,6 +47157,29 @@
         "min": 0,
         "max": 10,
         "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "borderSides",
+        "label": "Border sides",
+        "category": "Appearance",
+        "editor": "select",
+        "min": null,
+        "max": null,
+        "options": [
+          "all",
+          "none",
+          "top",
+          "bottom",
+          "left",
+          "right",
+          "top,bottom",
+          "left,right",
+          "top,left,right",
+          "bottom,left,right"
+        ],
         "kind": null,
         "readOnly": false,
         "childOnly": true
@@ -45905,6 +47813,16 @@
     ],
     "methods": [
       {
+        "name": "GetRenderState",
+        "parameters": []
+      },
+      {
+        "name": "HandleRuntimeEvent",
+        "parameters": [
+          "runtimeEvent"
+        ]
+      },
+      {
         "name": "Add",
         "parameters": [
           "child"
@@ -46058,6 +47976,29 @@
         "min": 0,
         "max": 10,
         "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "borderSides",
+        "label": "Border sides",
+        "category": "Appearance",
+        "editor": "select",
+        "min": null,
+        "max": null,
+        "options": [
+          "all",
+          "none",
+          "top",
+          "bottom",
+          "left",
+          "right",
+          "top,bottom",
+          "left,right",
+          "top,left,right",
+          "bottom,left,right"
+        ],
         "kind": null,
         "readOnly": false,
         "childOnly": true
@@ -46788,6 +48729,16 @@
         ]
       },
       {
+        "name": "GetRenderState",
+        "parameters": []
+      },
+      {
+        "name": "HandleRuntimeEvent",
+        "parameters": [
+          "runtimeEvent"
+        ]
+      },
+      {
         "name": "Add",
         "parameters": [
           "child"
@@ -46941,6 +48892,29 @@
         "min": 0,
         "max": 10,
         "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "borderSides",
+        "label": "Border sides",
+        "category": "Appearance",
+        "editor": "select",
+        "min": null,
+        "max": null,
+        "options": [
+          "all",
+          "none",
+          "top",
+          "bottom",
+          "left",
+          "right",
+          "top,bottom",
+          "left,right",
+          "top,left,right",
+          "bottom,left,right"
+        ],
         "kind": null,
         "readOnly": false,
         "childOnly": true
@@ -47575,6 +49549,16 @@
     ],
     "methods": [
       {
+        "name": "GetRenderState",
+        "parameters": []
+      },
+      {
+        "name": "HandleRuntimeEvent",
+        "parameters": [
+          "runtimeEvent"
+        ]
+      },
+      {
         "name": "Add",
         "parameters": [
           "child"
@@ -47728,6 +49712,29 @@
         "min": 0,
         "max": 10,
         "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "borderSides",
+        "label": "Border sides",
+        "category": "Appearance",
+        "editor": "select",
+        "min": null,
+        "max": null,
+        "options": [
+          "all",
+          "none",
+          "top",
+          "bottom",
+          "left",
+          "right",
+          "top,bottom",
+          "left,right",
+          "top,left,right",
+          "bottom,left,right"
+        ],
         "kind": null,
         "readOnly": false,
         "childOnly": true
@@ -48366,6 +50373,16 @@
     ],
     "methods": [
       {
+        "name": "GetRenderState",
+        "parameters": []
+      },
+      {
+        "name": "HandleRuntimeEvent",
+        "parameters": [
+          "runtimeEvent"
+        ]
+      },
+      {
         "name": "Add",
         "parameters": [
           "child"
@@ -48519,6 +50536,29 @@
         "min": 0,
         "max": 10,
         "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "borderSides",
+        "label": "Border sides",
+        "category": "Appearance",
+        "editor": "select",
+        "min": null,
+        "max": null,
+        "options": [
+          "all",
+          "none",
+          "top",
+          "bottom",
+          "left",
+          "right",
+          "top,bottom",
+          "left,right",
+          "top,left,right",
+          "bottom,left,right"
+        ],
         "kind": null,
         "readOnly": false,
         "childOnly": true
@@ -49153,6 +51193,16 @@
     ],
     "methods": [
       {
+        "name": "GetRenderState",
+        "parameters": []
+      },
+      {
+        "name": "HandleRuntimeEvent",
+        "parameters": [
+          "runtimeEvent"
+        ]
+      },
+      {
         "name": "Add",
         "parameters": [
           "child"
@@ -49346,6 +51396,29 @@
         "min": 0,
         "max": 10,
         "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "borderSides",
+        "label": "Border sides",
+        "category": "Appearance",
+        "editor": "select",
+        "min": null,
+        "max": null,
+        "options": [
+          "all",
+          "none",
+          "top",
+          "bottom",
+          "left",
+          "right",
+          "top,bottom",
+          "left,right",
+          "top,left,right",
+          "bottom,left,right"
+        ],
         "kind": null,
         "readOnly": false,
         "childOnly": true
@@ -49936,6 +52009,16 @@
     ],
     "methods": [
       {
+        "name": "GetRenderState",
+        "parameters": []
+      },
+      {
+        "name": "HandleRuntimeEvent",
+        "parameters": [
+          "runtimeEvent"
+        ]
+      },
+      {
         "name": "Add",
         "parameters": [
           "child"
@@ -50089,6 +52172,29 @@
         "min": 0,
         "max": 10,
         "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "borderSides",
+        "label": "Border sides",
+        "category": "Appearance",
+        "editor": "select",
+        "min": null,
+        "max": null,
+        "options": [
+          "all",
+          "none",
+          "top",
+          "bottom",
+          "left",
+          "right",
+          "top,bottom",
+          "left,right",
+          "top,left,right",
+          "bottom,left,right"
+        ],
         "kind": null,
         "readOnly": false,
         "childOnly": true
@@ -50728,6 +52834,16 @@
     ],
     "methods": [
       {
+        "name": "GetRenderState",
+        "parameters": []
+      },
+      {
+        "name": "HandleRuntimeEvent",
+        "parameters": [
+          "runtimeEvent"
+        ]
+      },
+      {
         "name": "Add",
         "parameters": [
           "child"
@@ -50905,6 +53021,29 @@
         "min": 0,
         "max": 10,
         "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "borderSides",
+        "label": "Border sides",
+        "category": "Appearance",
+        "editor": "select",
+        "min": null,
+        "max": null,
+        "options": [
+          "all",
+          "none",
+          "top",
+          "bottom",
+          "left",
+          "right",
+          "top,bottom",
+          "left,right",
+          "top,left,right",
+          "bottom,left,right"
+        ],
         "kind": null,
         "readOnly": false,
         "childOnly": true
@@ -51489,6 +53628,16 @@
     ],
     "methods": [
       {
+        "name": "GetRenderState",
+        "parameters": []
+      },
+      {
+        "name": "HandleRuntimeEvent",
+        "parameters": [
+          "runtimeEvent"
+        ]
+      },
+      {
         "name": "Add",
         "parameters": [
           "child"
@@ -51642,6 +53791,29 @@
         "min": 0,
         "max": 10,
         "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "borderSides",
+        "label": "Border sides",
+        "category": "Appearance",
+        "editor": "select",
+        "min": null,
+        "max": null,
+        "options": [
+          "all",
+          "none",
+          "top",
+          "bottom",
+          "left",
+          "right",
+          "top,bottom",
+          "left,right",
+          "top,left,right",
+          "bottom,left,right"
+        ],
         "kind": null,
         "readOnly": false,
         "childOnly": true
@@ -52272,6 +54444,16 @@
         ]
       },
       {
+        "name": "GetRenderState",
+        "parameters": []
+      },
+      {
+        "name": "HandleRuntimeEvent",
+        "parameters": [
+          "runtimeEvent"
+        ]
+      },
+      {
         "name": "Add",
         "parameters": [
           "child"
@@ -52425,6 +54607,29 @@
         "min": 0,
         "max": 10,
         "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "borderSides",
+        "label": "Border sides",
+        "category": "Appearance",
+        "editor": "select",
+        "min": null,
+        "max": null,
+        "options": [
+          "all",
+          "none",
+          "top",
+          "bottom",
+          "left",
+          "right",
+          "top,bottom",
+          "left,right",
+          "top,left,right",
+          "bottom,left,right"
+        ],
         "kind": null,
         "readOnly": false,
         "childOnly": true
@@ -53063,6 +55268,16 @@
     ],
     "methods": [
       {
+        "name": "GetRenderState",
+        "parameters": []
+      },
+      {
+        "name": "HandleRuntimeEvent",
+        "parameters": [
+          "runtimeEvent"
+        ]
+      },
+      {
         "name": "Add",
         "parameters": [
           "child"
@@ -53216,6 +55431,29 @@
         "min": 0,
         "max": 10,
         "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "borderSides",
+        "label": "Border sides",
+        "category": "Appearance",
+        "editor": "select",
+        "min": null,
+        "max": null,
+        "options": [
+          "all",
+          "none",
+          "top",
+          "bottom",
+          "left",
+          "right",
+          "top,bottom",
+          "left,right",
+          "top,left,right",
+          "bottom,left,right"
+        ],
         "kind": null,
         "readOnly": false,
         "childOnly": true
@@ -53854,6 +56092,16 @@
     ],
     "methods": [
       {
+        "name": "GetRenderState",
+        "parameters": []
+      },
+      {
+        "name": "HandleRuntimeEvent",
+        "parameters": [
+          "runtimeEvent"
+        ]
+      },
+      {
         "name": "Add",
         "parameters": [
           "child"
@@ -54007,6 +56255,29 @@
         "min": 0,
         "max": 10,
         "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "borderSides",
+        "label": "Border sides",
+        "category": "Appearance",
+        "editor": "select",
+        "min": null,
+        "max": null,
+        "options": [
+          "all",
+          "none",
+          "top",
+          "bottom",
+          "left",
+          "right",
+          "top,bottom",
+          "left,right",
+          "top,left,right",
+          "bottom,left,right"
+        ],
         "kind": null,
         "readOnly": false,
         "childOnly": true
@@ -54597,6 +56868,16 @@
     ],
     "methods": [
       {
+        "name": "GetRenderState",
+        "parameters": []
+      },
+      {
+        "name": "HandleRuntimeEvent",
+        "parameters": [
+          "runtimeEvent"
+        ]
+      },
+      {
         "name": "Add",
         "parameters": [
           "child"
@@ -54750,6 +57031,29 @@
         "min": 0,
         "max": 10,
         "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "borderSides",
+        "label": "Border sides",
+        "category": "Appearance",
+        "editor": "select",
+        "min": null,
+        "max": null,
+        "options": [
+          "all",
+          "none",
+          "top",
+          "bottom",
+          "left",
+          "right",
+          "top,bottom",
+          "left,right",
+          "top,left,right",
+          "bottom,left,right"
+        ],
         "kind": null,
         "readOnly": false,
         "childOnly": true
@@ -55400,6 +57704,16 @@
     ],
     "methods": [
       {
+        "name": "GetRenderState",
+        "parameters": []
+      },
+      {
+        "name": "HandleRuntimeEvent",
+        "parameters": [
+          "runtimeEvent"
+        ]
+      },
+      {
         "name": "Add",
         "parameters": [
           "child"
@@ -55553,6 +57867,29 @@
         "min": 0,
         "max": 10,
         "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "borderSides",
+        "label": "Border sides",
+        "category": "Appearance",
+        "editor": "select",
+        "min": null,
+        "max": null,
+        "options": [
+          "all",
+          "none",
+          "top",
+          "bottom",
+          "left",
+          "right",
+          "top,bottom",
+          "left,right",
+          "top,left,right",
+          "bottom,left,right"
+        ],
         "kind": null,
         "readOnly": false,
         "childOnly": true
@@ -56200,6 +58537,16 @@
     ],
     "methods": [
       {
+        "name": "GetRenderState",
+        "parameters": []
+      },
+      {
+        "name": "HandleRuntimeEvent",
+        "parameters": [
+          "runtimeEvent"
+        ]
+      },
+      {
         "name": "Add",
         "parameters": [
           "child"
@@ -56353,6 +58700,29 @@
         "min": 0,
         "max": 10,
         "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "borderSides",
+        "label": "Border sides",
+        "category": "Appearance",
+        "editor": "select",
+        "min": null,
+        "max": null,
+        "options": [
+          "all",
+          "none",
+          "top",
+          "bottom",
+          "left",
+          "right",
+          "top,bottom",
+          "left,right",
+          "top,left,right",
+          "bottom,left,right"
+        ],
         "kind": null,
         "readOnly": false,
         "childOnly": true
@@ -57083,6 +59453,16 @@
         ]
       },
       {
+        "name": "GetRenderState",
+        "parameters": []
+      },
+      {
+        "name": "HandleRuntimeEvent",
+        "parameters": [
+          "runtimeEvent"
+        ]
+      },
+      {
         "name": "Add",
         "parameters": [
           "child"
@@ -57236,6 +59616,29 @@
         "min": 0,
         "max": 10,
         "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "borderSides",
+        "label": "Border sides",
+        "category": "Appearance",
+        "editor": "select",
+        "min": null,
+        "max": null,
+        "options": [
+          "all",
+          "none",
+          "top",
+          "bottom",
+          "left",
+          "right",
+          "top,bottom",
+          "left,right",
+          "top,left,right",
+          "bottom,left,right"
+        ],
         "kind": null,
         "readOnly": false,
         "childOnly": true
@@ -57966,6 +60369,16 @@
         ]
       },
       {
+        "name": "GetRenderState",
+        "parameters": []
+      },
+      {
+        "name": "HandleRuntimeEvent",
+        "parameters": [
+          "runtimeEvent"
+        ]
+      },
+      {
         "name": "Add",
         "parameters": [
           "child"
@@ -58119,6 +60532,29 @@
         "min": 0,
         "max": 10,
         "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "borderSides",
+        "label": "Border sides",
+        "category": "Appearance",
+        "editor": "select",
+        "min": null,
+        "max": null,
+        "options": [
+          "all",
+          "none",
+          "top",
+          "bottom",
+          "left",
+          "right",
+          "top,bottom",
+          "left,right",
+          "top,left,right",
+          "bottom,left,right"
+        ],
         "kind": null,
         "readOnly": false,
         "childOnly": true
@@ -58710,6 +61146,16 @@
     ],
     "methods": [
       {
+        "name": "GetRenderState",
+        "parameters": []
+      },
+      {
+        "name": "HandleRuntimeEvent",
+        "parameters": [
+          "runtimeEvent"
+        ]
+      },
+      {
         "name": "Add",
         "parameters": [
           "child"
@@ -58913,6 +61359,16 @@
       {
         "name": "Dispose",
         "parameters": []
+      },
+      {
+        "name": "GetRenderState",
+        "parameters": []
+      },
+      {
+        "name": "HandleRuntimeEvent",
+        "parameters": [
+          "runtimeEvent"
+        ]
       },
       {
         "name": "Add",
@@ -59197,6 +61653,16 @@
         "parameters": []
       },
       {
+        "name": "GetRenderState",
+        "parameters": []
+      },
+      {
+        "name": "HandleRuntimeEvent",
+        "parameters": [
+          "runtimeEvent"
+        ]
+      },
+      {
         "name": "Add",
         "parameters": [
           "child"
@@ -59350,6 +61816,29 @@
         "min": 0,
         "max": 10,
         "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "borderSides",
+        "label": "Border sides",
+        "category": "Appearance",
+        "editor": "select",
+        "min": null,
+        "max": null,
+        "options": [
+          "all",
+          "none",
+          "top",
+          "bottom",
+          "left",
+          "right",
+          "top,bottom",
+          "left,right",
+          "top,left,right",
+          "bottom,left,right"
+        ],
         "kind": null,
         "readOnly": false,
         "childOnly": true
@@ -59941,6 +62430,16 @@
     ],
     "methods": [
       {
+        "name": "GetRenderState",
+        "parameters": []
+      },
+      {
+        "name": "HandleRuntimeEvent",
+        "parameters": [
+          "runtimeEvent"
+        ]
+      },
+      {
         "name": "Add",
         "parameters": [
           "child"
@@ -60094,6 +62593,29 @@
         "min": 0,
         "max": 10,
         "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "borderSides",
+        "label": "Border sides",
+        "category": "Appearance",
+        "editor": "select",
+        "min": null,
+        "max": null,
+        "options": [
+          "all",
+          "none",
+          "top",
+          "bottom",
+          "left",
+          "right",
+          "top,bottom",
+          "left,right",
+          "top,left,right",
+          "bottom,left,right"
+        ],
         "kind": null,
         "readOnly": false,
         "childOnly": true
@@ -60685,6 +63207,16 @@
     ],
     "methods": [
       {
+        "name": "GetRenderState",
+        "parameters": []
+      },
+      {
+        "name": "HandleRuntimeEvent",
+        "parameters": [
+          "runtimeEvent"
+        ]
+      },
+      {
         "name": "Add",
         "parameters": [
           "child"
@@ -60838,6 +63370,29 @@
         "min": 0,
         "max": 10,
         "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "borderSides",
+        "label": "Border sides",
+        "category": "Appearance",
+        "editor": "select",
+        "min": null,
+        "max": null,
+        "options": [
+          "all",
+          "none",
+          "top",
+          "bottom",
+          "left",
+          "right",
+          "top,bottom",
+          "left,right",
+          "top,left,right",
+          "bottom,left,right"
+        ],
         "kind": null,
         "readOnly": false,
         "childOnly": true
@@ -61484,6 +64039,16 @@
         ]
       },
       {
+        "name": "GetRenderState",
+        "parameters": []
+      },
+      {
+        "name": "HandleRuntimeEvent",
+        "parameters": [
+          "runtimeEvent"
+        ]
+      },
+      {
         "name": "Add",
         "parameters": [
           "child"
@@ -61637,6 +64202,29 @@
         "min": 0,
         "max": 10,
         "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "borderSides",
+        "label": "Border sides",
+        "category": "Appearance",
+        "editor": "select",
+        "min": null,
+        "max": null,
+        "options": [
+          "all",
+          "none",
+          "top",
+          "bottom",
+          "left",
+          "right",
+          "top,bottom",
+          "left,right",
+          "top,left,right",
+          "bottom,left,right"
+        ],
         "kind": null,
         "readOnly": false,
         "childOnly": true
@@ -62283,6 +64871,16 @@
         ]
       },
       {
+        "name": "GetRenderState",
+        "parameters": []
+      },
+      {
+        "name": "HandleRuntimeEvent",
+        "parameters": [
+          "runtimeEvent"
+        ]
+      },
+      {
         "name": "Add",
         "parameters": [
           "child"
@@ -62528,6 +65126,16 @@
     ],
     "methods": [
       {
+        "name": "GetRenderState",
+        "parameters": []
+      },
+      {
+        "name": "HandleRuntimeEvent",
+        "parameters": [
+          "runtimeEvent"
+        ]
+      },
+      {
         "name": "Add",
         "parameters": [
           "child"
@@ -62681,6 +65289,29 @@
         "min": 0,
         "max": 10,
         "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "borderSides",
+        "label": "Border sides",
+        "category": "Appearance",
+        "editor": "select",
+        "min": null,
+        "max": null,
+        "options": [
+          "all",
+          "none",
+          "top",
+          "bottom",
+          "left",
+          "right",
+          "top,bottom",
+          "left,right",
+          "top,left,right",
+          "bottom,left,right"
+        ],
         "kind": null,
         "readOnly": false,
         "childOnly": true
@@ -63329,6 +65960,16 @@
         ]
       },
       {
+        "name": "GetRenderState",
+        "parameters": []
+      },
+      {
+        "name": "HandleRuntimeEvent",
+        "parameters": [
+          "runtimeEvent"
+        ]
+      },
+      {
         "name": "Add",
         "parameters": [
           "child"
@@ -63482,6 +66123,29 @@
         "min": 0,
         "max": 10,
         "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "borderSides",
+        "label": "Border sides",
+        "category": "Appearance",
+        "editor": "select",
+        "min": null,
+        "max": null,
+        "options": [
+          "all",
+          "none",
+          "top",
+          "bottom",
+          "left",
+          "right",
+          "top,bottom",
+          "left,right",
+          "top,left,right",
+          "bottom,left,right"
+        ],
         "kind": null,
         "readOnly": false,
         "childOnly": true
@@ -64120,6 +66784,16 @@
     ],
     "methods": [
       {
+        "name": "GetRenderState",
+        "parameters": []
+      },
+      {
+        "name": "HandleRuntimeEvent",
+        "parameters": [
+          "runtimeEvent"
+        ]
+      },
+      {
         "name": "Add",
         "parameters": [
           "child"
@@ -64273,6 +66947,29 @@
         "min": 0,
         "max": 10,
         "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "borderSides",
+        "label": "Border sides",
+        "category": "Appearance",
+        "editor": "select",
+        "min": null,
+        "max": null,
+        "options": [
+          "all",
+          "none",
+          "top",
+          "bottom",
+          "left",
+          "right",
+          "top,bottom",
+          "left,right",
+          "top,left,right",
+          "bottom,left,right"
+        ],
         "kind": null,
         "readOnly": false,
         "childOnly": true
@@ -64910,6 +67607,16 @@
       "PropertyChanged"
     ],
     "methods": [
+      {
+        "name": "GetRenderState",
+        "parameters": []
+      },
+      {
+        "name": "HandleRuntimeEvent",
+        "parameters": [
+          "runtimeEvent"
+        ]
+      },
       {
         "name": "Add",
         "parameters": [
