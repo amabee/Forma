@@ -61,12 +61,17 @@
     restoreFocus?.focus?.();
   }
 
+  /**
+   * Renders the start screen. While `message.pending` is set (the page has just loaded and the
+   * host is still preparing), the layout is shown with its actions inactive.
+   */
   function show(message) {
     const reopening = !!page;
     if (!reopening) restoreFocus = document.activeElement;
     page?.remove();
     page = element("section", "start-page");
     page.setAttribute("role", "dialog"); page.setAttribute("aria-modal", "true"); page.setAttribute("aria-labelledby", "start-title");
+    if (message.pending) page.setAttribute("aria-busy", "true");
     const leave = run => () => { close(); run(); };
     const newProject = leave(() => command("new-project"));
     const openProject = leave(() => command("open"));
@@ -130,7 +135,8 @@
       item.append(open, remove);
       list.append(item);
     }
-    if (!list.children.length) {
+    if (message.pending) list.append(element("li", "start-loading", "Loading recent projects…"));
+    else if (!list.children.length) {
       const empty = element("li", "start-empty");
       empty.append(element("p", "", "Projects you open or save will show up here."), button("start-secondary", "Open project…", openProject, "folder-open"));
       list.append(empty);
@@ -170,7 +176,10 @@
     grid.append(recent, side);
     main.append(hero, grid);
     page.append(rail, main);
+    // Until the host is ready, only "Go to the designer" works; other clicks would be dropped.
+    if (message.pending) page.querySelectorAll("button:not(.start-resume)").forEach(control => { control.disabled = true; });
     document.body.append(page);
+    document.documentElement.classList.remove("is-launching");
     (reopening ? page.querySelector(".start-recent-item:not(:disabled), .start-primary") : page.querySelector(".start-primary"))?.focus();
   }
 
@@ -182,8 +191,11 @@
   const receive = d.receive.bind(d);
   d.receive = message => {
     if (message?.action === "start-page") { show(message); return; }
+    if (message?.action === "start-page-close") { close(); return; }
     if (message?.action === "preview") close();
     return receive(message);
   };
+  // Open on the start screen from the first frame, so the designer never flashes first.
+  if (document.documentElement.classList.contains("is-launching")) show({ pending: true });
   window.formaStartPage = { show, close, get open() { return !!page; } };
 })();

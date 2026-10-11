@@ -63,6 +63,25 @@ test('New project, Escape, the rail and the toolbox all leave the start screen s
   assert.equal(document.querySelector('.start-page'), null);
 });
 
+test('the designer opens on a pending start screen until the host sends its data', () => {
+  const { document, messages, show, window } = fixture();
+  const page = document.querySelector('.start-page');
+  assert.ok(page, 'shown from the first frame');
+  assert.equal(document.documentElement.classList.contains('is-launching'), false);
+  assert.equal(page.getAttribute('aria-busy'), 'true');
+  assert.equal(document.querySelector('.start-primary').disabled, true, 'actions wait for the host');
+  assert.equal(document.querySelector('.start-resume').disabled, false);
+  assert.match(document.querySelector('.start-loading').textContent, /Loading/);
+  show();
+  assert.equal(document.querySelectorAll('.start-page').length, 1);
+  assert.equal(document.querySelector('.start-page').hasAttribute('aria-busy'), false);
+  assert.equal(document.querySelector('.start-primary').disabled, false);
+  const count = messages.length;
+  window.forma.receive({ type: 'designer', action: 'start-page-close' });
+  assert.equal(document.querySelector('.start-page'), null, 'a restored design closes it');
+  assert.equal(messages.length, count);
+});
+
 test('an empty recent list invites opening a project', () => {
   const { window, document, messages } = fixture();
   window.forma.receive({ type: 'designer', action: 'start-page', templates: [], recent: [] });

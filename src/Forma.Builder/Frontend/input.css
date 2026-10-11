@@ -596,6 +596,13 @@
 
   /* Start screen: a full-window view built from the Builder's own tokens, so it follows the
      light/dark theme. The one bold moment is the Forma mark "selected" on a design canvas. */
+  /* Until the start screen is up, keep the designer from showing for a moment first. */
+  .is-launching body > :not(.start-page) {
+    visibility: hidden;
+  }
+  .start-loading {
+    @apply py-6 text-[13px] text-faint;
+  }
   .start-page {
     @apply fixed inset-0 z-[1100] flex bg-app text-ink;
     font-family: var(--font-chrome);
