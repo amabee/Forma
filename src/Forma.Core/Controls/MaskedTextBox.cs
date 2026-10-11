@@ -27,4 +27,12 @@ public sealed class MaskedTextBox : TextBox
         }
         return result.ToString();
     }
+
+    protected override void WriteRenderState(IDictionary<string, object?> state)
+    {
+        base.WriteRenderState(state);
+        state["mask"] = Mask;
+    }
+
+    protected override void OnUserInput(string text) => SetMaskedText(text);
 }

@@ -23,6 +23,7 @@ public static class ProjectExplorerService
         ExplorerNode Sources(Control control) => new($"sources:{control.Id}", "Source files", "folder", Children: [
             new($"css:{control.Id}", "component.css", "css", control.Id, "view-css", model.Appearance[control.Id].Locked),
             new($"script:{control.Id}", "script.js", "javascript", control.Id, "view-script", model.Appearance[control.Id].Locked),
+            new($"events:{control.Id}", "event.js", "javascript", control.Id, "view-events", model.Appearance[control.Id].Locked),
             new($"properties:{control.Id}", "custom-properties.json", "json", control.Id, "view-custom-properties", model.Appearance[control.Id].Locked)
         ]);
         ExplorerNode Component(Control control) => new(control.Id, control.Name ?? control.ControlType, control.ControlType == "form" ? "form" : "component",

@@ -72,14 +72,80 @@ const containerKinds = new Set([
   "flowlayoutpanel",
   "tablelayoutpanel",
 ]);
-const linearKinds = new Set(["flowlayoutpanel", "stackpanel", "hstack", "vstack", "wrappanel", "centerpanel", "sidebar", "appshell", "responsivepanel"]);
+const linearKinds = new Set(["flowlayoutpanel", "stackpanel", "hstack", "vstack", "wrappanel", "centerpanel", "sidebar", "appshell", "responsivepanel", "responsivegrid", "responsivestack"]);
 const managedKinds = new Set([...linearKinds, "tablelayoutpanel"]);
-for (const kind of [...linearKinds, "scrollablepanel", "accordion"]) containerKinds.add(kind);
+for (const kind of [...linearKinds, "scrollablepanel", "accordion", "breakpointcontainer", "aspectratiocontainer"]) containerKinds.add(kind);
 document.querySelectorAll("[data-kind]").forEach(tool => supportedKinds.add(tool.dataset.kind));
 const byId = (id) => document.getElementById(id);
+// status.js (when loaded) styles problems and keeps their history.
+function setStatus(text) {
+  if (byId("status")) byId("status").textContent = text ?? "";
+  window.formaStatus?.report(text ?? "");
+}
 const send = (event, id, payload = {}) =>
   window.forma.send({ type: "designer", id, event, payload });
 const gridDrafts = new Map();
+// Identity and position fields never offer "reset to default".
+const noReset = new Set(["name", "id", "x", "y", "layoutSlot", "locked"]);
+// CSS declarations in component.css that take over an inspector property.
+const CSS_FOR_PROPERTY = {
+  backColor: ["background", "background-color"], foreColor: ["color"],
+  fontSize: ["font", "font-size"], fontFamily: ["font", "font-family"], fontWeight: ["font", "font-weight"], fontStyle: ["font", "font-style"],
+  textAlign: ["text-align"], lineHeight: ["line-height"], letterSpacing: ["letter-spacing"],
+  borderColor: ["border", "border-color"], borderWidth: ["border", "border-width"], borderStyle: ["border", "border-style"], borderRadius: ["border-radius"],
+  borderSides: ["border", "border-width", "border-top", "border-right", "border-bottom", "border-left"],
+  paddingTop: ["padding", "padding-top"], paddingRight: ["padding", "padding-right"], paddingBottom: ["padding", "padding-bottom"], paddingLeft: ["padding", "padding-left"],
+  opacity: ["opacity"], cursor: ["cursor"], zIndex: ["z-index"],
+};
+/** Declarations in the plain `:host { ... }` rule, with their positions in the source text. */
+function hostDeclarations(css) {
+  // Blank out comments (keeping offsets) so commented examples are not treated as rules.
+  const text = css.replace(/\/\*[\s\S]*?\*\//g, (comment) => " ".repeat(comment.length));
+  const block = /(^|[};])\s*:host\s*\{([^}]*)\}/.exec(text);
+  if (!block) return [];
+  const bodyStart = block.index + block[0].indexOf("{") + 1, rules = [];
+  const pattern = /[ \t]*([a-z-]+)\s*:[^;]*(;|$)[ \t]*\r?\n?/g;
+  for (let match; (match = pattern.exec(block[2])); )
+    if (match[0].trim()) rules.push({ name: match[1], start: bodyStart + match.index, end: bodyStart + match.index + match[0].length });
+  return rules;
+}
+// Box-model declarations that move a control's contents relative to the designer's layout.
+const LAYOUT_CSS = new Set(["padding", "padding-top", "padding-right", "padding-bottom", "padding-left",
+  "border", "border-width", "border-top", "border-right", "border-bottom", "border-left"]);
+function borderEdge(item, side) {
+  const sides = item.borderSides ?? "all";
+  return sides === "all" || sides.split(",").includes(side) ? Number(item.borderWidth) || 0 : 0;
+}
+const COLOR_KEY = "forma.inspector.colors";
+const PRESET_COLORS = ["#ffffff", "#1f2937", "#2878ff", "#16a34a", "#dc2626", "#f59e0b", "#7c3aed", "#f3f6fb"];
+function recentColors() {
+  try { return JSON.parse(localStorage.getItem(COLOR_KEY)) ?? []; } catch { return []; }
+}
+function rememberColor(color) {
+  if (!/^#[0-9a-f]{6}$/i.test(color)) return;
+  const colors = [color.toLowerCase(), ...recentColors().filter((item) => item !== color.toLowerCase())].slice(0, 6);
+  try { localStorage.setItem(COLOR_KEY, JSON.stringify(colors)); } catch {}
+}
+/** Recent and preset colors under a color field; choosing one edits like the picker does. */
+function colorSwatches(input) {
+  const row = document.createElement("span");
+  row.className = "color-swatches";
+  const render = () => row.replaceChildren(...[...new Set([...recentColors(), ...PRESET_COLORS])].slice(0, 10).map((color) => {
+    const swatch = document.createElement("button");
+    swatch.type = "button"; swatch.style.background = color; swatch.title = color;
+    swatch.setAttribute("aria-label", `Use color ${color}`);
+    swatch.addEventListener("click", (event) => {
+      event.preventDefault();
+      if (input.disabled) return;
+      input.value = color;
+      input.dispatchEvent(new Event("change", { bubbles: true }));
+    });
+    return swatch;
+  }));
+  render();
+  input.addEventListener("change", () => { rememberColor(input.value); render(); });
+  return row;
+}
 const gridFields = new Set(["gridColumns", "gridRows"]);
 function gridValue(property, value) {
   if (property === "gridColumns")
@@ -123,9 +189,7 @@ function canSaveGridDrafts() {
   send("select", invalid.id);
   d.inspector();
   byId(`prop-${invalid.property}`)?.focus();
-  if (byId("status"))
-    byId("status").textContent =
-      "Fix the grid Rows JSON before saving. Your draft has been kept.";
+  setStatus("Fix the grid Rows JSON before saving. Your draft has been kept.");
   return false;
 }
 
@@ -153,7 +217,8 @@ function containerHost(container, x, y) {
   return host;
 }
 function flowInsertion(container, movingId, x, y) {
-  const vertical = container.dataset.orientation === "vertical";
+  const direction = containerHost(container).style.flexDirection;
+  const vertical = direction ? direction === "column" : container.dataset.orientation === "vertical";
   const siblings = Array.from(containerHost(container).children).filter(
     (child) => child.dataset.formaType && child.id !== movingId,
   );
@@ -250,13 +315,19 @@ function managedResizeBounds(item, direction, dx, dy, parentWidth, parentHeight)
 
 function controlledAxes(item) {
   const d = window.formaDesigner, parent = d?.controlById(item?.parentId);
+  const aspect = item?.kind === "aspectratiocontainer";
+  if (parent?.kind === "responsivegrid") return { width: true, height: aspect, position: true };
+  if (parent?.kind === "responsivestack") {
+    const direction = byId(parent.id)?.dataset.narrow === "true" ? parent.narrowOrientation : parent.orientation;
+    return { width: direction === "vertical", height: aspect, position: true };
+  }
   if (parent?.kind === "appshell") {
     const narrow = byId(parent.id)?.dataset.narrow === "true", main = d.state.controls.filter(c => c.parentId === parent.id)[0]?.id !== item.id;
-    return { width: narrow || main, height: main || !narrow && parent.orientation !== "vertical", position: true };
+    return { width: narrow || main, height: aspect || main || !narrow && parent.orientation !== "vertical", position: true };
   }
-  if (parent?.kind === "responsivepanel" && byId(parent.id)?.dataset.narrow === "true") return { width: true, height: false, position: true };
+  if (parent?.kind === "responsivepanel" && byId(parent.id)?.dataset.narrow === "true") return { width: true, height: aspect, position: true };
   const dock = managedKinds.has(parent?.kind) ? "none" : item?.dock ?? "none";
-  return { width: ["top", "bottom", "fill"].includes(dock), height: ["left", "right", "fill"].includes(dock), position: dock !== "none" || managedKinds.has(parent?.kind) };
+  return { width: ["top", "bottom", "fill"].includes(dock), height: aspect || ["left", "right", "fill"].includes(dock), position: dock !== "none" || managedKinds.has(parent?.kind) };
 }
 
 function resizeBounds(
@@ -409,9 +480,17 @@ window.formaDesigner = {
         height: `${(height + 36) * this.zoom}px`,
       });
     const device = byId("device-caption");
-    if (device) device.textContent = `Desktop (${width} × ${height})`;
+    if (device) device.textContent = `${window.formaCanvas?.deviceName(width, height) ?? "Desktop"} (${width} × ${height})`;
   },
   receive(message) {
+    if (message.action === "shared-changed") {
+      window.formaCustomization?.sharedChanged(message.key, message.value, message.deleted);
+      return;
+    }
+    if (message.action === "form-closed") {
+      window.formaCustomization?.formClosed(message.requestId, message.result, message.error);
+      return;
+    }
     if (message.action === "component-event") {
       window.formaCustomization?.event(message.id, message.event, message.detail);
       return;
@@ -484,11 +563,13 @@ window.formaDesigner = {
       this.root()?.setAttribute("aria-label", message.title);
       for (const name of ["canvas-title", "form-name"])
         if (byId(name)) byId(name).textContent = message.title;
-      if (byId("status")) byId("status").textContent = message.status;
+      byId("form-name")?.setAttribute("data-unsaved", String(!!message.hasUnsavedChanges));
+      setStatus(message.status);
       for (const item of message.controls) this.applyAppearance(item);
       window.formaLayout?.refresh(message);
       window.formaCustomization?.apply(message);
       this.select(message.selectedId);
+      window.formaSelection?.sync(message);
       this.inspector();
     }
   },
@@ -509,6 +590,8 @@ window.formaDesigner = {
       .forEach((el) => el.classList.remove("forma-selected"));
     byId(id)?.classList.add("forma-selected");
     this.outline();
+    window.formaSelection?.primaryChanged(id);
+    window.formaCanvas?.renderPath(id);
   },
   controlById(id) {
     const controls = this.state?.controls;
@@ -600,7 +683,8 @@ window.formaDesigner = {
       Object.assign(el.style, {
         borderStyle: item.borderStyle,
         borderColor: item.borderColor,
-        borderWidth: `${item.borderWidth}px`,
+        // Per-edge widths so "Border sides" can draw, say, only a bottom divider line.
+        borderWidth: ["top", "right", "bottom", "left"].map((side) => `${borderEdge(item, side)}px`).join(" "),
         borderRadius: `${item.borderRadius}px`,
         padding: `${item.padding}px`,
         opacity: String(
@@ -677,10 +761,12 @@ window.formaDesigner = {
       }
       el.classList.toggle("design-muted", !item.enabled || !item.visible);
       const parent = this.controlById(item.parentId);
+      if (parent?.kind === "breakpointcontainer") el.dataset.modelHidden = String(this.preview && !item.visible);
       el.hidden =
         (this.preview && (!item.visible || item.kind === "chip" && item.isRemoved)) ||
         (["tabcontrol", "accordion"].includes(parent?.kind) &&
-          (item.layoutSlot !== parent.selectedTab + 1 || parent.kind === "accordion" && parent.expanded === false));
+          (item.layoutSlot !== parent.selectedTab + 1 || parent.kind === "accordion" && parent.expanded === false)) ||
+        (parent?.kind === "breakpointcontainer" && item.layoutSlot !== (byId(parent.id)?.dataset.narrow === "true" ? 2 : 1));
       if (["treeview", "pagination"].includes(item.kind))
         el.querySelectorAll("button").forEach((button) => {
           button.disabled =
@@ -847,17 +933,20 @@ window.formaDesigner = {
         input.value = "Embedded image";
         input.disabled = true;
       }
-      if (
-        ["x", "y"].includes(property) &&
-        controlledAxes(selected).position
-      )
-        input.disabled = true;
+      // Explain layout-controlled fields next to the field, not only in a hover tooltip.
+      let reason = "";
       const controlled = controlledAxes(selected);
-      if (property === "width" && controlled.width || property === "height" && controlled.height) {
-        input.disabled = true; input.title = "This dimension is controlled by the parent layout or Dock.";
-      }
-      if (["dock", "anchor"].includes(property) && managedKinds.has(this.controlById(selected.parentId)?.kind)) {
-        input.disabled = true; input.title = "This parent arranges its children. Use a Panel for free positioning, Dock and Anchor.";
+      if (["x", "y"].includes(property) && controlled.position)
+        reason = "Position is set by the parent layout or Dock.";
+      if (property === "width" && controlled.width || property === "height" && controlled.height)
+        reason = "This dimension is controlled by the parent layout or Dock.";
+      if (["dock", "anchor"].includes(property) && managedKinds.has(this.controlById(selected.parentId)?.kind))
+        reason = "This parent arranges its children. Use a Panel for free positioning, Dock and Anchor.";
+      if (reason) { input.disabled = true; input.title = reason; }
+      const row = input.closest("label");
+      if (row) {
+        if (reason && !this.preview) row.dataset.lockedReason = reason;
+        else delete row.dataset.lockedReason;
       }
       if (["x", "width"].includes(property))
         input.max =
@@ -865,13 +954,147 @@ window.formaDesigner = {
       if (["y", "height"].includes(property))
         input.max =
           selected.id === this.rootId ? 1200 : this.root().clientHeight;
+      this.showSharedValue(input, property, selected);
+      this.showDefault(input, property, selected);
+      this.showCssOverride(input, property, selected);
     }
+    this.showUnmappedOverrides(selected, schema);
+    // Hide categories whose every property is hidden for this multi-selection.
+    byId("property-editors")?.querySelectorAll(".property-group").forEach((group) => {
+      const rows = [...group.querySelectorAll("label")];
+      group.classList.toggle("multi-empty", rows.length > 0 && rows.every((row) => row.classList.contains("multi-hidden")));
+    });
     if (byId("selection-status"))
       byId("selection-status").textContent =
-        selected.id === this.rootId
-          ? "Form selected"
-          : `Selected ${selected.name}`;
+        (window.formaSelection?.ids.length ?? 0) > 1
+          ? `${window.formaSelection.ids.length} controls selected`
+          : selected.id === this.rootId
+            ? "Form selected"
+            : `Selected ${selected.name}`;
     this.coordinates(selected.x, selected.y);
+  },
+  /**
+   * With several controls selected, only properties they all have stay visible, and a
+   * field whose values differ shows "Mixed" until the user sets one value for all.
+   */
+  showSharedValue(input, property, selected) {
+    const ids = window.formaSelection?.ids ?? [];
+    const others = ids.length > 1 ? ids.map((id) => this.controlById(id)).filter(Boolean) : [];
+    const row = input.closest("label");
+    const shared = new Set(this.state?.sharedProperties ?? []);
+    row?.classList.toggle("multi-hidden", others.length > 1 && !shared.has(property));
+    const mixed = others.length > 1 && shared.has(property)
+      && others.some((item) => JSON.stringify(item[property]) !== JSON.stringify(selected[property]));
+    if (input.type === "checkbox") input.indeterminate = mixed;
+    else if (mixed && document.activeElement !== input) {
+      input.dataset.placeholder ??= input.placeholder;
+      input.value = "";
+      input.placeholder = "Mixed";
+    } else if (!mixed && input.dataset.placeholder !== undefined) {
+      input.placeholder = input.dataset.placeholder;
+      delete input.dataset.placeholder;
+    }
+    if (mixed) input.dataset.mixed = "true";
+    else delete input.dataset.mixed;
+  },
+  /**
+   * component.css rules beat the Properties panel. When one overrides this field, say so and
+   * offer to remove it, so editing the field visibly works again.
+   */
+  showCssOverride(input, property, selected) {
+    const row = input.closest("label");
+    if (!row) return;
+    const single = (window.formaSelection?.ids.length ?? 1) <= 1;
+    const css = selected.customization?.css ?? selected.customization?.Css ?? "";
+    const found = single && CSS_FOR_PROPERTY[property] ? hostDeclarations(css).filter((rule) => CSS_FOR_PROPERTY[property].includes(rule.name)) : [];
+    let note = row.querySelector(".property-override");
+    if (!found.length) { if (note) note.hidden = true; return; }
+    if (!note) {
+      note = document.createElement("span");
+      note.className = "property-override";
+      const text = document.createElement("span");
+      const fix = document.createElement("button");
+      fix.type = "button"; fix.textContent = "Use panel value";
+      fix.addEventListener("click", (event) => {
+        event.preventDefault();
+        const item = this.controlById(this.selectedId), source = item?.customization;
+        if (!source || item.locked) return;
+        const current = source.css ?? source.Css ?? "";
+        const names = CSS_FOR_PROPERTY[note.dataset.property] ?? [];
+        // Remove from the end so earlier positions stay valid.
+        let next = current;
+        for (const rule of hostDeclarations(current).filter((rule) => names.includes(rule.name)).reverse())
+          next = next.slice(0, rule.start) + next.slice(rule.end);
+        send("customize", item.id, {
+          css: next,
+          behavior: source.behavior ?? source.Behavior ?? "",
+          events: source.events ?? source.Events ?? "",
+          characteristics: source.characteristics ?? source.Characteristics ?? "{}",
+        });
+      });
+      note.append(text, fix);
+      row.appendChild(note);
+    }
+    note.hidden = false;
+    note.dataset.property = property;
+    note.firstChild.textContent = `Overridden by component.css (${found.map((rule) => rule.name).join(", ")})`;
+    note.lastChild.disabled = !!selected.locked || this.preview;
+  },
+  /**
+   * component.css rules for things that have no field here (for example a form's padding or
+   * border) still change layout, such as shifting docked children. List them with a fix.
+   */
+  showUnmappedOverrides(selected, schema) {
+    const notice = byId("css-override-summary");
+    if (!notice) return;
+    const single = (window.formaSelection?.ids.length ?? 1) <= 1;
+    const css = selected.customization?.css ?? selected.customization?.Css ?? "";
+    const covered = new Set(schema.flatMap((descriptor) => CSS_FOR_PROPERTY[descriptor.id] ?? []));
+    const found = single ? hostDeclarations(css).filter((rule) => LAYOUT_CSS.has(rule.name) && !covered.has(rule.name)) : [];
+    notice.hidden = !found.length;
+    if (!found.length) return;
+    const names = [...new Set(found.map((rule) => rule.name))];
+    notice.querySelector("span").textContent = `component.css sets ${names.join(", ")} on this ${selected.kind}, which shifts its contents (docked controls included).`;
+    const button = notice.querySelector("button");
+    button.disabled = !!selected.locked || this.preview;
+    button.onclick = () => {
+      const source = selected.customization;
+      let next = source.css ?? source.Css ?? "";
+      for (const rule of hostDeclarations(next).filter((rule) => names.includes(rule.name)).reverse())
+        next = next.slice(0, rule.start) + next.slice(rule.end);
+      send("customize", selected.id, {
+        css: next,
+        behavior: source.behavior ?? source.Behavior ?? "",
+        events: source.events ?? source.Events ?? "",
+        characteristics: source.characteristics ?? source.Characteristics ?? "{}",
+      });
+    };
+  },
+  /** Marks a field that differs from a new control's default and offers a one-click reset. */
+  showDefault(input, property, selected) {
+    const row = input.closest("label");
+    if (!row) return;
+    const defaults = this.state?.defaults;
+    const single = (window.formaSelection?.ids.length ?? 1) <= 1;
+    const modified = !!defaults && single && !noReset.has(property) && property in defaults && !input.disabled
+      && JSON.stringify(selected[property]) !== JSON.stringify(defaults[property]);
+    row.classList.toggle("property-modified", modified);
+    let reset = row.querySelector(".property-reset");
+    if (!modified) { if (reset) reset.hidden = true; return; }
+    if (!reset) {
+      reset = document.createElement("button");
+      reset.type = "button"; reset.className = "property-reset"; reset.textContent = "↺";
+      reset.addEventListener("click", (event) => {
+        event.preventDefault();
+        const value = this.state?.defaults?.[reset.dataset.property];
+        if (value !== undefined) send("property", this.selectedId, { property: reset.dataset.property, value });
+      });
+      row.appendChild(reset);
+    }
+    reset.hidden = false;
+    reset.dataset.property = property;
+    reset.title = `Reset to default (${typeof defaults[property] === "string" && defaults[property].length > 30 ? "default" : JSON.stringify(defaults[property])})`;
+    reset.setAttribute("aria-label", `Reset ${property} to default`);
   },
   buildEditors(schema) {
     const container = byId("property-editors");
@@ -965,6 +1188,7 @@ window.formaDesigner = {
         wrapper.appendChild(track);
         label.appendChild(wrapper);
       } else label.appendChild(input);
+      if (property.editor === "color") label.appendChild(colorSwatches(input));
       group.appendChild(label);
     }
     const selected = this.state?.controls.find((c) => c.id === this.selectedId);
@@ -1401,8 +1625,10 @@ document.addEventListener("pointermove", (event) => {
       siblings,
       6 / d.zoom,
     );
-    drag.left = snapped.x;
-    drag.top = snapped.y;
+    // With View > Show grid on, axes no alignment guide claimed snap to the grid.
+    const gridded = window.formaView?.snap(snapped.x, snapped.y, snapped.guides) ?? snapped;
+    drag.left = gridded.x;
+    drag.top = gridded.y;
     d.showGuides(snapped.guides, parent);
   } else d.clearGuides();
   if (drag.managed) {
@@ -1469,6 +1695,11 @@ document.addEventListener(
   (event) => {
     const d = window.formaDesigner,
       root = d.root();
+    // Keyboard activation (Enter/Space) fires click with detail 0; mouse users double-click or drag.
+    if (event.detail === 0 && event.target.closest?.(".tool-group [data-kind]")) {
+      addTool(event);
+      return;
+    }
     if (event.target.closest("[data-handle]")) {
       event.preventDefault();
       event.stopImmediatePropagation();
@@ -1515,9 +1746,11 @@ document.addEventListener(
         { command: command.dataset.command },
       );
     const toggle = event.target.closest("[data-toggle]");
-    if (toggle) {
+    // The left sidebar's panels (toolbox, explorer) are toggled by solution-explorer.js.
+    if (toggle && !toggle.dataset.toggle.match(/^(toolbox|solution-explorer)$/)) {
       const panel = byId(toggle.dataset.toggle);
       panel.hidden = !panel.hidden;
+      toggle.setAttribute("aria-expanded", String(!panel.hidden));
     }
     if (event.target.closest("[data-preview]")) {
       d.cancelDrag();
@@ -1531,12 +1764,13 @@ document.addEventListener(
   },
   true,
 );
-document.addEventListener("dblclick", (event) => {
+function addTool(event) {
   const d = window.formaDesigner,
     tool = event.target.closest("[data-kind]");
   if (tool && !d.preview)
     send("drop", d.rootId, { control: tool.dataset.kind, x: 32, y: 32 });
-});
+}
+document.addEventListener("dblclick", addTool);
 document.addEventListener("change", (event) => {
   const d = window.formaDesigner,
     input = event.target;
@@ -1547,13 +1781,16 @@ document.addEventListener("change", (event) => {
   } else if (input.id === "selection") send("select", input.value);
   else if (input.dataset.property && !d.preview) {
     if (gridFields.has(input.dataset.property)) return; // Valid grid drafts commit on input, before selection or Save.
+    // A "Mixed" field left empty means "keep each control's own value".
+    if (input.dataset.mixed === "true" && input.type !== "checkbox" && input.value === "") return;
     const value =
       input.type === "checkbox"
         ? input.checked
         : input.type === "number"
           ? Number(input.value)
           : input.value;
-    send("property", d.selectedId, { property: input.dataset.property, value });
+    const ids = window.formaSelection?.ids ?? [];
+    send("property", d.selectedId, { property: input.dataset.property, value, ...(ids.length > 1 ? { ids } : {}) });
   }
 });
 document.addEventListener("input", (event) => {
@@ -1578,23 +1815,18 @@ document.addEventListener("input", (event) => {
     if (!error) send("property", id, { property, value: input.value });
     return;
   }
-  if (event.target.id === "prop-text" && !d.preview) {
-    send("property", d.selectedId, {
-      property: "text",
-      value: event.target.value,
-    });
-    return;
-  }
-  if (event.target.id !== "search") return;
-  const query = event.target.value.trim().toLowerCase();
-  document.querySelectorAll(".tool-group button").forEach((tool) => {
-    tool.hidden = !tool.textContent.toLowerCase().includes(query);
-  });
+  // Toolbox search lives in toolbox.js.
 });
 document.addEventListener("keydown", (event) => {
   const d = window.formaDesigner;
   if (d.standalone) return;
   if (event.key === "Escape") {
+    const menu = document.querySelector(".menubar details[open]");
+    if (menu) {
+      menu.open = false;
+      menu.querySelector("summary").focus();
+      return;
+    }
     d.cancelDrag();
     if (d.preview) {
       d.preview = false;
@@ -1635,6 +1867,8 @@ document.addEventListener("keydown", (event) => {
     send("command", d.rootId, { command: event.shiftKey ? "new-project" : "new" });
   }
   if (d.preview) return;
+  // Delete and arrow nudges act on the canvas selection; don't hijack them from side panels or menus.
+  if (event.target.closest("aside, nav, [role=menu], [role=tablist], [role=tree]")) return;
   if (event.key === "Delete") {
     event.preventDefault();
     send("command", d.rootId, { command: "delete" });

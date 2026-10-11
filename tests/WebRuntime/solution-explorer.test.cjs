@@ -116,3 +116,15 @@ test('context menu stays inside the sidebar while the native editor covers the c
   row('project:form1').dispatchEvent(new window.MouseEvent('contextmenu', { bubbles: true, cancelable: true, clientX: 240, clientY: 30 }));
   assert.ok(Number.parseFloat(menu.style.left) + menu.offsetWidth <= 264);
 });
+
+test('component rows have a lock toggle that sends toggle-lock without opening the item', t => {
+  const { doc, messages, row } = fixture(t);
+  const toggle = row('button1').querySelector('.explorer-lock-toggle');
+  assert.ok(toggle);
+  assert.equal(toggle.getAttribute('aria-pressed'), 'false');
+  assert.equal(row('css:button1')?.querySelector('.explorer-lock-toggle') ?? null, null, 'source files have no lock toggle');
+  const before = messages.length;
+  toggle.click();
+  assert.equal(messages.length, before + 1);
+  assert.deepEqual(JSON.parse(JSON.stringify(messages.at(-1).payload)), { action: 'toggle-lock', key: 'button1', controlId: 'button1' });
+});

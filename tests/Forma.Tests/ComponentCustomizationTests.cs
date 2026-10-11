@@ -21,11 +21,13 @@ public class ComponentCustomizationTests
         var template = ComponentEditorService.Template(button, model.Appearance[button.Id]);
         Assert.Contains(model.Appearance[button.Id].BackColor, template.Css);
         Assert.Contains("forma.on", template.Behavior);
+        template.Events = "export class ButtonEventHandler { static button1_Click(event) {} }";
         model.ExecuteEdit("customize", button.Id, JsonSerializer.SerializeToElement(template));
         var copy = ProjectFile.Restore(ProjectFile.Capture(model.Form!, control => JsonSerializer.SerializeToElement(model.Appearance[control.Id])));
         var restored = copy.Appearance[button.Id].Deserialize<Appearance>()!;
         Assert.Equal(template.Css, restored.Customization!.Css);
         Assert.Equal(template.Behavior, restored.Customization.Behavior);
+        Assert.Equal(template.Events, restored.Customization.Events);
         Assert.Equal(template.Characteristics, restored.Customization.Characteristics);
         var previous = ProjectFile.Restore(ProjectFile.Parse(model.Undo()!.Json));
         Assert.Null(previous.Appearance[button.Id].Deserialize<Appearance>()!.Customization);
@@ -45,14 +47,59 @@ public class ComponentCustomizationTests
         try
         {
             var source = ComponentEditorService.Template(button, model.Appearance[button.Id]);
+            source.Events = "export class ButtonEventHandler {}";
             ComponentEditorService.Write(folder, source);
             Assert.True(File.Exists(Path.Combine(folder, "script.js")));
+            Assert.True(File.Exists(Path.Combine(folder, "event.js")));
             File.WriteAllText(Path.Combine(folder, "script.js"), "api.set(component.id, 'text', 'Updated');");
             var reloaded = ComponentEditorService.Read(folder);
             Assert.Equal(source.Css, reloaded.Css);
+            Assert.Equal(source.Events, reloaded.Events);
             Assert.Contains("Updated", reloaded.Behavior);
+            File.Delete(Path.Combine(folder, "event.js"));
+            Assert.Equal("", ComponentEditorService.Read(folder).Events);
         }
         finally { Directory.Delete(folder, true); }
+    }
+
+    [Fact]
+    public void PropertyOriginsDescribeAcceptedCoalescedWritesAndAreDrainedWithState()
+    {
+        var (model, button) = Design();
+        using var preview = new PreviewSession(model);
+        preview.SetValue(button.Id, "text", JsonSerializer.SerializeToElement("First"));
+        preview.SetValue(button.Id, "text", JsonSerializer.SerializeToElement("Final"), "binding");
+        var state = JsonSerializer.SerializeToElement(preview.State());
+        var origins = state.GetProperty("propertyOrigins");
+        Assert.Equal(1, origins.GetArrayLength());
+        Assert.Equal(button.Id, origins[0].GetProperty("id").GetString());
+        Assert.Equal("text", origins[0].GetProperty("property").GetString());
+        Assert.Equal("binding", origins[0].GetProperty("origin").GetString());
+        Assert.Equal(0, JsonSerializer.SerializeToElement(preview.State()).GetProperty("propertyOrigins").GetArrayLength());
+        Assert.Throws<ArgumentException>(() => preview.SetValue(button.Id, "text", JsonSerializer.SerializeToElement("Rejected"), "user"));
+        Assert.Throws<ArgumentException>(() => preview.SetValue(button.Id, "text", JsonSerializer.SerializeToElement(3), "binding"));
+        Assert.Equal("Final", preview.Controls.Single(control => control.Id == button.Id).Text);
+        Assert.Equal(0, JsonSerializer.SerializeToElement(preview.State()).GetProperty("propertyOrigins").GetArrayLength());
+    }
+
+    [Fact]
+    public void ScriptCommandsMarkTheirResultingPropertyChangesAsProgrammatic()
+    {
+        var (model, _) = Design();
+        string Add(string kind) => model.ExecuteEdit("drop", model.Form!.Id,
+            JsonSerializer.SerializeToElement(new { control = kind, x = 20, y = 30 })).AddedControl!.Id;
+        var toast = Add("toast"); var dialog = Add("dialog"); var grid = Add("datagridview");
+        using var preview = new PreviewSession(model);
+        preview.ShowToast(toast, JsonSerializer.SerializeToElement(new { duration = 0 }));
+        preview.ShowDialog(dialog);
+        preview.EditGrid(grid, "addRow", JsonSerializer.SerializeToElement(new { row = new[] { "Alice", "Engineering" } }));
+        var origins = JsonSerializer.SerializeToElement(preview.State()).GetProperty("propertyOrigins").EnumerateArray().ToArray();
+        Assert.Contains(origins, change => change.GetProperty("id").GetString() == toast && change.GetProperty("property").GetString() == "isOpen");
+        Assert.Contains(origins, change => change.GetProperty("id").GetString() == dialog && change.GetProperty("property").GetString() == "isOpen");
+        Assert.Contains(origins, change => change.GetProperty("id").GetString() == grid && change.GetProperty("property").GetString() == "rows");
+        Assert.All(origins, change => Assert.Equal("programmatic", change.GetProperty("origin").GetString()));
+        preview.CloseToast(toast);
+        Assert.Equal("programmatic", JsonSerializer.SerializeToElement(preview.State()).GetProperty("propertyOrigins")[0].GetProperty("origin").GetString());
     }
 
     [Fact]

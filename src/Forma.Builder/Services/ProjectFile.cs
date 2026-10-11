@@ -37,65 +37,13 @@ public sealed class ProjectNode
 public static class ProjectFile
 {
     public const long MaximumBytes = 50 * 1024 * 1024;
+    public const long MaxEmbeddedImageBytes = 10 * 1024 * 1024;
     private static readonly JsonSerializerOptions Options = new()
     {
         WriteIndented = true,
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
         MaxDepth = 128,
     };
-    private static readonly Dictionary<string, Type> Types = new Type[]
-    {
-        typeof(Forma.Core.Form),
-        typeof(C.Button),
-        typeof(C.Label),
-        typeof(C.TextBox),
-        typeof(C.Panel),
-        typeof(C.GroupBox),
-        typeof(C.SplitContainer),
-        typeof(C.TabControl),
-        typeof(C.FlowLayoutPanel),
-        typeof(C.TableLayoutPanel),
-        typeof(C.CheckBox),
-        typeof(C.RadioButton),
-        typeof(C.ComboBox),
-        typeof(C.ListBox),
-        typeof(C.Image),
-        typeof(C.DataGridView),
-        typeof(Forma.Core.Controls.Timer),
-        typeof(C.BackgroundWorker),
-        typeof(C.NumericUpDown),
-        typeof(C.Slider),
-        typeof(C.ProgressBar),
-        typeof(C.CircularProgress),
-        typeof(C.ToggleSwitch),
-        typeof(C.ToggleButton),
-        typeof(C.DatePicker),
-        typeof(C.TimePicker),
-        typeof(C.DateTimePicker),
-        typeof(C.ColorPicker),
-        typeof(C.SearchBox),
-        typeof(C.PasswordBox),
-        typeof(C.TextArea),
-        typeof(C.LinkLabel),
-        typeof(C.MaskedTextBox),
-        typeof(C.CheckedListBox),
-        typeof(C.RadioGroup), typeof(C.CheckBoxGroup), typeof(C.SegmentedControl), typeof(C.Rating),
-        typeof(C.Chip), typeof(C.ChipGroup), typeof(C.ButtonGroup), typeof(C.IconButton), typeof(C.FloatingActionButton),
-        typeof(C.DropdownButton), typeof(C.SplitButton), typeof(C.CommandButton),
-        typeof(C.Accordion), typeof(C.Sidebar), typeof(C.AppShell), typeof(C.ResponsivePanel), typeof(C.StackPanel), typeof(C.HStack), typeof(C.VStack), typeof(C.WrapPanel), typeof(C.CenterPanel), typeof(C.ScrollablePanel), typeof(C.Breadcrumb), typeof(C.SideNavigation),
-        typeof(C.RichTextBox),
-        typeof(C.PictureBox),
-        typeof(C.ListView),
-        typeof(C.TreeView),
-        typeof(C.Pagination),
-        typeof(C.FilePicker),
-        typeof(C.FolderPicker),
-        typeof(C.PropertyGrid),
-        typeof(C.MenuStrip), typeof(C.Toolbar), typeof(C.ToolStrip), typeof(C.StatusBar),
-        typeof(C.ContextMenu), typeof(C.ContextMenuStrip), typeof(C.Dialog), typeof(C.ConfirmationDialog),
-        typeof(C.Tooltip),
-        typeof(C.Icon), typeof(C.EmptyState), typeof(C.Skeleton), typeof(C.Card), typeof(C.Badge), typeof(C.Avatar), typeof(C.Divider), typeof(C.Toast), typeof(C.Spinner), typeof(C.LoadingOverlay),
-    }.ToDictionary(t => t.Name.ToLowerInvariant());
     private static readonly HashSet<string> PropertyNames = new(StringComparer.Ordinal)
     {
         "Name",
@@ -148,7 +96,7 @@ public static class ProjectFile
         "CheckedIndices",
         "Stars",
         "Removable", "ShowText",
-        "PrimaryEnabled",
+        "PrimaryEnabled", "NarrowColumns", "NarrowOrientation", "AspectRatio",
         "ScrollDirection",
         "WorkerReportsProgress",
         "WorkerSupportsCancellation",
@@ -181,7 +129,8 @@ public static class ProjectFile
     public static ProjectDocument Capture(
         FControl root,
         Func<FControl, JsonElement> appearance,
-        bool embedImages = false
+        bool embedImages = false,
+        ICollection<string>? skippedImages = null
     )
     {
         ProjectNode Node(FControl control)
@@ -198,22 +147,12 @@ public static class ProjectFile
                 && uri.IsFile
             )
             {
-                var info = new FileInfo(uri.LocalPath);
-                if (info.Length > 10 * 1024 * 1024)
-                    throw new InvalidDataException("An image exceeds the 10 MB image limit.");
-                var mime = Path.GetExtension(info.Name).ToLowerInvariant() switch
-                {
-                    ".svg" => "image/svg+xml",
-                    ".jpg" or ".jpeg" => "image/jpeg",
-                    ".gif" => "image/gif",
-                    ".webp" => "image/webp",
-                    ".bmp" => "image/bmp",
-                    ".ico" => "image/x-icon",
-                    _ => "image/png",
-                };
-                properties["Source"] = JsonSerializer.SerializeToElement(
-                    $"data:{mime};base64,{Convert.ToBase64String(File.ReadAllBytes(info.FullName))}"
-                );
+                // Embedding is best-effort: a moved, unreadable or oversized image keeps its
+                // file URI so saving and undo never fail because of an external file.
+                if (EmbeddedImage(uri.LocalPath) is string dataUri)
+                    properties["Source"] = JsonSerializer.SerializeToElement(dataUri);
+                else
+                    skippedImages?.Add(image.Source);
             }
             return new()
             {
@@ -227,9 +166,49 @@ public static class ProjectFile
         return new() { Root = Node(root) };
     }
 
-    public static ProjectDocument CaptureProject(IEnumerable<Forma.Core.Form> forms, Func<FControl, JsonElement> appearance, bool embedImages = false)
+    // Undo snapshots embed images on every edit; cache the encoded file until it changes on disk.
+    private static readonly Dictionary<string, (long Length, DateTime WrittenUtc, string DataUri)> EmbeddedImages = new(StringComparer.OrdinalIgnoreCase);
+
+    private static string? EmbeddedImage(string path)
     {
-        var nodes = forms.Select(form => Capture(form, appearance, embedImages).Root).ToList();
+        try
+        {
+            var info = new FileInfo(path);
+            if (!info.Exists || info.Length > MaxEmbeddedImageBytes)
+                return null;
+            lock (EmbeddedImages)
+            {
+                if (EmbeddedImages.TryGetValue(info.FullName, out var cached)
+                    && cached.Length == info.Length && cached.WrittenUtc == info.LastWriteTimeUtc)
+                    return cached.DataUri;
+            }
+            var mime = Path.GetExtension(info.Name).ToLowerInvariant() switch
+            {
+                ".svg" => "image/svg+xml",
+                ".jpg" or ".jpeg" => "image/jpeg",
+                ".gif" => "image/gif",
+                ".webp" => "image/webp",
+                ".bmp" => "image/bmp",
+                ".ico" => "image/x-icon",
+                _ => "image/png",
+            };
+            var dataUri = $"data:{mime};base64,{Convert.ToBase64String(File.ReadAllBytes(info.FullName))}";
+            lock (EmbeddedImages)
+            {
+                if (EmbeddedImages.Count >= 32) EmbeddedImages.Clear();
+                EmbeddedImages[info.FullName] = (info.Length, info.LastWriteTimeUtc, dataUri);
+            }
+            return dataUri;
+        }
+        catch (Exception error) when (error is IOException or UnauthorizedAccessException or ArgumentException or NotSupportedException)
+        {
+            return null;
+        }
+    }
+
+    public static ProjectDocument CaptureProject(IEnumerable<Forma.Core.Form> forms, Func<FControl, JsonElement> appearance, bool embedImages = false, ICollection<string>? skippedImages = null)
+    {
+        var nodes = forms.Select(form => Capture(form, appearance, embedImages, skippedImages).Root).ToList();
         if (nodes.Count == 0) throw new InvalidOperationException("No forms are open.");
         return nodes.Count == 1 ? new() { Root = nodes[0] } : new() { Version = 2, Root = nodes[0], Forms = nodes };
     }
@@ -251,15 +230,11 @@ public static class ProjectFile
             throw new InvalidDataException("This is not a supported Forma project version.");
         var ids = new HashSet<string>();
         var count = 0;
-        void Validate(ProjectNode node, int depth)
+        void Validate(ProjectNode? node, int depth)
         {
             if (node is null || depth > 32 || ++count > 5000)
                 throw new InvalidDataException("The project tree is too large or invalid.");
-            if (
-                node.Kind is null
-                || !Types.ContainsKey(node.Kind)
-                || (depth == 0) != (node.Kind == "form")
-            )
+            if (!ControlCatalog.TryGet(node.Kind, out var entry) || (depth == 0) != (node.Kind == "form"))
                 throw new InvalidDataException("Unknown control kind or invalid root form.");
             if (
                 string.IsNullOrEmpty(node.Id)
@@ -289,25 +264,11 @@ public static class ProjectFile
                     || size > 1600
                 )
                     throw new InvalidDataException("Invalid control dimensions.");
-            if (
-                node.Children.Count > 0
-                && node.Kind
-                    is not (
-                        "form"
-                        or "panel"
-                        or "groupbox"
-                        or "card"
-                        or "splitcontainer"
-                        or "tabcontrol"
-                        or "flowlayoutpanel"
-                        or "accordion" or "sidebar" or "appshell" or "responsivepanel" or "stackpanel" or "hstack" or "vstack" or "wrappanel" or "centerpanel" or "scrollablepanel"
-                        or "tablelayoutpanel"
-                    )
-            )
+            if (node.Children.Count > 0 && !entry.CanContainChildren)
                 throw new InvalidDataException("This control cannot contain children.");
             foreach (var child in node.Children)
             {
-                if (depth > 0 && child.Kind is "timer" or "backgroundworker")
+                if (depth > 0 && ControlCatalog.TryGet(child?.Kind, out var childEntry) && childEntry.FormOnly)
                     throw new InvalidDataException("Nonvisual components must belong to the form.");
                 Validate(child, depth + 1);
             }
@@ -338,7 +299,8 @@ public static class ProjectFile
         var appearance = new Dictionary<string, JsonElement>();
         FControl Build(ProjectNode node)
         {
-            var control = (FControl)Activator.CreateInstance(Types[node.Kind])!;
+            ControlCatalog.TryGet(node.Kind, out var entry);
+            var control = (FControl)Activator.CreateInstance(entry.Type)!;
             typeof(FControl).GetProperty(nameof(FControl.Id))!.SetValue(control, node.Id);
             if (control is C.NumericControl numeric)
             {

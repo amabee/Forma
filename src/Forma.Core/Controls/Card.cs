@@ -7,4 +7,10 @@ public sealed class Card : LayoutContainer
     public Card() => Text = "Card title";
     public string Description { get => _description; set { ArgumentNullException.ThrowIfNull(value); SetProperty(ref _description, value); } }
     public bool HeaderVisible { get => _headerVisible; set => SetProperty(ref _headerVisible, value); }
+
+    protected override void WriteRenderState(IDictionary<string, object?> state)
+    {
+        base.WriteRenderState(state);
+        state["description"] = Description; state["headerVisible"] = HeaderVisible;
+    }
 }

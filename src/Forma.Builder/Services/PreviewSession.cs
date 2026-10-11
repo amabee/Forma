@@ -28,11 +28,33 @@ public sealed class PreviewSession : IDisposable
         _projectFiles = ProjectEntryService.ModuleSources(design.Files);
     }
 
+    /// <summary>A session for one form of a <see cref="PreviewProject"/> snapshot.</summary>
+    internal PreviewSession(Forma.Core.Form form, Dictionary<string, Appearance> appearance, string globalScript, ProjectEntryService.ModuleSource[] files,
+        IReadOnlyDictionary<string, JsonElement>? sharedState = null)
+    {
+        _sharedState = sharedState;
+        Form = form;
+        Appearance = appearance;
+        Appearance[Form.Id].GlobalScript = globalScript;
+        _projectFiles = files;
+    }
+
     private readonly ProjectEntryService.ModuleSource[] _projectFiles;
+    // Values forma.shared already holds when this window starts (other forms set them).
+    private readonly IReadOnlyDictionary<string, JsonElement>? _sharedState;
+    private readonly Dictionary<(string Id, string Property), string> _propertyOrigins = new();
+    private object[] TakePropertyOrigins()
+    {
+        var changes = _propertyOrigins.Select(entry => (object)new { id = entry.Key.Id, property = entry.Key.Property, origin = entry.Value }).ToArray();
+        _propertyOrigins.Clear();
+        return changes;
+    }
 
     public object State() => new
     {
         type = "designer", action = "runtime-preview", id = Form.Id, globalScript = Appearance[Form.Id].GlobalScript, projectFiles = _projectFiles.Select(file => new { path = file.Path, content = file.Content }).ToArray(),
+        propertyOrigins = TakePropertyOrigins(),
+        sharedState = _sharedState,
         controls = Controls.Select(control =>
         {
             var item = JsonSerializer.Deserialize<Dictionary<string, object?>>(
@@ -100,7 +122,14 @@ public sealed class PreviewSession : IDisposable
             timer.Enabled = Appearance[timer.Id].Enabled;
     }
 
-    public void SetValue(string id, string property, JsonElement value)
+    public void SetValue(string id, string property, JsonElement value, string origin = "programmatic")
+    {
+        if (origin is not ("programmatic" or "binding")) throw new ArgumentException("Unsupported script change origin.");
+        SetValueCore(id, property, value);
+        _propertyOrigins[(id, property)] = origin;
+    }
+
+    private void SetValueCore(string id, string property, JsonElement value)
     {
         var control = Controls.FirstOrDefault(control => control.Id == id)
             ?? throw new ArgumentException("The target control no longer exists.");
@@ -217,7 +246,7 @@ public sealed class PreviewSession : IDisposable
         if (RuntimePropertyService.TrySet(control, Appearance[id], property, value))
         {
             if (property is "width" or "height" or "minimumWidth" or "minimumHeight" or "maximumWidth" or "maximumHeight"
-                or "paddingTop" or "paddingRight" or "paddingBottom" or "paddingLeft" or "borderWidth" or "headerVisible")
+                or "paddingTop" or "paddingRight" or "paddingBottom" or "paddingLeft" or "borderWidth" or "borderSides" or "headerVisible" or "aspectRatio")
                 ResizeAnchoredChildren(control, oldContent);
             return;
         }
@@ -228,8 +257,8 @@ public sealed class PreviewSession : IDisposable
     {
         var a = Appearance[control.Id];
         if (control == Form) return (a.Width, a.Height);
-        var width = a.Width - a.PaddingLeft - a.PaddingRight - 2 * a.BorderWidth;
-        var height = a.Height - a.PaddingTop - a.PaddingBottom - 2 * a.BorderWidth;
+        var width = a.Width - a.PaddingLeft - a.PaddingRight - a.BorderOn("left") - a.BorderOn("right");
+        var height = a.Height - a.PaddingTop - a.PaddingBottom - a.BorderOn("top") - a.BorderOn("bottom");
         if (control is Forma.Core.Controls.GroupBox) height -= 28;
         if (control is Card { HeaderVisible: true }) height -= 56;
         if (control is Accordion accordion) height -= (accordion.Tabs.Length + 1) * 36;
@@ -249,7 +278,7 @@ public sealed class PreviewSession : IDisposable
             var oldChildContent = ContentSize(child);
             var bounds = LayoutGeometry.Anchor(new(child.X ?? 0, child.Y ?? 0, a.Width, a.Height), a.Anchor, next.Width - oldContent.Width, next.Height - oldContent.Height);
             RuntimePropertyService.TrySet(child, a, "width", JsonSerializer.SerializeToElement(bounds.Width));
-            RuntimePropertyService.TrySet(child, a, "height", JsonSerializer.SerializeToElement(bounds.Height));
+            if (child is not AspectRatioContainer) RuntimePropertyService.TrySet(child, a, "height", JsonSerializer.SerializeToElement(bounds.Height));
             child.X = Math.Max(0, bounds.X); child.Y = Math.Max(0, bounds.Y);
             ResizeAnchoredChildren(child, oldChildContent);
         }
@@ -286,6 +315,24 @@ public sealed class PreviewSession : IDisposable
             foreach (var property in properties) SetValue(id, property.Name, property.Value);
         }
         toast.Show();
+        _propertyOrigins[(id, "isOpen")] = "programmatic";
+    }
+
+    public void CloseToast(string id)
+    {
+        var toast = Controls.FirstOrDefault(control => control.Id == id) as Toast
+            ?? throw new ArgumentException("The target must be a Toast.");
+        toast.Close();
+        _propertyOrigins[(id, "isOpen")] = "programmatic";
+    }
+
+    public void ShowDialog(string id)
+    {
+        var dialog = Controls.FirstOrDefault(control => control.Id == id) as Dialog
+            ?? throw new ArgumentException("The target must be a Dialog.");
+        dialog.Show();
+        _propertyOrigins[(id, "isOpen")] = "programmatic";
+        _propertyOrigins[(id, "result")] = "programmatic";
     }
 
     /// <summary>Apply each script command to the latest runtime rows, avoiding stale browser read/modify/write races.</summary>
@@ -328,6 +375,8 @@ public sealed class PreviewSession : IDisposable
         // ReadOnly governs interactive editing; scripts may update data in a read-only grid.
         grid.Rows = rows.ToArray();
         grid.SelectedRow = selection;
+        _propertyOrigins[(id, "rows")] = "programmatic";
+        _propertyOrigins[(id, "selectedRow")] = "programmatic";
     }
 
     public void Dispose()

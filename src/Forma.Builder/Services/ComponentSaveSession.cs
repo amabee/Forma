@@ -9,6 +9,7 @@ public sealed class ComponentSaveSession(ComponentCustomization initial, Func<Co
 
     public bool IsCurrent(ComponentCustomization source) => _hasApplied
         && source.Css == Current.Css && source.Behavior == Current.Behavior
+        && source.Events == Current.Events
         && source.Characteristics == Current.Characteristics;
 
     public async Task<bool> ApplyAsync(ComponentCustomization source)

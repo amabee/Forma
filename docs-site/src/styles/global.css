@@ -18,7 +18,7 @@ code, kbd { font-family: var(--font-mono); }
 .skip-link:focus { top: 12px; }
 .site-header { @apply fixed inset-x-0 top-0 z-40 flex items-center gap-6 border-b px-6; height: 72px; border-color: var(--line); background: var(--header); backdrop-filter: blur(16px); }
 .brand { @apply flex shrink-0 items-center gap-2.5; width: 224px; font-size: 21px; letter-spacing: -.6px; }
-.brand-symbol { @apply grid size-8 place-items-center rounded-[10px] text-lg font-black text-white; background: linear-gradient(140deg, #b18aff, #7240dd); box-shadow: 0 4px 15px #8b5cf629; transform: rotate(-5deg); }
+.brand-symbol { @apply size-8 shrink-0 rounded-[9px]; box-shadow: 0 4px 15px #5b4bff29; }
 .brand-divider { @apply mx-2 h-5 border-l; border-color: var(--line); }
 .brand-docs { color: var(--muted); font-size: 14px; font-weight: 400; letter-spacing: 0; }
 .search-launch { @apply flex h-9 max-w-md flex-1 items-center gap-3 rounded-lg border px-3 text-left text-sm; background: var(--panel-soft); border-color: var(--line); color: var(--muted); }

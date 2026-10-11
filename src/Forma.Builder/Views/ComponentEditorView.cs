@@ -9,6 +9,7 @@ public sealed class ComponentEditorView : UserControl
 {
     private readonly string _folder;
     private readonly bool _globalScript;
+    private readonly string _handlerClass;
     private const string GlobalFile = "main.js";
     private readonly Microsoft.Web.WebView2.WinForms.WebView2 _web = new() { Dock = DockStyle.Fill };
     private ComponentCustomization _draft;
@@ -19,6 +20,7 @@ public sealed class ComponentEditorView : UserControl
     private Task? _initialization;
     private string _theme = "dark";
     private string _activeDocument = "css";
+    private string? _pendingEvent;
     public bool HasUnsavedChanges { get; private set; }
     public string DocumentName => _componentName;
     public event EventHandler? MetadataChanged;
@@ -34,11 +36,12 @@ public sealed class ComponentEditorView : UserControl
     private readonly TaskCompletionSource<bool> _editorLoaded = new(TaskCreationOptions.RunContinuationsAsynchronously);
     public ComponentCustomization Result => _saveSession.Current;
 
-    public ComponentEditorView(string name, string folder, ComponentCustomization source, Func<ComponentCustomization, Task> apply, Func<object>? completionContext = null, bool globalScript = false, string? projectFileName = null)
+    public ComponentEditorView(string name, string folder, ComponentCustomization source, Func<ComponentCustomization, Task> apply, Func<object>? completionContext = null, bool globalScript = false, string? projectFileName = null, string componentKind = "component")
     {
         Text = $"{name} — Custom Properties";
         _componentName = name;
         _globalScript = globalScript;
+        _handlerClass = char.ToUpperInvariant(componentKind[0]) + componentKind[1..] + "EventHandler";
         _projectFileName = projectFileName;
         if (projectFileName is not null) _activeDocument = Path.GetExtension(projectFileName).ToLowerInvariant() switch { ".css" => "css", ".json" => "characteristics", _ => "behavior" };
         _completionContext = completionContext;
@@ -96,10 +99,15 @@ public sealed class ComponentEditorView : UserControl
     }
     public void ActivateDocument(string document) {
         if (_projectFileName is not null) document = _activeDocument;
-        _activeDocument = document is "behavior" or "characteristics" ? document : "css";
+        _activeDocument = document is "behavior" or "events" or "characteristics" ? document : "css";
         SendEditor(new { action = "activate", document = _activeDocument });
     }
     public void RefreshCompletionContext() => SendEditor(new { action = "context", context = _completionContext?.Invoke() });
+    public void OpenEventHandler(string eventName) {
+        ActivateDocument("behavior");
+        if (!_editorReady) { _pendingEvent = eventName; return; }
+        SendEditor(new { action = "event-handler", eventName, componentName = _componentName, handlerClass = _handlerClass });
+    }
     public void ApplyTheme(string theme) {
         var value = theme == "light" ? "light" : "dark";
         if (value == _theme) return;
@@ -138,7 +146,9 @@ public sealed class ComponentEditorView : UserControl
             if (message.ValueKind != JsonValueKind.Object || !message.TryGetProperty("type", out var type) || type.GetString() != "editor") return;
             var command = message.GetProperty("event").GetString();
             if (command == "ready") {
-                _editorReady = true; _status.Visible = false; Populate(_draft); StartWatching(); _editorLoaded.TrySetResult(true); return;
+                _editorReady = true; _status.Visible = false; Populate(_draft);
+                if (_pendingEvent is string eventName) { _pendingEvent = null; OpenEventHandler(eventName); }
+                StartWatching(); _editorLoaded.TrySetResult(true); return;
             }
             if (command == "dirty") {
                 HasUnsavedChanges = message.GetProperty("dirty").GetBoolean();
@@ -147,7 +157,7 @@ public sealed class ComponentEditorView : UserControl
             }
             if (command == "document") {
                 var document = message.GetProperty("document").GetString();
-                if (document is "css" or "behavior" or "characteristics") _activeDocument = document;
+                if (document is "css" or "behavior" or "events" or "characteristics") _activeDocument = document;
                 return;
             }
             if (command is "save" or "external") {
@@ -203,7 +213,7 @@ public sealed class ComponentEditorView : UserControl
         }
         await SaveAsync();
         var start = new ProcessStartInfo(_preferredEditor!) { UseShellExecute = false, WorkingDirectory = _folder };
-        foreach (var file in _projectFileName is not null ? new[] { _projectFileName } : _globalScript ? new[] { GlobalFile } : new[] { "component.css", ComponentEditorService.ScriptFile, ComponentEditorService.PropertiesFile }) start.ArgumentList.Add(Path.Combine(_folder, file));
+        foreach (var file in _projectFileName is not null ? new[] { _projectFileName } : _globalScript ? new[] { GlobalFile } : new[] { "component.css", ComponentEditorService.ScriptFile, ComponentEditorService.EventsFile, ComponentEditorService.PropertiesFile }) start.ArgumentList.Add(Path.Combine(_folder, file));
         using var process = Process.Start(start);
         SetStatus("Save in your external editor; changes apply automatically here.");
     }
@@ -251,7 +261,7 @@ public sealed class ComponentEditorView : UserControl
             };
             void Changed(object sender, FileSystemEventArgs e)
             {
-                if (_closed || IsDisposed || Disposing || e.Name != _projectFileName && e.Name is not ("component.css" or "script.js" or "behavior.js" or "main.js" or "global-script.js" or "custom-properties.json" or "characteristics.json")) return;
+                if (_closed || IsDisposed || Disposing || e.Name != _projectFileName && e.Name is not ("component.css" or "script.js" or "event.js" or "behavior.js" or "main.js" or "global-script.js" or "custom-properties.json" or "characteristics.json")) return;
                 _readRetries = 0; _reloadDelay.Stop(); _reloadDelay.Start();
             }
             _watcher.Changed += Changed; _watcher.Created += Changed; _watcher.Renamed += Changed;

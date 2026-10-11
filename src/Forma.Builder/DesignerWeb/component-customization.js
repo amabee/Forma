@@ -8,6 +8,132 @@
   const modules = new Map();
   let moduleSession;
   let sharedState, globalSignature, globalKey, globalFailed = false;
+  let runtimeActive = false, runtimeEpoch = 0, eventSequence = 0;
+  let controlsById = new Map();
+  // forma.shared across Preview windows: values other forms already set when this window
+  // starts, the raw reactive store behind the synced proxy, and guards for the sync.
+  let sharedSeed = {}, sharedStore, initializingShared = false, applyingRemoteShared = false;
+  // forma.showForm promises waiting for their window to close, by request ID.
+  const pendingForms = new Map();
+  let formRequests = 0;
+  const eventMetadata = new WeakMap(), propertyCache = new Map();
+  const eventSession = Math.random().toString(36).slice(2);
+  const eventLabels = Object.fromEntries(("Click DoubleClick MouseDown MouseUp MouseMove MouseEnter MouseLeave MouseOver MouseOut MouseWheel KeyDown KeyUp KeyPress Input Change BeforeInput Focus Blur FocusIn FocusOut Load Ready Created Mounted Updated Destroyed Resize Move Layout DragStart Drag DragEnd DragEnter DragOver DragLeave Drop Copy Cut Paste Validating Validated Submit Reset PropertyChanged Tick").split(" ").map(name => [({ doubleclick: "dblclick", mousewheel: "wheel" })[name.toLowerCase()] ?? name.toLowerCase(), name]));
+  const textInputs = new Set(["textbox", "searchbox", "passwordbox", "textarea", "maskedtextbox"]);
+  const numericInputs = new Set(["numericupdown", "slider", "progressbar", "circularprogress", "rating"]);
+  function canonicalProperty(item, property) {
+    if (textInputs.has(item.kind) && property === "text") return "value";
+    if (numericInputs.has(item.kind) && property === "number") return "value";
+    if (["datepicker", "timepicker", "datetimepicker"].includes(item.kind) && property === "dateValue") return "value";
+    if (item.kind === "colorpicker" && property === "color") return "value";
+    return property;
+  }
+  const cloneValue = value => value && typeof value === "object" ? JSON.parse(JSON.stringify(value)) : value;
+  const equalValue = (a, b) => Object.is(a, b) || a && b && typeof a === "object" && typeof b === "object" && JSON.stringify(a) === JSON.stringify(b);
+  function portableValue(value, ancestors = new Set()) {
+    if (value === null || ["string", "boolean"].includes(typeof value)) return value;
+    if (typeof value === "number") return Number.isFinite(value) ? value : null;
+    if (typeof value === "bigint") return String(value);
+    if (typeof value !== "object" || value instanceof Node || value instanceof Event || ancestors.has(value)) return undefined;
+    ancestors.add(value);
+    const result = Array.isArray(value) ? value.map(entry => portableValue(entry, ancestors) ?? null) : Object.fromEntries(Object.keys(value).map(key => [key, portableValue(value[key], ancestors)]).filter(([, entry]) => entry !== undefined));
+    ancestors.delete(value); return result;
+  }
+  function eventSource(event, fallbackId) {
+    const data = eventMetadata.get(event);
+    if (data?.sourceId) return controlsById.get(data.sourceId) ?? data.sourceIdentity;
+    for (const node of event.composedPath?.() ?? [event.target]) {
+      const id = node?.dataset?.componentSource ?? node?.dataset?.commandSource ?? node?.id;
+      if (controlsById.has(id)) return controlsById.get(id);
+    }
+    return controlsById.get(fallbackId);
+  }
+  function metadata(event, origin) {
+    if (!eventMetadata.has(event)) eventMetadata.set(event, { eventId: `evt_${eventSession}_${++eventSequence}`, timestamp: Date.now(), origin: origin ?? (event.isTrusted ? "user" : "programmatic"), handled: false, propagationStopped: false });
+    return eventMetadata.get(event);
+  }
+  function notifyProperty(id, property, value, previousValue, origin) {
+    const element = document.getElementById(id);
+    if (!runtimeActive || !element || !controlsById.has(id)) return;
+    const event = new CustomEvent("propertychanged", { bubbles: true, detail: { property, value: cloneValue(value), previousValue: cloneValue(previousValue) } });
+    Object.assign(metadata(event, origin), { sourceId: id, property, value: cloneValue(event.detail.value), previousValue: cloneValue(event.detail.previousValue) });
+    dispatchComponent(id, event);
+  }
+  function dispatchComponent(id, event) {
+    const element = document.getElementById(id);
+    if (!element) return;
+    metadata(event).sourceId = id;
+    element.dispatchEvent(event);
+    const rootId = currentState?.id ?? currentState?.controls.find(control => control.kind === "form")?.id;
+    const root = document.getElementById(rootId);
+    // Tray components belong to the form in the model, outside its DOM subtree.
+    if (event.bubbles && root && root !== element && !root.contains(element) && !metadata(event).propagationStopped && !event.cancelBubble) root.dispatchEvent(event);
+  }
+  function inputProperty(item, event) {
+    if (["checkbox", "radiobutton", "switch", "togglebutton", "chip"].includes(item.kind)) return "checked";
+    if (["checkboxgroup", "chipgroup", "checkedlistbox"].includes(item.kind)) return "checkedIndices";
+    if (["combobox", "listbox", "listview", "radiogroup", "segmentedcontrol", "buttongroup", "breadcrumb", "sidenavigation"].includes(item.kind)) return "selectedIndex";
+    if (["filepicker", "folderpicker"].includes(item.kind)) return "selectedPath";
+    if (["tabcontrol", "accordion"].includes(item.kind)) return "selectedTab";
+    if (textInputs.has(item.kind) || numericInputs.has(item.kind) || ["datepicker", "timepicker", "datetimepicker", "colorpicker"].includes(item.kind)) return "value";
+    if (event.type === "row-selection") return "selectedRow";
+    return undefined;
+  }
+  function liveInputValue(item, property, event) {
+    if (property === "selectedRow" && typeof event.detail?.row === "number") return event.detail.row;
+    const element = document.getElementById(item.id);
+    if (element?._selectionProperties) {
+      const key = property === "value" ? "number" : property;
+      if (key in element._selectionProperties) return cloneValue(element._selectionProperties[key]);
+    }
+    const reader = [...behaviors.values()].find(record => record.api)?.api;
+    if (reader) return reader.get(item.id, property);
+    return undefined;
+  }
+  function captureInput(event) {
+    if (!runtimeActive) return;
+    const item = eventSource(event);
+    if (!item) return;
+    const property = inputProperty(item, event);
+    if (!property) return;
+    try {
+      const rawValue = liveInputValue(item, property, event), value = typeof rawValue === "number" && !Number.isFinite(rawValue) ? null : rawValue, cache = propertyCache.get(item.id);
+      const previousValue = cache?.values.get(property);
+      Object.assign(metadata(event), { property, value: cloneValue(value), previousValue: cloneValue(previousValue) });
+      if (cache && !equalValue(value, previousValue)) {
+        cache.pendingNative.set(property, { value: cloneValue(value), previousValue: cache.pendingNative.get(property)?.previousValue ?? cloneValue(previousValue) });
+        cache.values.set(property, cloneValue(value));
+        const epoch = runtimeEpoch;
+        queueMicrotask(() => { if (epoch === runtimeEpoch) notifyProperty(item.id, property, value, previousValue, metadata(event).origin); });
+      }
+    } catch (error) { report(item.id, error); }
+  }
+  function refreshProperties(state, pending) {
+    for (const id of propertyCache.keys()) if (!controlsById.has(id)) propertyCache.delete(id);
+    for (const item of state.controls) {
+      const signature = behaviors.get(item.id)?.snapshot ?? snapshot(item), previous = propertyCache.get(item.id);
+      if (previous?.signature === signature && !(state.propertyOrigins ?? []).some(entry => entry.id === item.id)) continue;
+      const values = new Map();
+      const excluded = new Set(["id", "kind", "parentId", "component", "customization", "globalScript", "scriptProperties"]);
+      for (const key of new Set([...(item.scriptProperties ?? Object.keys(item)), "text", "enabled", "visible", ...(textInputs.has(item.kind) ? ["text"] : []), ...(numericInputs.has(item.kind) ? ["number"] : []), ...(["datepicker", "timepicker", "datetimepicker"].includes(item.kind) ? ["dateValue"] : []), ...(item.kind === "colorpicker" ? ["color"] : [])])) {
+        if (!excluded.has(key) && Object.hasOwn(item, key)) values.set(canonicalProperty(item, key), cloneValue(item[key]));
+      }
+      const pendingNative = previous?.pendingNative ?? new Map();
+      for (const [property, change] of pendingNative) {
+        const acknowledged = (state.propertyOrigins ?? []).some(entry => entry.id === item.id && canonicalProperty(item, entry.property) === property);
+        if (!acknowledged && equalValue(values.get(property), change.previousValue)) values.set(property, change.value);
+        else pendingNative.delete(property);
+      }
+      propertyCache.set(item.id, { signature, values, pendingNative });
+      if (!previous) continue;
+      for (const [property, value] of values) {
+        if (!previous.values.has(property) || equalValue(value, previous.values.get(property))) continue;
+        const origin = (state.propertyOrigins ?? []).find(change => change.id === item.id && canonicalProperty(item, change.property) === property)?.origin ?? "native";
+        const oldValue = previous.values.get(property);
+        pending.push(() => notifyProperty(item.id, property, value, oldValue, origin));
+      }
+    }
+  }
   const aliases = { doubleclick: "dblclick", mousewheel: "wheel" };
   const lifecycle = new Set([
     "created",
@@ -21,13 +147,15 @@
     "layout",
     "validating",
     "validated",
+    "propertychanged",
   ]);
   const eventName = (name) =>
     aliases[String(name).toLowerCase()] ?? String(name).toLowerCase();
   function emit(record, name, detail = {}, cancelable = false) {
-    return record.element.dispatchEvent(
-      new CustomEvent(name, { detail, cancelable }),
-    );
+    const event = new CustomEvent(name, { detail, cancelable });
+    const owner = controlsById.get(record.item.ownerId ?? record.item.id) ?? record.sourceIdentity ?? record.item;
+    Object.assign(metadata(event, "system"), { sourceId: owner.id, sourceIdentity: { id: owner.id, name: owner.name, kind: owner.kind, parentId: owner.parentId } });
+    return record.element.dispatchEvent(event);
   }
   function validate(record) {
     if (!emit(record, "validating", {}, true)) return false;
@@ -153,10 +281,103 @@
     return matches[0];
   }
 
-  function installBehavior(item, state, source, characteristics) {
+  function installBehavior(item, state, source, characteristics, events = "") {
     const element = item.globalElement ?? document.getElementById(item.id),
       cleanups = [];
     const values = JSON.parse(characteristics || "{}");
+    let scopeActive = true;
+    cleanups.push(() => { scopeActive = false; });
+    const handles = new Map(), identities = new Map();
+    function active() { if (!scopeActive) throw new Error("This component script has been destroyed."); }
+    function handle(id, identity = controlsById.get(id)) {
+      if (identity) identities.set(id, { name: identity.name, kind: identity.kind });
+      if (handles.has(id)) return handles.get(id);
+      const reference = Object.freeze({
+        get id() { return id; },
+        get name() { return (controlsById.get(id) ?? identities.get(id))?.name; },
+        get kind() { return (controlsById.get(id) ?? identities.get(id))?.kind; },
+        get element() { return document.getElementById(id); },
+        get(property) { active(); return api.get(id, property); },
+        set(property, value) { active(); return api.set(id, property, value); },
+        bind(property) { active(); return api.bind(id, property); },
+        on(event, handler) { active(); return listen(event, handler, document.getElementById(id), () => controlsById.get(id)); },
+      });
+      handles.set(id, reference); return reference;
+    }
+    function eventPayload(event, subscriberId) {
+      const data = metadata(event), source = eventSource(event, subscriberId);
+      const path = [], visited = new Set();
+      let ancestor = source;
+      while (ancestor && !visited.has(ancestor.id)) { visited.add(ancestor.id); path.push(handle(ancestor.id, ancestor)); ancestor = controlsById.get(ancestor.parentId); }
+      const overlay = {
+        eventId: data.eventId, timestamp: data.timestamp,
+        eventName: eventLabels[event.type] ?? event.type,
+        id: source?.id ?? subscriberId,
+        source: source ? handle(source.id, source) : handle(subscriberId),
+        subscriber: handle(subscriberId, controlsById.get(subscriberId) ?? (item.id === subscriberId ? item : undefined)), path,
+        originalEvent: event,
+        target: event.target,
+        currentTarget: event.currentTarget,
+        phase: event.eventPhase === Event.CAPTURING_PHASE ? "capture" : source?.id === subscriberId ? "target" : "bubble",
+        origin: data.origin, property: data.property, value: cloneValue(data.value), previousValue: cloneValue(data.previousValue),
+        modifiers: Object.freeze({ ctrl: !!event.ctrlKey, shift: !!event.shiftKey, alt: !!event.altKey, meta: !!event.metaKey }),
+        mouse: typeof event.clientX === "number" ? Object.freeze({ x: event.clientX, y: event.clientY, screenX: event.screenX, screenY: event.screenY, button: event.button, buttons: event.buttons, deltaX: event.deltaX, deltaY: event.deltaY, deltaZ: event.deltaZ, deltaMode: event.deltaMode }) : undefined,
+        pointer: typeof event.pointerId === "number" ? Object.freeze({ id: event.pointerId, type: event.pointerType, pressure: event.pressure, isPrimary: event.isPrimary, width: event.width, height: event.height }) : undefined,
+        keyboard: typeof event.key === "string" ? Object.freeze({ key: event.key, code: event.code, repeat: event.repeat, location: event.location, isComposing: event.isComposing }) : undefined,
+        preventDefault() { event.preventDefault(); },
+        stopPropagation() { data.propagationStopped = true; event.stopPropagation(); },
+        stopImmediatePropagation() { data.propagationStopped = true; event.stopImmediatePropagation(); },
+        toJSON() {
+          const identity = reference => ({ id: reference.id, name: reference.name, kind: reference.kind });
+          return {
+            eventId: data.eventId, eventName: overlay.eventName, type: event.type, timestamp: data.timestamp,
+            id: overlay.id, source: identity(overlay.source), subscriber: identity(overlay.subscriber), path: path.map(reference => reference.id),
+            property: data.property, value: portableValue(data.value), previousValue: portableValue(data.previousValue), detail: portableValue(event.detail),
+            phase: overlay.phase, origin: data.origin, handled: data.handled, defaultPrevented: event.defaultPrevented,
+            propagationStopped: data.propagationStopped || event.cancelBubble, cancelable: event.cancelable, bubbles: event.bubbles, isTrusted: event.isTrusted,
+            mouse: overlay.mouse, keyboard: overlay.keyboard, pointer: overlay.pointer, modifiers: overlay.modifiers,
+          };
+        },
+      };
+      return new Proxy(event, {
+        get(target, key) {
+          if (key === "handled") return data.handled;
+          if (key === "propagationStopped") return data.propagationStopped || event.cancelBubble;
+          if (Object.hasOwn(overlay, key)) return overlay[key];
+          const value = Reflect.get(target, key, target);
+          return typeof value === "function" && key !== "constructor" ? value.bind(target) : value;
+        },
+        set(target, key, value) {
+          if (key === "handled") { if (typeof value !== "boolean") throw new TypeError("handled must be a boolean."); data.handled = value; return true; }
+          if (Object.hasOwn(overlay, key)) return false;
+          if (key === "cancelBubble" && value) data.propagationStopped = true;
+          return Reflect.set(target, key, value, target);
+        },
+      });
+    }
+    const rootId = state.id ?? state.controls.find(control => control.kind === "form")?.id ?? item.ownerId ?? state.controls[0]?.id;
+    function listen(event, handler, eventTarget, readItem) {
+      event = eventName(event);
+      if (typeof handler !== "function") throw new Error("Event handler must be a function.");
+      if (!eventTarget) throw new Error("Event target is unavailable.");
+      const listener = e => {
+        if (lifecycle.has(event) && !(e instanceof CustomEvent)) return;
+        const owner = readItem();
+        if (!lifecycle.has(event) && (!owner || owner.enabled === false || owner.visible === false)) return;
+        try { Promise.resolve(handler(eventPayload(e, eventTarget.id || item.ownerId || item.id))).catch(error => report(item.id, error)); }
+        catch (error) { report(item.id, error); }
+      };
+      const options = { capture: ["focus", "blur"].includes(event), passive: false };
+      eventTarget.addEventListener(event, listener, options);
+      let attached = true;
+      const unsubscribe = () => {
+        if (!attached) return;
+        attached = false; eventTarget.removeEventListener(event, listener, options);
+      };
+      cleanups.push(unsubscribe);
+      return unsubscribe;
+    }
+    const root = handle(rootId);
     function gridCommand(name, operation, args = {}) {
       const destination = target(currentState, name);
       if (destination.kind !== "datagridview")
@@ -182,6 +403,7 @@
       return value;
     }
     const api = {
+      get root() { return root; },
       provide(name, value) {
         if (!item.globalElement) throw new Error("Define shared modules in main.js using forma.provide.");
         if (typeof name !== "string" || !/^[A-Za-z][\w.-]{0,63}$/.test(name)) throw new Error("Use a nonempty module name, e.g. app.");
@@ -220,28 +442,8 @@
         });
       },
       on(event, handler) {
-        event = eventName(event);
-        const listener = (e) => {
-          if (lifecycle.has(event) && !(e instanceof CustomEvent)) return;
-          if (!lifecycle.has(event) && (!item.enabled || !item.visible)) return;
-          try {
-            Promise.resolve(handler(e)).catch((error) =>
-              report(item.id, error),
-            );
-          } catch (error) {
-            report(item.id, error);
-          }
-        };
-        // Focus/blur and enter/leave do not bubble from composite control inputs.
-        const options = {
-          capture: ["focus", "blur"].includes(event),
-          passive: false,
-        };
-        const eventTarget = item.globalElement && !lifecycle.has(event) ? document.getElementById(item.ownerId) ?? element : element;
-        eventTarget.addEventListener(event, listener, options);
-        cleanups.push(() =>
-          eventTarget.removeEventListener(event, listener, options),
-        );
+        const eventTarget = item.globalElement && !lifecycle.has(eventName(event)) ? document.getElementById(item.ownerId) ?? element : element;
+        return listen(event, handler, eventTarget, () => item);
       },
       validate() {
         return validate(behaviors.get(item.id));
@@ -347,7 +549,7 @@
         if (item.scriptProperties?.includes(property)) return item[property] && typeof item[property] === "object" ? JSON.parse(JSON.stringify(item[property])) : item[property];
         throw new Error(`Unsupported property '${property}'.`);
       },
-      set(name, property, value) {
+      set(name, property, value, origin = "programmatic") {
         const destination = target(currentState, name);
         if (property === "commandItems" && !Array.isArray(value)) throw new Error("Commands must be an array.");
         if (destination.kind === "datagridview") {
@@ -362,7 +564,7 @@
           type: "custom",
           id: destination.id,
           event: "set",
-          payload: { sourceId: item.ownerId ?? item.id, property, value },
+          payload: { sourceId: item.ownerId ?? item.id, property, value, origin },
         });
       },
       showToast(name, options = {}) {
@@ -400,6 +602,32 @@
           payload: { sourceId: item.ownerId ?? item.id },
         });
       },
+      /**
+       * Opens another form of the project in its own Preview window. With { modal: true } it
+       * blocks this window like ShowDialog. Resolves with the value passed to closeForm.
+       */
+      showForm(name, options = {}) {
+        if (typeof name !== "string" || !name.trim()) throw new Error("showForm needs a form name.");
+        const requestId = `form-${eventSession}-${++formRequests}`;
+        return new Promise((resolve, reject) => {
+          pendingForms.set(requestId, { resolve, reject });
+          window.forma.send({
+            type: "custom",
+            id: item.ownerId ?? item.id,
+            event: "show-form",
+            payload: { sourceId: item.ownerId ?? item.id, form: name, modal: options?.modal === true, requestId },
+          });
+        });
+      },
+      /** Closes this form's window; the opener's showForm promise receives the result. */
+      closeForm(result = null) {
+        window.forma.send({
+          type: "custom",
+          id: item.ownerId ?? item.id,
+          event: "close-form",
+          payload: { sourceId: item.ownerId ?? item.id, result: result === undefined ? null : JSON.parse(JSON.stringify(result)) },
+        });
+      },
     };
     const component = {
       id: item.ownerId ?? item.id,
@@ -408,13 +636,17 @@
       properties: values,
       characteristics: values,
     };
+    const sourceOwner = item.ownerId ? controlsById.get(item.ownerId) : undefined;
     const record = {
       source,
       characteristics,
+      events,
       element,
       item,
       cleanups,
       snapshot: snapshot(item),
+      api,
+      sourceIdentity: sourceOwner && { id: sourceOwner.id, name: sourceOwner.name, kind: sourceOwner.kind, parentId: sourceOwner.parentId },
       validationElement: item.globalElement ? document.getElementById(item.ownerId) : undefined,
     };
     behaviors.set(item.id, record);
@@ -442,6 +674,7 @@
           id,
           property === "value" && textInput ? "text" : property,
           value,
+          "binding",
         );
       },
     });
@@ -454,7 +687,7 @@
       "bind",
     ])
       api[name] = reactiveScope[name];
-    if (item.globalElement) sharedState = reactiveScope.reactive({});
+    if (item.globalElement) sharedState = createShared(reactiveScope, item.ownerId);
     cleanups.push(() => reactiveScope.dispose());
     if (window.ResizeObserver && !item.globalElement) {
       let lastSize;
@@ -480,7 +713,7 @@
     // The script-local forma API is separate from the internal window.forma bridge.
     // api remains an alias for existing saved projects.
     try {
-      if (moduleSession) moduleSession.execute(source, api, component, item.globalElement ? "main.js" : "script.js");
+      if (moduleSession) moduleSession.execute(source, api, component, item.globalElement ? "main.js" : "script.js", item.globalElement || !events ? [] : [{ path: "event.js", content: events }]);
       else new Function("forma", "component", "api", '"use strict";\n' + source)(api, component, api);
     } catch (error) {
       cleanupBehavior(item.id);
@@ -504,9 +737,71 @@
     }
   }
 
+  /**
+   * forma.shared for this window. Top-level assignments are sent to the host, which keeps the
+   * values for the whole Preview run and forwards them to every other form's window. While
+   * main.js first runs here, assignments only fill values no other form has set yet, so
+   * `forma.shared.count = 0` initializes once instead of resetting the app.
+   * Values must be JSON-compatible; reassign rather than mutating nested objects.
+   */
+  function createShared(scope, rootId) {
+    const seeded = new Set(Object.keys(sharedSeed));
+    const store = scope.reactive({ ...sharedSeed });
+    sharedStore = store;
+    const publish = (key, value, deleted) => {
+      if (applyingRemoteShared || !runtimeActive) return;
+      // Refs and reactive objects are live state for this page; only plain data is shared.
+      if (!deleted && window.formaReactivity?.isLive(value)) return;
+      let json;
+      try { json = deleted ? null : JSON.stringify(value); } catch { return; }
+      if (!deleted && json === undefined) return; // functions and undefined stay local to this window
+      window.forma.send({ type: "custom", id: rootId, event: "shared-set",
+        payload: { sourceId: rootId, key, value: deleted ? null : JSON.parse(json), deleted } });
+    };
+    return new Proxy(store, {
+      set(target, key, value) {
+        if (typeof key === "symbol") return Reflect.set(target, key, value);
+        if (initializingShared && seeded.has(key)) return true;
+        target[key] = value;
+        publish(key, value, false);
+        return true;
+      },
+      deleteProperty(target, key) {
+        if (typeof key === "symbol") return Reflect.deleteProperty(target, key);
+        delete target[key];
+        publish(key, undefined, true);
+        return true;
+      },
+    });
+  }
+
+  /** Another Preview window changed forma.shared. */
+  function sharedChanged(key, value, deleted) {
+    if (!sharedStore) return;
+    applyingRemoteShared = true;
+    try { if (deleted) delete sharedStore[key]; else sharedStore[key] = value; }
+    finally { applyingRemoteShared = false; }
+  }
+
+  /** The host reports a window opened by showForm has closed (or could not open). */
+  function formClosed(requestId, result, error) {
+    const pending = pendingForms.get(requestId);
+    if (!pending) return;
+    pendingForms.delete(requestId);
+    if (error) pending.reject(new Error(error));
+    else pending.resolve(result ?? null);
+  }
   window.formaCustomization = {
+    formClosed,
+    sharedChanged,
     apply(state, runtime = false) {
       currentState = state;
+      controlsById = new Map(state.controls.map(control => [control.id, control]));
+      for (const record of behaviors.values()) {
+        const owner = record.item.ownerId && controlsById.get(record.item.ownerId);
+        if (owner) record.sourceIdentity = { id: owner.id, name: owner.name, kind: owner.kind, parentId: owner.parentId };
+      }
+      runtimeActive = runtime;
       if (runtime && !state.controls.length) { this.clear(); window.formaReactivity.refresh(); return; }
       const pending = [];
       const live = new Set(state.controls.map((item) => item.id));
@@ -517,17 +812,23 @@
         if (signature !== globalSignature) {
           for (const id of [...behaviors.keys()].filter(id => id !== globalKey)) cleanupBehavior(id);
           if (globalKey) cleanupBehavior(globalKey);
+          runtimeEpoch++; propertyCache.clear();
           modules.clear(); sharedState = undefined; globalFailed = false; globalSignature = signature;
           globalKey = "__global__" + root.id;
           moduleSession = window.formaModuleRuntime?.createModuleSession(state.projectFiles ?? []);
+          // Start from what other Preview windows already put in forma.shared.
+          sharedSeed = runtime && state.sharedState && typeof state.sharedState === "object" ? { ...state.sharedState } : {};
+          initializingShared = runtime;
           try {
             const record = installBehavior({ id: globalKey, ownerId: root.id, name: "main.js", kind: "form", enabled: true, visible: true, globalElement: document.createElement("div") }, state, source, "{}");
             pending.push(() => { for (const event of ["created", "mounted", "ready", "load"]) emit(record, event); });
           } catch (error) { globalFailed = true; modules.clear(); sharedState = undefined; report(root.id, error); }
+          finally { initializingShared = false; }
         }
         live.add(globalKey);
       } else {
         moduleSession = undefined; modules.clear(); sharedState = undefined; globalSignature = undefined; globalFailed = false;
+        runtimeEpoch++; propertyCache.clear();
       }
       for (const map of [failedStyles, failedBehaviors])
         for (const id of map.keys()) if (!live.has(id)) map.delete(id);
@@ -579,11 +880,13 @@
         }
         if (!runtime || globalFailed) continue;
         const source = field(customization, "behavior") ?? "",
+          events = field(customization, "events") ?? "",
           characteristics = field(customization, "characteristics") ?? "{}";
         const existing = behaviors.get(item.id);
         if (
           existing &&
           existing.source === source &&
+          existing.events === events &&
           existing.characteristics === characteristics &&
           existing.element === document.getElementById(item.id)
         ) {
@@ -612,16 +915,17 @@
           continue;
         }
         cleanupBehavior(item.id);
-        const signature = source + "\n" + characteristics;
+        const signature = JSON.stringify([source, characteristics, events]);
         if (failedBehaviors.get(item.id) !== signature)
           failedBehaviors.delete(item.id);
-        if (source && failedBehaviors.get(item.id) !== signature)
+        if ((source || item.kind === "form" || item.id === state.id) && failedBehaviors.get(item.id) !== signature)
           try {
             const record = installBehavior(
               item,
               state,
               source,
               characteristics,
+              events,
             );
             pending.push(() => {
               for (const event of ["created", "mounted", "ready", "load"])
@@ -634,13 +938,13 @@
           }
       }
       window.formaReactivity.refresh();
+      if (runtime && !globalFailed) refreshProperties(state, pending);
       // All components and their handlers exist before startup callbacks run.
       for (const dispatch of pending) dispatch();
     },
     event(id, event, detail = {}) {
-      document
-        .getElementById(id)
-        ?.dispatchEvent(new CustomEvent(eventName(event), { detail }));
+      const native = new CustomEvent(eventName(event), { detail, bubbles: true });
+      metadata(native, "native"); dispatchComponent(id, native);
     },
     clear() {
       for (const id of [...behaviors.keys()].filter(id => id !== globalKey)) cleanupBehavior(id);
@@ -649,8 +953,10 @@
       for (const record of styles.values()) record.element.remove();
       styles.clear();
       failedStyles.clear();
+      runtimeActive = false; runtimeEpoch++; propertyCache.clear(); controlsById.clear();
       failedBehaviors.clear();
     },
   };
+  for (const name of ["input", "change", "row-selection"]) document.addEventListener(name, captureInput, true);
   window.addEventListener("pagehide", () => window.formaCustomization.clear());
 })();

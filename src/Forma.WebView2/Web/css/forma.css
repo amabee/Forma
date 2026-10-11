@@ -34,3 +34,30 @@ input {
 .forma-form, [data-forma-type="panel"] {
     position: relative;
 }
+
+/* Responsive primitives also work in C# hosts without the Builder stylesheet. */
+[data-forma-type="responsivegrid"], [data-forma-type="responsivestack"],
+[data-forma-type="breakpointcontainer"], [data-forma-type="aspectratiocontainer"] {
+    position: relative;
+    box-sizing: border-box;
+    min-width: 0;
+    width: 100%;
+}
+[data-forma-type="responsivegrid"] > .layout-content,
+[data-forma-type="responsivestack"] > .layout-content,
+[data-forma-type="breakpointcontainer"] > .layout-content,
+[data-forma-type="aspectratiocontainer"] > .layout-content {
+    position: relative;
+    height: 100%;
+    min-height: 0;
+    overflow: auto;
+}
+[data-forma-type="responsivegrid"] > .layout-content { align-items: start; grid-auto-rows: max-content; }
+[data-forma-type="responsivegrid"] > .layout-content > [data-forma-type],
+[data-forma-type="responsivestack"] > .layout-content[data-direction="vertical"] > [data-forma-type] {
+    width: auto !important;
+    min-width: 0;
+    box-sizing: border-box;
+}
+[data-forma-type="breakpointcontainer"] { height: 200px; }
+[data-forma-type="breakpointcontainer"] > .layout-header { display: none; }

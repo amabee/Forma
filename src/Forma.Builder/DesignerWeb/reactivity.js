@@ -43,6 +43,7 @@
   function sameValue(a, b) {
     return Object.is(a, b) || a && b && typeof a === "object" && typeof b === "object" && JSON.stringify(a) === JSON.stringify(b);
   }
+  const reactiveMarker = Symbol("forma.reactive");
   function createScope(context) {
     let disposed = false;
     const disposers = new Set(), bindings = new Map();
@@ -113,6 +114,7 @@
       const shape = signal(0);
       return new Proxy({ ...initial }, {
         get(object, key) {
+          if (key === reactiveMarker) return true;
           if (typeof key === "symbol") return Reflect.get(object, key);
           if (!properties.has(key)) properties.set(key, signal(undefined));
           return properties.get(key).value;
@@ -185,5 +187,9 @@
   }
   for (const event of ["input", "change"]) document.addEventListener(event, refresh, true);
   for (const event of ["click", "row-selection", "chip-remove"]) document.addEventListener(event, refresh);
-  window.formaReactivity = { createScope, refresh };
+  /** True for refs, computed values and reactive objects: live state tied to one page. */
+  function isLive(value) {
+    return !!value && typeof value === "object" && (value[reactiveMarker] === true || typeof value.subscribe === "function");
+  }
+  window.formaReactivity = { createScope, refresh, isLive };
 })();

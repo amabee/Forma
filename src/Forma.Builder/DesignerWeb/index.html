@@ -9,7 +9,7 @@
   <body>
     <header class="app-header">
       <div class="project-bar">
-        <span class="forma-logo" aria-hidden="true">◈</span><strong>Forma</strong>
+        <img class="forma-logo" src="forma-mark.svg" alt="" /><strong>Forma</strong>
         <nav class="menubar" aria-label="Main menu">
           <details>
             <summary>File</summary>
@@ -17,6 +17,7 @@
               <button data-command="new">New form <kbd>Ctrl+N</kbd></button>
               <button data-command="new-project">New project <kbd>Ctrl+Shift+N</kbd></button>
               <button data-command="open">Open… <kbd>Ctrl+O</kbd></button>
+              <button data-command="start-page">Start page…</button>
               <button data-command="save">Save <kbd>Ctrl+S</kbd></button>
               <button data-command="save-as">Save as… <kbd>Ctrl+Shift+S</kbd></button>
               <hr />
@@ -31,7 +32,13 @@
               <button data-command="undo" disabled>Undo <kbd>Ctrl+Z</kbd></button>
               <button data-command="redo" disabled>Redo <kbd>Ctrl+Y</kbd></button>
               <hr />
-              <button data-command="delete">Delete selected <kbd>Del</kbd></button>
+              <button data-selection-command="cut">Cut <kbd>Ctrl+X</kbd></button>
+              <button data-selection-command="copy">Copy <kbd>Ctrl+C</kbd></button>
+              <button data-selection-command="paste" disabled>Paste <kbd>Ctrl+V</kbd></button>
+              <button data-selection-command="duplicate">Duplicate <kbd>Ctrl+D</kbd></button>
+              <button data-selection-command="delete">Delete selected <kbd>Del</kbd></button>
+              <hr />
+              <button data-selection-command="select-all">Select all <kbd>Ctrl+A</kbd></button>
             </div>
           </details>
           <details>
@@ -40,6 +47,9 @@
               <button data-toggle="toolbox">Toggle toolbox</button>
               <button data-toggle="solution-explorer">Toggle solution explorer</button>
               <button data-toggle="properties">Toggle properties</button>
+              <hr />
+              <button data-view-option="grid" aria-pressed="false"><span class="view-check"></span>Show grid</button>
+              <button data-view-option="tabOrder" aria-pressed="false"><span class="view-check"></span>Show tab order</button>
             </div>
           </details>
           <details>
@@ -52,6 +62,9 @@
           <details>
             <summary>Help</summary>
             <div class="menu">
+              <button data-palette="palette">Command palette… <kbd>Ctrl+K</kbd></button>
+              <button data-palette="shortcuts">Keyboard shortcuts <kbd>F1</kbd></button>
+              <hr />
               <button data-command="about">About Forma</button>
             </div>
           </details>
@@ -67,18 +80,37 @@
           <button data-command="undo" disabled aria-label="Undo" title="Undo (Ctrl+Z)"><img class="icon-svg" src="icons/undo-2.svg" alt="" /></button>
           <button data-command="redo" disabled aria-label="Redo" title="Redo (Ctrl+Y)"><img class="icon-svg" src="icons/redo-2.svg" alt="" /></button>
         </div>
+        <div class="tool-cluster">
+          <button data-selection-command="copy" aria-label="Copy" title="Copy (Ctrl+C)"><img class="icon-svg" src="icons/copy.svg" alt="" /></button>
+          <button data-selection-command="paste" disabled aria-label="Paste" title="Paste (Ctrl+V)"><img class="icon-svg" src="icons/clipboard-paste.svg" alt="" /></button>
+          <button data-selection-command="duplicate" aria-label="Duplicate" title="Duplicate (Ctrl+D)"><img class="icon-svg" src="icons/copy-plus.svg" alt="" /></button>
+        </div>
+        <div class="tool-cluster align-tools" role="group" aria-label="Align selected controls" hidden>
+          <button data-align="left" aria-label="Align left edges" title="Align left edges"><img class="icon-svg" src="icons/align-start-vertical.svg" alt="" /></button>
+          <button data-align="center" aria-label="Align horizontal centers" title="Align horizontal centers"><img class="icon-svg" src="icons/align-center-vertical.svg" alt="" /></button>
+          <button data-align="right" aria-label="Align right edges" title="Align right edges"><img class="icon-svg" src="icons/align-end-vertical.svg" alt="" /></button>
+          <button data-align="top" aria-label="Align top edges" title="Align top edges"><img class="icon-svg" src="icons/align-start-horizontal.svg" alt="" /></button>
+          <button data-align="middle" aria-label="Align vertical centers" title="Align vertical centers"><img class="icon-svg" src="icons/align-center-horizontal.svg" alt="" /></button>
+          <button data-align="bottom" aria-label="Align bottom edges" title="Align bottom edges"><img class="icon-svg" src="icons/align-end-horizontal.svg" alt="" /></button>
+          <button data-align="distribute-horizontal" aria-label="Distribute horizontally" title="Distribute horizontally (3 or more)"><img class="icon-svg" src="icons/align-horizontal-distribute-center.svg" alt="" /></button>
+          <button data-align="distribute-vertical" aria-label="Distribute vertically" title="Distribute vertically (3 or more)"><img class="icon-svg" src="icons/align-vertical-distribute-center.svg" alt="" /></button>
+        </div>
         <div class="toolbar-right">
-          <span class="device" title="Form size"><img class="icon-svg" src="icons/monitor.svg" alt="" /><span id="device-caption">Desktop (640 × 440)</span></span>
+          <button id="device-button" class="device" type="button" title="Form size presets" aria-haspopup="menu" aria-expanded="false"><img class="icon-svg" src="icons/monitor.svg" alt="" /><span id="device-caption">Desktop (640 × 440)</span><img class="icon-svg" src="icons/chevron-down.svg" alt="" /></button>
+          <div id="device-menu" class="device-menu" role="menu" aria-label="Form size presets" hidden></div>
           <label class="zoom-label" title="Canvas zoom"><img class="icon-svg" src="icons/search.svg" alt="" />
-            <select id="zoom" aria-label="Canvas zoom">
+            <select id="zoom" aria-label="Canvas zoom" title="Zoom (Ctrl+wheel, Ctrl+= / Ctrl+-, Ctrl+0 for 100%)">
+              <option value="fit">Fit</option>
+              <option value="0.5">50%</option>
               <option value="0.75">75%</option>
               <option value="1" selected>100%</option>
               <option value="1.25">125%</option>
               <option value="1.5">150%</option>
+              <option value="2">200%</option>
             </select>
           </label>
           <button class="primary" data-preview><img class="icon-svg" src="icons/play.svg" alt="" /><span id="preview-caption">Preview</span></button>
-          <button id="theme-toggle" type="button" aria-pressed="true" aria-label="Switch to light mode" title="Switch to light mode">
+          <button id="theme-toggle" type="button" aria-label="Switch to light mode" title="Switch to light mode">
             <img class="icon-svg theme-sun" src="icons/sun.svg" alt="" /><img class="icon-svg theme-moon" src="icons/moon.svg" alt="" />
           </button>
         </div>
@@ -87,10 +119,10 @@
     <main class="workspace">
       <div class="left-sidebar">
         <nav class="left-panel-tabs" role="tablist" aria-label="Project panels">
-          <button role="tab" aria-selected="false" aria-controls="solution-explorer" data-left-panel="solution-explorer">Explorer</button>
-          <button role="tab" aria-selected="true" aria-controls="toolbox" data-left-panel="toolbox">Toolbox</button>
+          <button id="left-tab-explorer" role="tab" aria-selected="false" aria-controls="solution-explorer" data-left-panel="solution-explorer">Explorer</button>
+          <button id="left-tab-toolbox" role="tab" aria-selected="true" aria-controls="toolbox" data-left-panel="toolbox">Toolbox</button>
         </nav>
-      <aside id="toolbox" class="toolbox sidebar" aria-label="Toolbox">
+      <aside id="toolbox" class="toolbox sidebar" role="tabpanel" aria-labelledby="left-tab-toolbox">
         <div class="toolbox-head">
           <div class="panel-heading">Toolbox</div>
           <div class="library-filter" role="group" aria-label="Show">
@@ -109,6 +141,10 @@
           <button draggable="true" data-kind="accordion"><img class="icon-svg" src="icons/list.svg" alt="" />Accordion</button>
           <button draggable="true" data-kind="sidebar"><img class="icon-svg" src="icons/panel-top.svg" alt="" />Sidebar</button>
           <button draggable="true" data-kind="appshell"><img class="icon-svg" src="icons/panel-top.svg" alt="" />AppShell</button>
+          <button draggable="true" data-kind="responsivegrid"><img class="icon-svg" src="icons/grid-2x2.svg" alt="" />ResponsiveGrid</button>
+          <button draggable="true" data-kind="responsivestack"><img class="icon-svg" src="icons/list.svg" alt="" />ResponsiveStack</button>
+          <button draggable="true" data-kind="breakpointcontainer"><img class="icon-svg" src="icons/columns-2.svg" alt="" />BreakpointContainer</button>
+          <button draggable="true" data-kind="aspectratiocontainer"><img class="icon-svg" src="icons/panel-top.svg" alt="" />AspectRatioContainer</button>
           <button draggable="true" data-kind="responsivepanel"><img class="icon-svg" src="icons/panel-top.svg" alt="" />ResponsivePanel</button>
           <button draggable="true" data-kind="stackpanel"><img class="icon-svg" src="icons/list.svg" alt="" />StackPanel</button>
           <button draggable="true" data-kind="hstack"><img class="icon-svg" src="icons/columns-2.svg" alt="" />HStack</button>
@@ -458,7 +494,7 @@
         <p class="tool-note">Drag onto the form, or double-click to add.</p>
         </div>
       </aside>
-        <aside id="solution-explorer" class="solution-explorer sidebar" aria-label="Solution Explorer" hidden>
+        <aside id="solution-explorer" class="solution-explorer sidebar" role="tabpanel" aria-labelledby="left-tab-explorer" hidden>
           <div class="explorer-heading panel-heading">Solution Explorer<button data-command="new" title="Add form (Ctrl+N)" aria-label="Add form"><img class="icon-svg" src="icons/file-plus.svg" alt="" /></button></div>
           <label class="search explorer-search"><img class="icon-svg" src="icons/search.svg" alt="" /><input id="explorer-search" placeholder="Search project" aria-label="Search project" /></label>
           <ul id="explorer-tree" role="tree" aria-label="Project files"></ul>
@@ -498,23 +534,29 @@
       </section>
       <aside id="properties" class="properties sidebar" aria-label="Properties">
         <div class="panel-heading">
-          <div class="tabs">
-            <span class="active">Properties</span>
-            <span class="unavailable" title="Event binding is not implemented yet">Events</span>
+          <div class="tabs" role="tablist" aria-label="Component inspector">
+            <button id="inspector-properties-tab" class="active" role="tab" aria-selected="true" aria-controls="property-editors">Properties</button>
+            <button id="inspector-events-tab" role="tab" aria-selected="false" aria-controls="events-inspector" tabindex="-1">Events</button>
           </div>
           <button class="close-panel" data-toggle="properties" aria-label="Hide properties" title="Hide properties"><img class="icon-svg" src="icons/x.svg" alt="" /></button>
         </div>
         <div class="inspector-body">
+          <nav id="selection-path" class="selection-path" aria-label="Selection path"></nav>
           <select id="selection" aria-label="Selected control"></select>
+          <div id="css-override-summary" class="css-override-summary" role="note" hidden><span></span><button type="button">Remove from component.css</button></div>
           <label class="search property-search"><img class="icon-svg" src="icons/search.svg" alt="" /><input id="property-search" placeholder="Search properties" aria-label="Search properties" /></label>
           <div class="property-actions" id="custom-properties-action"><button data-command="edit-custom-properties" disabled>Custom Properties…</button></div>
           <div id="property-editors"></div>
+          <div id="events-inspector" role="tabpanel" aria-labelledby="inspector-events-tab" hidden>
+            <label class="search property-search"><img class="icon-svg" src="icons/search.svg" alt="" /><input id="event-search" placeholder="Search events" aria-label="Search events" /></label>
+            <div id="event-editors"></div>
+          </div>
         </div>
       </aside>
     </main>
     <footer class="statusbar">
-      <span><i class="ready-dot"></i><span id="status">Loading designer…</span></span>
-      <span id="selection-status">Form selected</span>
+      <span><i class="ready-dot"></i><span id="status" role="status" aria-live="polite">Loading designer…</span></span>
+      <span id="selection-status" aria-live="polite">Form selected</span>
       <span class="status-spacer"></span>
       <span id="coordinates">X: 0 &nbsp; Y: 0</span>
       <span>Forma 0.1.0</span>
@@ -523,7 +565,17 @@
       <div id="component-source-name" class="source-menu-title"></div>
       <button role="menuitem" data-source-command="view-css">View CSS <span>component.css</span></button>
       <button role="menuitem" data-source-command="view-script">View Script <span>script.js</span></button>
+      <button role="menuitem" data-source-command="view-events">View Events <span>event.js</span></button>
       <button role="menuitem" data-source-command="view-custom-properties">View Custom Properties <span>custom-properties.json</span></button>
+      <hr />
+      <button role="menuitem" data-selection-command="cut">Cut <span>Ctrl+X</span></button>
+      <button role="menuitem" data-selection-command="copy">Copy <span>Ctrl+C</span></button>
+      <button role="menuitem" data-selection-command="paste">Paste <span>Ctrl+V</span></button>
+      <button role="menuitem" data-selection-command="duplicate">Duplicate <span>Ctrl+D</span></button>
+      <button role="menuitem" data-selection-command="delete">Delete <span>Del</span></button>
+      <hr />
+      <button role="menuitem" data-source-command="bring-front">Bring to front</button>
+      <button role="menuitem" data-source-command="send-back">Send to back</button>
     </div>
     <script src="../Web/scripts/data-grid.js"></script>
     <script src="../Web/scripts/forma.js"></script>
@@ -537,6 +589,15 @@
     <script src="module-runtime.bundle.js"></script>
     <script src="component-customization.js"></script>
     <script src="workspace.js"></script>
+    <script src="toolbox.js"></script>
+    <script src="status.js"></script>
+    <script src="selection.js"></script>
+    <script src="canvas.js"></script>
+    <script src="start-page.js"></script>
+    <script src="palette.js"></script>
+    <script src="view-options.js"></script>
+    <script src="accessibility.js"></script>
     <script src="solution-explorer.js"></script>
+    <script src="event-inspector.bundle.js"></script>
   </body>
 </html>

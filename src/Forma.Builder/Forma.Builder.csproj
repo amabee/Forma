@@ -1,6 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
+    <ApplicationIcon>forma.ico</ApplicationIcon>
     <TargetFramework>net10.0-windows</TargetFramework>
     <Nullable>enable</Nullable>
     <UseWindowsForms>true</UseWindowsForms>
@@ -11,7 +12,8 @@
     <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.4129.50" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="DesignerWeb\**\*" Exclude="DesignerWeb\code-editor.bundle.js;DesignerWeb\code-editor.bundle.js.LICENSE.txt;DesignerWeb\javascript-worker.bundle.js;DesignerWeb\module-runtime.bundle.js" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="DesignerWeb\**\*" Exclude="DesignerWeb\code-editor.bundle.js;DesignerWeb\code-editor.bundle.js.LICENSE.txt;DesignerWeb\javascript-worker.bundle.js;DesignerWeb\module-runtime.bundle.js;DesignerWeb\event-inspector.bundle.js" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="DesignerWeb\event-inspector.bundle.js" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="DesignerWeb\code-editor.bundle.js" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="DesignerWeb\module-runtime.bundle.js" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="DesignerWeb\javascript-worker.bundle.js" CopyToOutputDirectory="PreserveNewest" />

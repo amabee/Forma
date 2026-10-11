@@ -1,3 +1,5 @@
+using Forma.Core.Rendering;
+
 namespace Forma.Core.Controls;
 
 public sealed class ColorPicker : Control
@@ -20,4 +22,16 @@ public sealed class ColorPicker : Control
         }
     }
     public event EventHandler? ColorChanged;
+
+    protected override void WriteRenderState(IDictionary<string, object?> state)
+    {
+        base.WriteRenderState(state);
+        state["color"] = Color;
+    }
+
+    protected override void OnRuntimeEvent(RuntimeEvent e)
+    {
+        base.OnRuntimeEvent(e);
+        if (e.Name == "value" && e.TryGetString("value", out var value)) Color = value;
+    }
 }

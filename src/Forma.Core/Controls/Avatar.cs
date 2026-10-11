@@ -6,4 +6,10 @@ public sealed class Avatar : Image
     public Avatar() { Text = "User"; SizeMode = "cover"; }
     public string Initials { get => _initials; set { ArgumentNullException.ThrowIfNull(value); SetProperty(ref _initials, value.Length > 4 ? value[..4] : value); } }
     public string Shape { get => _shape; set { if (value is "circle" or "rounded" or "square") SetProperty(ref _shape, value); } }
+
+    protected override void WriteRenderState(IDictionary<string, object?> state)
+    {
+        base.WriteRenderState(state);
+        state["initials"] = Initials; state["shape"] = Shape;
+    }
 }

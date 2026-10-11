@@ -7,4 +7,10 @@ public class IconButton : Button
     public string IconName { get => _iconName; set { if (Icon.Names.Contains(value)) SetProperty(ref _iconName, value); } }
     public bool ShowText { get => _showText; set => SetProperty(ref _showText, value); }
     public IconButton() => Text = "Search";
+
+    protected override void WriteRenderState(IDictionary<string, object?> state)
+    {
+        base.WriteRenderState(state);
+        state["iconName"] = IconName; state["showText"] = ShowText;
+    }
 }

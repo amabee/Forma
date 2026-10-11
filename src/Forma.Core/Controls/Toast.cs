@@ -1,3 +1,5 @@
+using Forma.Core.Rendering;
+
 namespace Forma.Core.Controls;
 
 public sealed class Toast : Component
@@ -15,4 +17,17 @@ public sealed class Toast : Component
     public event EventHandler? Closed;
     public void Show() => SetProperty(ref _isOpen, true, nameof(IsOpen));
     public void Close() { if (!_isOpen) return; SetProperty(ref _isOpen, false, nameof(IsOpen)); Closed?.Invoke(this, EventArgs.Empty); }
+
+    protected override void WriteRenderState(IDictionary<string, object?> state)
+    {
+        base.WriteRenderState(state);
+        state["variant"] = Variant; state["position"] = Position; state["duration"] = Duration; state["dismissible"] = Dismissible; state["isOpen"] = IsOpen;
+    }
+
+    protected override void OnRuntimeEvent(RuntimeEvent e)
+    {
+        base.OnRuntimeEvent(e);
+        // A timeout closes even non-dismissible toasts; users can only dismiss dismissible ones.
+        if (e.Name == "toast-close" && (Dismissible || e.TryGetString("reason", out var reason) && reason == "timeout")) Close();
+    }
 }

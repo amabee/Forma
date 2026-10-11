@@ -1,3 +1,5 @@
+using Forma.Core.Rendering;
+
 namespace Forma.Core.Controls;
 
 /// <summary>Path selection state. The host handles BrowseRequested with a native dialog.</summary>
@@ -25,4 +27,16 @@ public abstract class PathPicker : Control
     public event EventHandler? SelectedPathChanged;
     public event EventHandler? BrowseRequested;
     public void RequestBrowse() => BrowseRequested?.Invoke(this, EventArgs.Empty);
+
+    protected override void WriteRenderState(IDictionary<string, object?> state)
+    {
+        base.WriteRenderState(state);
+        state["selectedPath"] = SelectedPath; state["dialogTitle"] = DialogTitle;
+    }
+
+    protected override void OnRuntimeEvent(RuntimeEvent e)
+    {
+        base.OnRuntimeEvent(e);
+        if (e.Name == "browse") RequestBrowse();
+    }
 }

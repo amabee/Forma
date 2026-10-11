@@ -40,6 +40,27 @@ test('global editor shows only main.js and component editor uses script.js', asy
   assert.equal(window.document.querySelector('#tab-behavior span').textContent, 'script.js');
 });
 
+test('event scaffolds open event.js, preserve both drafts, and save imports and class methods together', async t => {
+  const { window, editor, messages } = fixture(t);
+  editor.receive({ action: 'source', source: { css: '', behavior: 'const value = forma.ref(1);', events: '', characteristics: '{}' } });
+  editor.receive({ action: 'event-handler', eventName: 'DoubleClick', componentName: 'button1', handlerClass: 'ButtonEventHandler' });
+  assert.equal(window.document.getElementById('editor-events').hidden, false);
+  editor.views.get('events').dispatch({ changes: { from: editor.source().events.indexOf('// Add'), insert: 'console.log(event.clientX);\n    ' } });
+  editor.receive({ action: 'event-handler', eventName: 'Change', componentName: 'button1', handlerClass: 'ButtonEventHandler' });
+  assert.ok(editor.source().events.includes('console.log(event.clientX)'));
+  assert.ok(editor.source().behavior.includes('const value = forma.ref(1)'));
+  assert.equal(editor.source().behavior.match(/import \{ ButtonEventHandler/g).length, 1);
+  const before = JSON.stringify(editor.source());
+  editor.receive({ action: 'event-handler', eventName: 'DoubleClick', componentName: 'button1', handlerClass: 'ButtonEventHandler' });
+  assert.equal(JSON.stringify(editor.source()), before);
+  await editor.command('save');
+  const saved = messages.at(-1); assert.equal(saved.event, 'save');
+  assert.ok(saved.source.events.includes('static button1_DoubleClick(event)'));
+  assert.ok(saved.source.behavior.includes('forma.on("DoubleClick", ButtonEventHandler.button1_DoubleClick)'));
+  editor.receive({ action: 'saved', source: saved.source });
+  assert.equal(window.document.getElementById('editor-dirty').textContent, 'Saved');
+});
+
 test('editor has line numbers, syntax colors, tabs, formats and saves all sources to the host', async t => {
   const { window, editor, messages } = fixture(t);
   const source = { css: ':host{color:red}', behavior: 'api.on("click",()=>{});', characteristics: '{"count":1}' };
@@ -64,7 +85,7 @@ test('editor has line numbers, syntax colors, tabs, formats and saves all source
 
 test('invalid format does not partly change sources and a host error permits retry', async t => {
   const { window, editor, messages } = fixture(t);
-  const source = { css: ':host{color:red}', behavior: 'const =', characteristics: '{}' };
+  const source = { css: ':host{color:red}', behavior: 'const =', events: '', characteristics: '{}' };
   editor.receive({ action: 'source', source });
   await editor.command('save');
   assert.equal(JSON.stringify(editor.source()), JSON.stringify(source));

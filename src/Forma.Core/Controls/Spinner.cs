@@ -7,4 +7,10 @@ public sealed class Spinner : Control
     public Spinner() => Text = "Loading…";
     public bool IsActive { get => _isActive; set => SetProperty(ref _isActive, value); }
     public int Speed { get => _speed; set => SetProperty(ref _speed, Math.Clamp(value, 100, 5000)); }
+
+    protected override void WriteRenderState(IDictionary<string, object?> state)
+    {
+        base.WriteRenderState(state);
+        state["isActive"] = IsActive; state["speed"] = Speed;
+    }
 }

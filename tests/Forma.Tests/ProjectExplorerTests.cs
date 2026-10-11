@@ -21,7 +21,7 @@ public class ProjectExplorerTests
         Assert.Equal(2, forms.Children!.Length);
         var nestedPanel = forms.Children[0].Children!.Single(node => node.ControlId == panel.Id);
         var nestedButton = nestedPanel.Children!.Single(node => node.ControlId == button.Id);
-        Assert.Equal(new[] { "view-css", "view-script", "view-custom-properties" }, nestedButton.Children!.Select(node => node.Command));
+        Assert.Equal(new[] { "view-css", "view-script", "view-events", "view-custom-properties" }, nestedButton.Children!.Select(node => node.Command));
         Assert.Equal("edit-global-script", tree.Children!.Single(node => node.Key == "global-script").Command);
         // The bridge uses default JSON naming; tree properties must still be camelCase.
         Assert.True(JsonSerializer.SerializeToElement(tree).TryGetProperty("children", out _));

@@ -1,3 +1,5 @@
+using Forma.Core.Rendering;
+
 namespace Forma.Core.Controls;
 
 /// <summary>A categorized name/value editor. Object binding is supplied by application code.</summary>
@@ -30,5 +32,18 @@ public sealed class PropertyGrid : Control
         next[index] = next[index] with { Value = value };
         Entries = next;
         PropertyValueChanged?.Invoke(this, new(index, next[index].Name, value));
+    }
+
+    protected override void WriteRenderState(IDictionary<string, object?> state)
+    {
+        base.WriteRenderState(state);
+        state["entries"] = Entries; state["readOnly"] = ReadOnly;
+    }
+
+    protected override void OnRuntimeEvent(RuntimeEvent e)
+    {
+        base.OnRuntimeEvent(e);
+        if (e.Name == "property-value" && e.TryGetInt("index", out var index) && e.TryGetString("value", out var value))
+            SetEntryValue(index, value);
     }
 }

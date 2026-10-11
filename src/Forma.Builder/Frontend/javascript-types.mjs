@@ -1,6 +1,6 @@
 import { propertiesFor, eventNames } from "./code-assistance.mjs";
 
-const numbers = new Set("x y width height minimumWidth minimumHeight maximumWidth maximumHeight layoutSlot borderWidth borderRadius opacity fontSize lineHeight letterSpacing marginTop marginRight marginBottom marginLeft paddingTop paddingRight paddingBottom paddingLeft tabIndex interval minimum maximum increment speed lines maxLength strokeWidth thickness stars columns rowCount initialDelay showDuration totalItems pageSize page pageCount selectedIndex selectedTab selectedRow sortColumn duration gap breakpoint".split(" "));
+const numbers = new Set("x y width height minimumWidth minimumHeight maximumWidth maximumHeight layoutSlot borderWidth borderRadius opacity fontSize lineHeight letterSpacing marginTop marginRight marginBottom marginLeft paddingTop paddingRight paddingBottom paddingLeft tabIndex interval minimum maximum increment speed lines maxLength strokeWidth thickness stars columns rowCount initialDelay showDuration totalItems pageSize page pageCount selectedIndex selectedTab selectedRow sortColumn duration gap breakpoint narrowColumns aspectRatio".split(" "));
 const booleans = new Set("enabled visible focusable readOnly password checked isActive headerVisible canCancel isOpen maskCompleted isBusy workerReportsProgress workerSupportsCancellation sortingEnabled filteringEnabled dismissible removable isRemoved showText primaryEnabled expanded".split(" "));
 const enums = {
   dock: ["none", "top", "bottom", "left", "right", "fill"],
@@ -51,8 +51,49 @@ interface FormaProperties { ${maps} }
 interface FormaWritableProperties { ${writes} }
 interface FormaControls { ${names} }
 type FormaModules = typeof import("./global-script").__formaModules;
-type FormaEvent<E extends string> = Lowercase<E> extends keyof HTMLElementEventMap ? HTMLElementEventMap[Lowercase<E>] : Lowercase<E> extends "doubleclick" ? MouseEvent : Lowercase<E> extends "mousewheel" ? WheelEvent : CustomEvent<{ row?: number; index?: number; text?: string; itemId?: string }>;
+type FormaNativeEvent<E extends string> = Lowercase<E> extends keyof HTMLElementEventMap ? HTMLElementEventMap[Lowercase<E>] : Lowercase<E> extends "doubleclick" ? MouseEvent : Lowercase<E> extends "mousewheel" ? WheelEvent : CustomEvent<{ row?: number; index?: number; text?: string; itemId?: string; property?: string; value?: unknown; previousValue?: unknown }>;
+interface FormaComponentHandle<K extends keyof FormaProperties = keyof FormaProperties> {
+  readonly id: string;
+  readonly name: string;
+  readonly kind: K;
+  readonly element: HTMLElement | null;
+  get<P extends keyof FormaProperties[K]>(property: P): FormaProperties[K][P];
+  get(property: string): unknown;
+  set<P extends keyof FormaProperties[K] & FormaWritableProperties[K]>(property: P, value: FormaProperties[K][P]): void;
+  set(property: string, value: unknown): void;
+  bind<P extends keyof FormaProperties[K]>(property: P): P extends FormaWritableProperties[K] ? FormaRef<FormaProperties[K][P]> : FormaReadOnlyRef<FormaProperties[K][P]>;
+  bind(property: string): FormaRef<unknown>;
+  /** Subscribe to the active form. Returns unsubscribe; also cleaned up with the subscribing script. */
+  on<E extends ${union(eventNames)} | Lowercase<${union(eventNames)}> | (string & {})>(event: E, callback: (event: FormaEvent<E>) => void | Promise<void>): () => void;
+}
+interface FormaRoot extends FormaComponentHandle<"form"> {}
+interface FormaEventMetadata {
+  /** Plain metadata for logs/bridges; omits DOM objects, functions and cycles. */
+  toJSON(): Omit<FormaEventMetadata, "toJSON" | "source" | "subscriber" | "path" | "originalEvent"> & { type: string; source: { id: string; name: string; kind: string }; subscriber: { id: string; name: string; kind: string }; path: string[]; detail?: unknown; defaultPrevented: boolean; cancelable: boolean; bubbles: boolean; isTrusted: boolean };
+  readonly eventId: string;
+  readonly eventName: string;
+  readonly timestamp: number;
+  readonly id: string;
+  readonly source: FormaComponentHandle;
+  /** Component owning this subscription. currentTarget retains its DOM meaning. */
+  readonly subscriber: FormaComponentHandle;
+  readonly path: readonly FormaComponentHandle[];
+  readonly property?: string;
+  readonly value?: unknown;
+  readonly previousValue?: unknown;
+  readonly origin: "user" | "programmatic" | "binding" | "system" | "native";
+  readonly phase: "capture" | "target" | "bubble" | "none";
+  handled: boolean;
+  readonly propagationStopped: boolean;
+  readonly originalEvent: Event;
+  readonly modifiers: { ctrl: boolean; shift: boolean; alt: boolean; meta: boolean };
+  readonly mouse?: { x: number; y: number; screenX: number; screenY: number; button: number; buttons: number; deltaX?: number; deltaY?: number; deltaZ?: number; deltaMode?: number };
+  readonly pointer?: { id: number; type: string; pressure: number; isPrimary: boolean; width: number; height: number };
+  readonly keyboard?: { key: string; code: string; repeat: boolean; location: number; isComposing: boolean };
+}
+type FormaEvent<E extends string = string> = FormaNativeEvent<E> & FormaEventMetadata;
 interface FormaApi {
+  readonly root: FormaRoot;
   /** Read a current runtime property. A plain return value is a snapshot. */
   get<N extends keyof FormaControls, P extends keyof FormaProperties[FormaControls[N]]>(name: N, property: P): FormaProperties[FormaControls[N]][P];
   get(name: string, property: string): unknown;
@@ -67,7 +108,7 @@ interface FormaApi {
   computed<T>(getter: () => T): FormaReadOnlyRef<T>;
   effect(callback: () => void): () => void;
   watch<T>(source: FormaReadOnlyRef<T> | (() => T), callback: (value: T, previous: T) => void, options?: { immediate?: boolean }): () => void;
-  on<E extends ${union(eventNames)} | Lowercase<${union(eventNames)}> | (string & {})>(event: E, callback: (event: FormaEvent<E>) => void | Promise<void>): void;
+  on<E extends ${union(eventNames)} | Lowercase<${union(eventNames)}> | (string & {})>(event: E, callback: (event: FormaEvent<E>) => void | Promise<void>): () => void;
   provide<T>(name: string, value: T): T;
   use<N extends keyof FormaModules>(name: N): FormaModules[N];
   use(name: string): unknown;
@@ -76,6 +117,10 @@ interface FormaApi {
   cleanup(callback: () => void): void;
   validate(): boolean; submit(): boolean; reset(): boolean;
   showDialog(name: string): void;
+  /** Opens another form in its own window; modal blocks this one. Resolves with closeForm's result. */
+  showForm(name: string, options?: { modal?: boolean }): Promise<unknown>;
+  /** Closes this form's window and hands result to the opener's showForm promise. */
+  closeForm(result?: unknown): void;
   showToast(name: string, options?: { text?: string; variant?: "neutral" | "info" | "success" | "warning" | "caution" | "error" | "danger"; position?: string; duration?: number; dismissible?: boolean }): void;
   closeToast(name: string): void;
   addRow(name: string, cells: string[]): void;

@@ -1,3 +1,4 @@
+using Forma.Core.Rendering;
 using System.Globalization;
 
 namespace Forma.Core.Controls;
@@ -84,12 +85,47 @@ public sealed class DataGridView : Control
             return;
         var cells = _rows[row];
         if (cells.Length < _columns.Length)
+        {
+            // Pad with empty cells: filtering, sorting and the Rows setter all assume non-null cells.
+            var length = cells.Length;
             Array.Resize(ref cells, _columns.Length);
+            Array.Fill(cells, "", length, cells.Length - length);
+        }
         if (cells[column] == value)
             return;
         cells[column] = value;
         _rows[row] = cells;
         OnPropertyChanged(nameof(Rows));
         CellChanged?.Invoke(this, new(row, column, value));
+    }
+
+    protected override void WriteRenderState(IDictionary<string, object?> state)
+    {
+        base.WriteRenderState(state);
+        state["columns"] = Columns; state["rows"] = Rows; state["readOnly"] = ReadOnly;
+        state["sortingEnabled"] = SortingEnabled; state["filteringEnabled"] = FilteringEnabled;
+        state["filterText"] = FilterText; state["sortColumn"] = SortColumn; state["sortDirection"] = SortDirection;
+        state["selectedRow"] = SelectedRow; state["visibleRowIndices"] = VisibleRowIndices;
+    }
+
+    protected override void OnRuntimeEvent(RuntimeEvent e)
+    {
+        base.OnRuntimeEvent(e);
+        switch (e.Name)
+        {
+            case "grid-sort" when SortingEnabled && e.TryGetInt("column", out var column) && column >= 0 && column < Columns.Length:
+                SortDirection = SortColumn == column && SortDirection == "ascending" ? "descending" : "ascending";
+                SortColumn = column;
+                break;
+            case "grid-filter" when FilteringEnabled && e.TryGetString("text", out var filter):
+                FilterText = filter;
+                break;
+            case "grid-select" when e.TryGetInt("row", out var row) && VisibleRowIndices.Contains(row):
+                SelectedRow = row;
+                break;
+            case "cell" when e.TryGetInt("row", out var cellRow) && e.TryGetInt("column", out var cellColumn) && e.TryGetString("value", out var value):
+                SetCell(cellRow, cellColumn, value);
+                break;
+        }
     }
 }

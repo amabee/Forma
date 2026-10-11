@@ -128,14 +128,23 @@
     @apply flex-col items-stretch flex-nowrap;
   }
   [data-forma-type="chipgroup"] button {
-    @apply rounded-full border border-slate-300 bg-slate-100 text-slate-700 px-3 py-1;
+    @apply rounded-full border-0 bg-slate-100 px-3 py-1 font-medium text-slate-700 hover:bg-slate-200;
+  }
+  [data-forma-type="chipgroup"] button.selected {
+    @apply bg-blue-600 text-white hover:bg-blue-700;
+  }
+  /* Button group: one joined bar; neighbours share a border instead of doubling it. */
+  [data-forma-type="buttongroup"] {
+    @apply gap-0;
   }
   [data-forma-type="buttongroup"] button {
-    @apply flex-1 rounded border border-slate-300 bg-white text-slate-700 px-3 py-1;
+    @apply -ml-px flex-1 rounded-none border border-slate-300 bg-white px-3 py-1 font-medium text-slate-700 first:ml-0 first:rounded-l-md last:rounded-r-md hover:bg-slate-50;
   }
-  [data-forma-type="chipgroup"] button.selected,
+  [data-forma-type="buttongroup"][data-orientation="vertical"] button {
+    @apply ml-0 -mt-px first:mt-0 first:rounded-t-md first:rounded-bl-none last:rounded-b-md last:rounded-tr-none;
+  }
   [data-forma-type="buttongroup"] button.selected {
-    @apply bg-blue-600 border-blue-600 text-white;
+    @apply relative z-10 border-blue-600 bg-blue-600 text-white hover:bg-blue-700;
   }
   [data-forma-type="chipgroup"] button:focus-visible,
   [data-forma-type="buttongroup"] button:focus-visible,
@@ -160,11 +169,15 @@
   [data-forma-type="checkboxgroup"] input {
     @apply accent-blue-600;
   }
+  /* Segmented control: a soft track with the selected segment raised on it. */
+  [data-forma-type="segmentedcontrol"] {
+    @apply flex-nowrap gap-1;
+  }
   [data-forma-type="segmentedcontrol"] button {
-    @apply flex-1 rounded border border-slate-300 px-3 py-1 text-inherit;
+    @apply flex-1 rounded-md border-0 bg-transparent px-3 py-1 font-medium text-slate-600 hover:text-slate-900;
   }
   [data-forma-type="segmentedcontrol"] button.selected {
-    @apply bg-blue-600 border-blue-600 text-white;
+    @apply bg-white text-slate-900 shadow-sm;
   }
   [data-forma-type="rating"] {
     @apply flex items-center gap-1 overflow-auto;
@@ -238,7 +251,7 @@
     @apply flex items-center justify-between gap-2;
   }
   .forma-form [data-forma-type="pagination"] button {
-    @apply border-slate-300 bg-slate-50 px-2 text-slate-800;
+    @apply rounded-md border-slate-200 bg-white px-3 font-medium text-slate-700 hover:bg-slate-50;
   }
   .forma-form [data-forma-type="richtextbox"] {
     @apply flex flex-col overflow-hidden;
@@ -280,8 +293,15 @@
   .forma-form textarea {
     @apply resize-none rounded border border-slate-300 p-2;
   }
+  /* Progress: a rounded fill on a soft track instead of the browser's default bar. */
   .forma-form progress {
-    @apply accent-blue-500;
+    @apply appearance-none overflow-hidden rounded-full;
+  }
+  .forma-form progress::-webkit-progress-bar {
+    @apply rounded-full bg-slate-200;
+  }
+  .forma-form progress::-webkit-progress-value {
+    @apply rounded-full bg-blue-500 transition-[width];
   }
   .forma-form [type="range"] {
     @apply accent-blue-500;
@@ -363,15 +383,20 @@
   .forma-form [data-forma-type] {
     @apply box-border cursor-move touch-none select-none;
   }
-  .forma-form button {
+  /* Baseline for form elements. :where() keeps these at the lowest specificity so every
+     control-specific rule below (chips, stars, segments, toolbar items...) wins over them. */
+  :where(.forma-form) button {
     @apply overflow-hidden text-ellipsis whitespace-nowrap rounded border border-blue-600 px-2 py-1 font-semibold;
   }
-  .forma-form input,
-  .forma-form select {
+  :where(.forma-form) input,
+  :where(.forma-form) select {
     @apply rounded border border-slate-300 px-2.5 py-2;
   }
-  .forma-form input::placeholder {
-    @apply text-slate-400;
+  /* Placeholders follow the field's Foreground color, just lighter. */
+  .forma-form input::placeholder,
+  .forma-form textarea::placeholder {
+    color: currentColor;
+    opacity: 0.5;
   }
   .forma-form [data-forma-type="label"] {
     @apply flex items-center overflow-hidden whitespace-nowrap font-semibold;
@@ -420,7 +445,7 @@
   [data-forma-type="toolbar"] button,
   [data-forma-type="toolstrip"] button,
   .command-menu > summary {
-    @apply cursor-pointer list-none whitespace-nowrap rounded px-2 py-1 text-sm hover:bg-blue-100 focus-visible:outline-blue-500 disabled:cursor-default disabled:opacity-40;
+    @apply cursor-pointer list-none whitespace-nowrap rounded border-0 bg-transparent px-2 py-1 text-sm font-normal text-inherit hover:bg-slate-900/5 focus-visible:outline-blue-500 disabled:cursor-default disabled:opacity-40;
   }
   .command-menu {
     @apply relative;
@@ -496,6 +521,183 @@
   }
   .forma-form.drop-target {
     @apply ring-2 ring-inset ring-blue-500;
+  }
+  /* Multi-selection: every member is outlined; the primary also gets resize handles. */
+  .forma-form .forma-multi-selected {
+    outline: 2px solid rgb(59 130 246 / 0.85);
+    outline-offset: 1px;
+  }
+  /* Changed-from-default marker, reset button and color swatches in the inspector */
+  .property-group label {
+    @apply relative;
+  }
+  .property-group label.property-modified {
+    @apply font-semibold text-ink;
+  }
+  .property-reset {
+    @apply absolute top-1.5 left-[78px] size-5 rounded text-[12px] leading-none text-muted hover:bg-hover hover:text-ink;
+  }
+  /* Command palette and keyboard shortcuts sheet */
+  .palette-backdrop {
+    @apply fixed inset-0 z-[1200] flex items-start justify-center bg-black/30 px-4 pt-[12vh];
+  }
+  .palette {
+    @apply flex max-h-[70vh] w-[560px] max-w-full flex-col overflow-hidden rounded-xl border border-line bg-raised text-ink;
+    box-shadow: 0 24px 64px -16px rgb(0 0 0 / 0.55);
+  }
+  .palette-input {
+    @apply w-full shrink-0 border-b border-line bg-transparent px-4 py-3 text-[14px] text-ink outline-none placeholder:text-faint;
+  }
+  .palette-results {
+    @apply min-h-0 overflow-y-auto p-1.5;
+  }
+  .palette-item {
+    @apply flex cursor-pointer items-center gap-3 rounded-md px-3 py-2 text-[13px];
+  }
+  .palette-item[aria-selected="true"] {
+    @apply bg-accent-soft;
+  }
+  .palette-group {
+    @apply w-14 shrink-0 text-[11px] text-faint uppercase;
+  }
+  .palette-label {
+    @apply min-w-0 flex-1 truncate;
+  }
+  .palette-hint {
+    @apply shrink-0 text-[12px] text-muted;
+  }
+  .palette-empty {
+    @apply px-3 py-4 text-center text-[13px] text-faint;
+  }
+  .palette.shortcuts {
+    @apply gap-4 overflow-y-auto p-5;
+  }
+  .palette-header {
+    @apply flex items-center justify-between;
+  }
+  .palette-header h2 {
+    @apply text-base font-semibold;
+  }
+  .palette-close {
+    @apply size-8 rounded-md text-xl leading-none text-muted hover:bg-hover hover:text-ink;
+  }
+  .shortcut-group h3 {
+    @apply mb-1.5 text-[12px] font-semibold tracking-wide text-muted uppercase;
+  }
+  .shortcut-group dl {
+    @apply grid grid-cols-[minmax(0,14rem)_1fr] gap-x-4 gap-y-1 text-[13px];
+  }
+  .shortcut-group dt {
+    @apply font-mono text-[12px] text-ink;
+  }
+  .shortcut-group dd {
+    @apply text-muted;
+  }
+
+  /* Start page: a dialog over the workspace with templates and recent projects */
+  .start-page {
+    @apply fixed inset-0 z-[1100] flex items-center justify-center bg-black/40 p-4;
+  }
+  .start-panel {
+    @apply flex max-h-[calc(100vh-32px)] w-[640px] max-w-full flex-col gap-5 overflow-y-auto rounded-2xl border border-line bg-raised p-6 text-ink;
+    box-shadow: 0 24px 64px -16px rgb(0 0 0 / 0.55);
+  }
+  .start-header {
+    @apply flex items-center justify-between;
+  }
+  .start-header h2 {
+    @apply text-lg font-semibold;
+  }
+  .start-close {
+    @apply size-8 rounded-md text-xl leading-none text-muted hover:bg-hover hover:text-ink;
+  }
+  .start-section h3 {
+    @apply mb-2 text-[12px] font-semibold tracking-wide text-muted uppercase;
+  }
+  .start-actions, .start-templates {
+    @apply grid grid-cols-2 gap-2 max-sm:grid-cols-1;
+  }
+  .start-templates {
+    @apply grid-cols-3 max-sm:grid-cols-1;
+  }
+  .start-action, .start-recent-item {
+    @apply flex w-full flex-col items-start gap-0.5 rounded-lg border border-line bg-panel px-3 py-2.5 text-left hover:border-accent hover:bg-hover disabled:opacity-50;
+  }
+  .start-action strong, .start-recent-item strong {
+    @apply text-[13px] font-semibold;
+  }
+  .start-action span, .start-recent-item span {
+    @apply text-[12px] leading-snug text-muted;
+  }
+  .start-recent {
+    @apply flex flex-col gap-1.5;
+  }
+  .start-recent-item span {
+    @apply max-w-full truncate;
+  }
+  .start-empty {
+    @apply text-[12px] text-faint;
+  }
+  .css-override-summary {
+    @apply mb-2 flex flex-col items-start gap-1.5 rounded-md bg-amber-500/10 px-3 py-2 text-[12px] leading-snug text-amber-300;
+  }
+  [data-theme="light"] .css-override-summary {
+    @apply text-amber-700;
+  }
+  .css-override-summary button {
+    @apply rounded px-1.5 py-0.5 font-semibold underline hover:bg-hover disabled:opacity-50;
+  }
+  .property-override {
+    @apply col-span-full mt-1 flex items-center gap-2 rounded bg-amber-500/10 px-2 py-1 text-[11px] font-normal text-amber-300;
+  }
+  [data-theme="light"] .property-override {
+    @apply text-amber-700;
+  }
+  .property-override button {
+    @apply ml-auto shrink-0 rounded px-1.5 py-0.5 font-semibold underline hover:bg-hover disabled:opacity-50;
+  }
+  .color-swatches {
+    @apply col-start-2 mt-1 flex flex-wrap gap-1;
+  }
+  .color-swatches button {
+    @apply size-4 rounded-sm border border-line hover:scale-110;
+  }
+  /* Multi-selection inspector: properties not shared by every selected control are hidden. */
+  .property-group label.multi-hidden,
+  .property-group.multi-empty {
+    display: none;
+  }
+  .property-group [data-mixed="true"]::placeholder {
+    @apply italic;
+  }
+  .selection-path {
+    @apply mb-2 flex flex-wrap items-center gap-1 text-[12px] text-faint;
+  }
+  .selection-path button {
+    @apply max-w-32 truncate rounded px-1.5 py-0.5 text-muted hover:bg-hover hover:text-ink;
+  }
+  .selection-path button[aria-current="true"] {
+    @apply font-semibold text-ink;
+  }
+  .component-source-menu hr {
+    @apply my-1 border-line;
+  }
+  /* View > Show grid / Show tab order */
+  .forma-form.show-grid {
+    background-image: radial-gradient(rgb(100 116 139 / 0.45) 1px, transparent 1.2px);
+    background-size: 8px 8px;
+  }
+  .tab-order-layer {
+    @apply pointer-events-none absolute inset-0 z-[950];
+  }
+  .tab-order-badge {
+    @apply absolute flex h-5 min-w-5 -translate-x-1.5 -translate-y-1.5 items-center justify-center rounded-full bg-amber-500 px-1 text-[11px] font-bold text-black shadow;
+  }
+  .view-check {
+    @apply inline-block w-4 text-accent;
+  }
+  #selection-marquee {
+    @apply pointer-events-none absolute z-[900] border border-blue-500 bg-blue-500/10;
   }
   .design-muted {
     @apply opacity-50;
@@ -607,6 +809,31 @@
   .layout-content {
     @apply relative h-full min-h-0 overflow-auto;
   }
+  [data-forma-type="responsivegrid"] > .layout-content > [data-forma-type],
+  [data-forma-type="responsivestack"] > .layout-content[data-direction="vertical"] > [data-forma-type] {
+    width: auto !important;
+    @apply min-w-0;
+    box-sizing: border-box;
+  }
+  [data-forma-type="responsivegrid"] > .layout-content {
+    @apply grid items-start;
+    grid-auto-rows: max-content;
+  }
+  [data-forma-type="breakpointcontainer"] > .layout-header {
+    @apply pointer-events-none absolute top-1 right-1 z-10 rounded bg-blue-50 px-2 text-[10px] leading-5 text-blue-600;
+  }
+  .preview-mode [data-forma-type="breakpointcontainer"] > .layout-header { display: none; }
+  body:not(.preview-mode) [data-forma-type="responsivegrid"] > .layout-content {
+    background-image: linear-gradient(to right, transparent calc(100% - 1px), #3b82f626 0);
+    background-size: calc(100% / var(--responsive-columns, 2)) 100%;
+  }
+  body:not(.preview-mode) [data-forma-type="responsivegrid"] > .layout-content:empty::after {
+    @apply pointer-events-none absolute top-1 right-1 rounded bg-blue-50 px-2 text-[10px] leading-5 text-blue-600;
+    content: attr(data-grid-label);
+  }
+  [data-forma-type="aspectratiocontainer"] {
+    box-sizing: border-box;
+  }
   [data-forma-type="sidebar"] > .layout-content {
     @apply overflow-x-hidden overflow-y-auto;
   }
@@ -618,7 +845,7 @@
   }
   [data-forma-type="appshell"][data-narrow="false"][data-orientation="horizontal"]
     > .layout-content
-    > [data-forma-type] {
+    > [data-forma-type]:not([data-forma-type="aspectratiocontainer"]) {
     height: 100% !important;
   }
   [data-forma-type="appshell"][data-narrow="true"]
@@ -1081,7 +1308,7 @@
     @apply flex shrink-0 items-center gap-1;
   }
   .forma-logo {
-    @apply grid size-8 place-items-center rounded-lg bg-accent-soft text-lg leading-none text-accent;
+    @apply h-7 w-auto shrink-0;
   }
   .project-bar strong {
     @apply mr-3 ml-2 text-[15px] font-semibold tracking-tight text-ink;
@@ -1140,6 +1367,22 @@
   .device,
   .zoom-label {
     @apply flex h-9 items-center gap-2 rounded-lg px-3 whitespace-nowrap text-muted;
+  }
+  .device:hover {
+    @apply bg-hover text-ink;
+  }
+  .device-menu {
+    @apply fixed z-[1000] flex w-[220px] flex-col rounded-xl border border-line bg-raised p-1.5 text-ink;
+    box-shadow: 0 16px 40px -12px rgb(0 0 0 / 0.45);
+  }
+  .device-menu button {
+    @apply flex items-center justify-between rounded-md px-2.5 py-1.5 text-[13px] hover:bg-hover disabled:opacity-50;
+  }
+  .device-menu button[aria-checked="true"] {
+    @apply bg-accent-soft;
+  }
+  .device-menu small {
+    @apply text-[12px] text-muted tabular-nums;
   }
   .zoom-label {
     @apply border border-line bg-field pr-1;
@@ -1280,6 +1523,16 @@
   .tool-group button[draggable="true"] {
     @apply cursor-grab active:cursor-grabbing;
   }
+  /* Groups with no search matches disappear instead of showing an empty heading. */
+  .tool-group.search-empty {
+    display: none;
+  }
+  .recent-tools summary {
+    @apply text-accent;
+  }
+  .toolbox-empty {
+    @apply mx-2 mt-3 text-center text-[12px] text-faint;
+  }
   .tool-note {
     @apply mx-2 mt-3 rounded-lg border border-dashed border-line px-3 py-2.5 text-[12px] leading-snug text-faint;
   }
@@ -1413,9 +1666,14 @@
   .tabs {
     @apply flex h-full items-stretch gap-5;
   }
-  .tabs span {
+  .tabs span, .tabs button {
     @apply relative flex items-center text-muted;
   }
+  .tabs button { @apply cursor-pointer bg-transparent focus-visible:outline-2 focus-visible:outline-accent; }
+  .event-note { @apply px-1 py-3 text-xs leading-relaxed text-muted; }
+  .event-handler { @apply flex w-full items-center justify-between gap-3 rounded px-2 py-2 text-left text-xs text-ink hover:bg-hover focus-visible:outline-2 focus-visible:outline-accent; }
+  .event-handler small { @apply max-w-[55%] truncate text-muted; }
+  .event-handler:disabled { @apply cursor-default opacity-50; }
   .tabs .active {
     @apply text-ink;
   }
@@ -1549,6 +1807,55 @@
     box-shadow: 0 0 0 3px rgb(16 185 129 / 0.18);
   }
 
+  /* Problems: error tone, a count button and a short history popover */
+  .statusbar[data-tone="error"] #status {
+    @apply text-red-400;
+  }
+  [data-theme="light"] .statusbar[data-tone="error"] #status {
+    @apply text-red-600;
+  }
+  .statusbar[data-tone="error"] .ready-dot {
+    @apply bg-red-500;
+    box-shadow: 0 0 0 3px rgb(239 68 68 / 0.2);
+  }
+  .status-problems {
+    @apply rounded px-1.5 py-0.5 text-[12px] font-semibold text-red-400 hover:bg-hover;
+  }
+  [data-theme="light"] .status-problems {
+    @apply text-red-600;
+  }
+  .status-problem-list {
+    @apply fixed z-[1000] w-90 max-w-[calc(100vw-16px)] rounded-xl border border-line bg-raised p-2 text-[12px] text-ink;
+    box-shadow: 0 16px 40px -12px rgb(0 0 0 / 0.45);
+  }
+  .status-problem-heading {
+    @apply mb-1 flex items-center justify-between px-1 font-semibold;
+  }
+  .status-problem-heading button {
+    @apply rounded px-2 py-0.5 font-normal text-muted hover:bg-hover hover:text-ink;
+  }
+  .status-problem-list ol {
+    @apply max-h-64 overflow-y-auto;
+  }
+  .status-problem-list li {
+    @apply flex gap-3 rounded-md px-1 py-1.5 leading-snug;
+  }
+  .status-problem-list time {
+    @apply shrink-0 tabular-nums text-faint;
+  }
+
+  /* Why a property is locked, shown under the field */
+  .property-group label[data-locked-reason]::after {
+    content: attr(data-locked-reason);
+    @apply col-span-full mt-1 block text-[11px] leading-snug font-normal text-faint;
+  }
+
+  /* Unsaved changes marker next to the form name */
+  #form-name[data-unsaved="true"]::after {
+    content: " \25CF";
+    @apply text-accent;
+  }
+
   /* Right-click source menu */
   .component-source-menu {
     @apply fixed z-[1000] min-w-72 rounded-xl border border-line bg-raised p-1.5 text-ink;
@@ -1633,6 +1940,10 @@
   .explorer-row > .icon-svg { @apply size-4 shrink-0; }
   .explorer-label { @apply truncate; }
   .explorer-lock { @apply ml-auto size-3 opacity-60; }
+  .explorer-lock-toggle { @apply ml-auto flex size-5 items-center justify-center rounded opacity-0 hover:bg-hover; }
+  .explorer-lock-toggle img { @apply size-3; }
+  .explorer-row:hover .explorer-lock-toggle, .explorer-row:focus .explorer-lock-toggle, .explorer-lock-toggle[aria-pressed="true"] { @apply opacity-70; }
+  .explorer-lock-toggle[aria-pressed="true"]:hover { @apply opacity-100; }
   .explorer-empty { @apply px-3 py-2 text-xs text-muted; }
   @media (max-width: 1100px) { .left-sidebar { @apply w-[220px]; } }
 }

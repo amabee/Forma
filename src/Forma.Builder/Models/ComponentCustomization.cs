@@ -6,15 +6,17 @@ public sealed class ComponentCustomization
 {
     public string Css { get; set; } = "";
     public string Behavior { get; set; } = "";
+    public string Events { get; set; } = "";
     public string Characteristics { get; set; } = "{}";
 
     public static ComponentCustomization Validate(ComponentCustomization value)
     {
-        if (value.Css is null || value.Behavior is null || value.Characteristics is null)
+        if (value.Css is null || value.Behavior is null || value.Events is null || value.Characteristics is null)
             throw new ArgumentException("Component sources cannot be null.");
         if (
             value.Css.Length > 200_000
             || value.Behavior.Length > 200_000
+            || value.Events.Length > 200_000
             || value.Characteristics.Length > 200_000
         )
             throw new ArgumentException("Each component file must be under 200,000 characters.");
@@ -25,6 +27,7 @@ public sealed class ComponentCustomization
         {
             Css = value.Css,
             Behavior = value.Behavior,
+            Events = value.Events,
             Characteristics = value.Characteristics,
         };
     }

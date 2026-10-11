@@ -6,4 +6,10 @@ public sealed class EmptyState : Control
     public EmptyState() => Text = "Nothing here yet";
     public string Description { get => _description; set { ArgumentNullException.ThrowIfNull(value); SetProperty(ref _description, value); } }
     public string IconName { get => _iconName; set { if (Icon.Names.Contains(value)) SetProperty(ref _iconName, value); } }
+
+    protected override void WriteRenderState(IDictionary<string, object?> state)
+    {
+        base.WriteRenderState(state);
+        state["description"] = Description; state["iconName"] = IconName;
+    }
 }

@@ -8,6 +8,7 @@ namespace Forma.Builder;
 public static class ComponentEditorService
 {
     public const string ScriptFile = "script.js";
+    public const string EventsFile = "event.js";
     public static string[] ModuleNames(string source) => System.Text.RegularExpressions.Regex.Matches(source,
         "(?:forma|api)\\.provide\\(\\s*[\"'](?<name>[A-Za-z][\\w.-]{0,63})[\"']")
         .Select(match => match.Groups["name"].Value).Distinct().ToArray();
@@ -15,38 +16,37 @@ public static class ComponentEditorService
     public static ComponentCustomization Template(Control control, Appearance appearance)
     {
         if (appearance.Customization is not null) return ComponentCustomization.Validate(appearance.Customization);
-        string Number(double value) => value.ToString(CultureInfo.InvariantCulture);
         var toast = control is Forma.Core.Controls.Toast;
         var eventName = control is Forma.Core.Controls.SplitButton ? "primary-click"
             : control is Forma.Core.Controls.DropdownButton ? "command-item"
             : control is Forma.Core.Controls.Breadcrumb or Forma.Core.Controls.SideNavigation ? "navigate"
             : control is Forma.Core.Controls.Accordion ? "change" : "click";
-        var palette = toast ? "/* Colors follow Variant. Use :host[data-variant=\"error\"] for custom colors. */"
-            : $"color: {appearance.ForeColor};\n  background-color: {appearance.BackColor};";
-        var border = toast ? $"border-width: {appearance.BorderWidth}px;\n  border-style: {appearance.BorderStyle};"
+        // Inspector-managed values are listed for reference only. Active declarations here
+        // override the Properties panel (they are applied with !important), so the starter
+        // file must not freeze colors, fonts, borders or padding.
+        var palette = toast ? "Colors follow Variant. Use :host[data-variant=\"error\"] for custom colors."
+            : $"color: {appearance.ForeColor};\n     background-color: {appearance.BackColor};";
+        var border = toast ? $"border-width: {appearance.BorderWidth}px;\n     border-style: {appearance.BorderStyle};"
             : $"border: {appearance.BorderWidth}px {appearance.BorderStyle} {appearance.BorderColor};";
         return new()
         {
             Css = $$"""
                 /* {{control.Name ?? control.ControlType}} — styles scoped to this component.
                    :host means this component. Use :host:hover or :host input, etc.
-                   These are your current appearance defaults; edit them as needed.
-                   Keep position and sizing in the Layout properties. */
+                   Colors, fonts, borders and padding come from the Properties panel.
+                   A declaration in this file overrides that property, so add only what the
+                   panel can't do. Keep position and sizing in the Layout properties.
+
+                   Current Properties values, to copy from if you want to override them:
+                     {{palette}}
+                     font-family: {{JsonSerializer.Serialize(appearance.FontFamily)}};
+                     font-size: {{appearance.FontSize}}px;
+                     font-weight: {{appearance.FontWeight}};
+                     {{border}}
+                     border-radius: {{appearance.BorderRadius}}px;
+                     padding: {{appearance.PaddingTop}}px {{appearance.PaddingRight}}px {{appearance.PaddingBottom}}px {{appearance.PaddingLeft}}px;
+                */
                 :host {
-                  {{palette}}
-                  font-family: {{JsonSerializer.Serialize(appearance.FontFamily)}};
-                  font-size: {{appearance.FontSize}}px;
-                  font-weight: {{appearance.FontWeight}};
-                  font-style: {{appearance.FontStyle}};
-                  text-align: {{appearance.TextAlign}};
-                  line-height: {{Number(appearance.LineHeight)}};
-                  letter-spacing: {{Number(appearance.LetterSpacing)}}px;
-                  {{border}}
-                  border-radius: {{appearance.BorderRadius}}px;
-                  padding: {{appearance.PaddingTop}}px {{appearance.PaddingRight}}px {{appearance.PaddingBottom}}px {{appearance.PaddingLeft}}px;
-                  opacity: {{Number(appearance.Opacity / 100d)}};
-                  cursor: {{appearance.Cursor}};
-                  z-index: {{appearance.ZIndex}};
                   {{appearance.CustomCss}}
                 }
 
@@ -79,11 +79,8 @@ public static class ComponentEditorService
 
                 // command-item supplies event.detail.itemId, text, and checked.
                 // primary-click is the SplitButton's main action, separate from its menu.
-                forma.on("{{eventName}}", event => {
-                  // Example (uncomment and replace label1 with your label's Name):
-                  // component.properties.clicks += 1;
-                  // forma.set("label1", "text", `Clicked ${component.properties.clicks} times`);
-                });
+                // Add handlers from the Events inspector. Methods go in event.js;
+                // imports and forma.on("{{eventName}}", handler) subscriptions go here.
                 """,
             Characteristics = """
                 {
@@ -108,6 +105,7 @@ public static class ComponentEditorService
         Directory.CreateDirectory(folder);
         File.WriteAllText(Path.Combine(folder, "component.css"), source.Css);
         File.WriteAllText(Path.Combine(folder, ScriptFile), source.Behavior);
+        File.WriteAllText(Path.Combine(folder, EventsFile), source.Events);
         File.WriteAllText(Path.Combine(folder, PropertiesFile), source.Characteristics);
     }
 
@@ -115,6 +113,7 @@ public static class ComponentEditorService
     {
         Css = ReadFile(Path.Combine(folder, "component.css")),
         Behavior = ReadFile(File.Exists(Path.Combine(folder, ScriptFile)) ? Path.Combine(folder, ScriptFile) : Path.Combine(folder, "behavior.js")),
+        Events = File.Exists(Path.Combine(folder, EventsFile)) ? ReadFile(Path.Combine(folder, EventsFile)) : "",
         Characteristics = ReadFile(File.Exists(Path.Combine(folder, PropertiesFile))
             ? Path.Combine(folder, PropertiesFile) : Path.Combine(folder, "characteristics.json"))
     });

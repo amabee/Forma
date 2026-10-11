@@ -30,6 +30,16 @@ test('language service infers shared modules, live refs, computed values and nes
   assert.match(service.hover(query('const page = forma.bind("pages", "pageCount"); page.value')).signature, /FormaReadOnlyRef<number>/);
 });
 
+test('event module class methods complete from script.js and typed event parameters complete in event.js', async t => {
+  const service = (await load()).createJavaScriptService(libraries); t.after(service.dispose);
+  const events = 'export class ButtonEventHandler {\n  /** @param {MouseEvent} event */\n  static button1_Click(event) { event. }\n}';
+  const eventContext = { ...context, filePath: 'script.js', projectFiles: [{ path: 'event.js', content: events }] };
+  const script = 'import { ButtonEventHandler } from "./event.js"; ButtonEventHandler.';
+  assert.ok(service.complete(query(script, { context: eventContext })).options.some(option => option.label === 'button1_Click'));
+  const position = events.indexOf('event. }') + 'event.'.length;
+  assert.ok(service.complete({ source: events, position, context: { ...context, filePath: 'event.js' } }).options.some(option => option.label === 'clientX'));
+});
+
 test('language service suggests JavaScript, DOM, scoped callback members and function signatures', async t => {
   const service = (await load()).createJavaScriptService(libraries); t.after(service.dispose);
   const labels = source => service.complete(query(source))?.options.map(option => option.label) ?? [];
@@ -43,6 +53,17 @@ test('language service suggests JavaScript, DOM, scoped callback members and fun
   assert.match(service.details({ ...request, entry: option.entry }).signature, /map/);
   const signature = service.signature(query('forma.set("timer1", "interval", '));
   assert.equal(signature.active, 2); assert.match(signature.parameters[2], /number/);
+});
+
+test('root facade and its typed event callbacks appear in code completion', async t => {
+  const service = (await load()).createJavaScriptService(libraries); t.after(service.dispose);
+  const labels = source => service.complete(query(source))?.options.map(option => option.label) ?? [];
+  assert.deepEqual(labels('forma.root.'), ['bind', 'element', 'get', 'id', 'kind', 'name', 'on', 'set']);
+  assert.ok(labels('forma.root.on("DoubleClick", event => { event.').includes('clientX'));
+  assert.ok(labels('const stop = forma.root.on("Click", () => {}); stop.').includes('call'));
+  assert.ok(labels('forma.root.on("Input", event => { event.').includes('previousValue'));
+  assert.ok(labels('forma.root.on("Input", event => { event.source.').includes('bind'));
+  assert.ok(labels('forma.root.on("Input", event => { event.keyboard?.').includes('isComposing'));
 });
 
 test('global source changes refresh module shapes and globals stay isolated from component locals', async t => {

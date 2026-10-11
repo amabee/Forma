@@ -89,8 +89,8 @@
   function applyTheme(value, persist = false) {
     theme = value === "light" ? "light" : "dark";
     document.documentElement.dataset.theme = theme;
+    // The label names the action, so the button is not also a pressed/unpressed toggle.
     const label = theme === "dark" ? "Switch to light mode" : "Switch to dark mode";
-    themeToggle.setAttribute("aria-pressed", String(theme === "dark"));
     themeToggle.setAttribute("aria-label", label); themeToggle.title = label;
     if (persist) try { localStorage.setItem("forma.workspace.theme", theme); } catch {}
     window.forma.send({ type: "designer", event: "theme", payload: { theme } });
@@ -126,10 +126,18 @@
     const item = d.state?.controls.find(c => c.id === control.id);
     if (!item || d.preview) return;
     event.preventDefault(); d.cancelDrag?.(); menuTarget = item.id;
-    d.select?.(item.id);
-    window.forma.send({ type: "designer", event: "select", id: item.id, payload: {} });
-    document.getElementById("component-source-name").textContent = item.name || item.kind;
-    menu.querySelectorAll("button").forEach(button => { button.disabled = !!item.locked; });
+    // Right-clicking inside a multi-selection keeps it, so the edit commands apply to all of it.
+    const selection = window.formaSelection?.ids ?? [];
+    const keep = selection.length > 1 && selection.includes(item.id);
+    if (!keep) {
+      d.select?.(item.id);
+      window.forma.send({ type: "designer", event: "select", id: item.id, payload: {} });
+    }
+    document.getElementById("component-source-name").textContent = keep ? `${selection.length} controls` : item.name || item.kind;
+    menu.querySelectorAll("[data-source-command]").forEach(button => {
+      const layer = ["bring-front", "send-back"].includes(button.dataset.sourceCommand);
+      button.disabled = !!item.locked || keep || layer && item.id === d.rootId;
+    });
     menu.hidden = false;
     const r = control.getBoundingClientRect();
     menu.style.left = `${Math.max(0, Math.min(event.clientX || r.left, window.innerWidth - menu.offsetWidth))}px`;
@@ -141,6 +149,8 @@
     if (control) openSourceMenu(event, control);
   });
   menu.addEventListener("click", event => {
+    // Edit and layer commands are handled by selection.js and designer.js; just close the menu.
+    if (event.target.closest("[data-selection-command]")) { closeMenu(); return; }
     const button = event.target.closest("[data-source-command]");
     if (!button || button.disabled) return;
     window.forma.send({ type: "designer", event: "command", id: menuTarget, payload: { command: button.dataset.sourceCommand } });

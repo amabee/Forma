@@ -195,6 +195,64 @@ test('Accordion sections switch their actual children and keep them through head
   window.close();
 });
 
+test('responsive grid and stack change tracks and direction without replacing children', () => {
+  const { window, document, create } = fixture();
+  const observers = [];
+  window.ResizeObserver = class { constructor(callback) { this.callback = callback; observers.push(this); } observe(element) { this.element = element; } disconnect() { this.disconnected = true; } };
+  create('grid', 'responsivegrid', 'root', { breakpoint: 500, columns: 3, narrowColumns: 2, gap: 8 });
+  create('grid-child', 'textbox', 'grid', { x: 40, y: 20 });
+  const grid = document.getElementById('grid'), field = document.getElementById('grid-child'), host = grid.querySelector('.layout-content');
+  field.value = 'Keep this';
+  grid.style.width = '500px'; observers[0].callback();
+  assert.equal(grid.dataset.narrow, 'false'); assert.equal(host.style.gridTemplateColumns, 'repeat(3, minmax(0, 1fr))');
+  grid.style.width = '499px'; observers[0].callback();
+  assert.equal(host.style.gridTemplateColumns, 'repeat(2, minmax(0, 1fr))');
+  window.forma.update({ id: 'grid', properties: { gap: 16 } });
+  assert.equal(grid._layoutProperties.columns, 3); assert.equal(document.getElementById('grid-child'), field); assert.equal(field.value, 'Keep this');
+  assert.equal(field.style.position, 'relative'); assert.equal(field.style.left, '');
+  create('stack', 'responsivestack', 'root', { breakpoint: 500, orientation: 'horizontal', narrowOrientation: 'vertical' });
+  const stack = document.getElementById('stack'), stackHost = stack.querySelector('.layout-content');
+  stack.style.width = '700px'; observers[1].callback(); assert.equal(stackHost.style.flexDirection, 'row');
+  stack.style.width = '300px'; observers[1].callback(); assert.equal(stackHost.style.flexDirection, 'column');
+  assert.equal(stackHost.style.flexWrap, 'nowrap'); assert.equal(stackHost.style.alignItems, 'stretch');
+  window.forma.update({ id: 'stack', properties: { narrowOrientation: 'horizontal' } }); assert.equal(stackHost.style.flexDirection, 'row');
+  window.forma.remove({ id: 'root' }); assert.ok(observers.every(observer => observer.disconnected)); window.close();
+});
+
+test('breakpoint panes choose drop slots, preserve input and visibility, and move focus out of hidden content', () => {
+  const { window, document, create } = fixture();
+  const observers = [];
+  window.ResizeObserver = class { constructor(callback) { this.callback = callback; observers.push(this); } observe() {} disconnect() {} };
+  create('panes', 'breakpointcontainer', 'root', { breakpoint: 500 });
+  create('wide', 'textbox', 'panes', { layoutSlot: 1, x: 30, y: 20 });
+  create('narrow', 'textbox', 'panes', { layoutSlot: 2, x: 5, y: 8 });
+  const panes = document.getElementById('panes'), wide = document.getElementById('wide'), narrow = document.getElementById('narrow');
+  wide.value = 'Wide state'; narrow.value = 'Narrow state';
+  panes.style.width = '500px'; observers[0].callback();
+  assert.equal(wide.hidden, false); assert.equal(narrow.hidden, true); assert.equal(panes.querySelector('.layout-content').dataset.layoutSlot, '1');
+  wide.focus(); panes.style.width = '300px'; observers[0].callback();
+  assert.equal(wide.hidden, true); assert.equal(narrow.hidden, false); assert.equal(document.activeElement, panes);
+  assert.equal(panes.querySelector('.layout-content').dataset.layoutSlot, '2');
+  assert.equal(wide.value, 'Wide state'); assert.equal(narrow.value, 'Narrow state');
+  window.forma.update({ id: 'narrow', properties: { visible: false } });
+  observers[0].callback(); assert.equal(narrow.hidden, true);
+  assert.equal(wide.style.position, 'absolute'); assert.equal(wide.style.left, '30px'); window.close();
+});
+
+test('aspect frame follows actual width and keeps child elements through ratio edits', () => {
+  const { window, document, create } = fixture();
+  const observers = [];
+  window.ResizeObserver = class { constructor(callback) { this.callback = callback; observers.push(this); } observe() {} disconnect() { this.disconnected = true; } };
+  create('frame', 'aspectratiocontainer', 'root', { aspectRatio: 2 });
+  create('child', 'label', 'frame', { x: 8, y: 12, text: 'Frame content' });
+  const frame = document.getElementById('frame'), child = document.getElementById('child');
+  frame.style.width = '360px'; observers[0].callback(); assert.equal(frame.style.height, '180px');
+  window.forma.update({ id: 'frame', properties: { aspectRatio: 1.5 } }); assert.equal(frame.style.height, '240px');
+  assert.equal(document.getElementById('child'), child); assert.equal(child.textContent, 'Frame content');
+  frame.style.maxHeight = '200px'; observers[0].callback(); assert.equal(frame.style.height, '200px');
+  window.forma.remove({ id: 'frame' }); assert.equal(observers[0].disconnected, true); window.close();
+});
+
 test('responsive containers follow their own width, preserve partial settings and dispose observers', () => {
   const { window, document, create } = fixture(); const observed = [];
   window.ResizeObserver = class {
@@ -1339,7 +1397,7 @@ test('inspector selection options stay intact until names or membership change',
 });
 
 
-test('documented JavaScript recipes run against the current preview API', () => {
+test('JavaScript recipe fixtures run against the current preview API', () => {
   for (const filename of ['greet-button.js', 'live-input.js', 'busy-button.js', 'grid-selection.js']) {
     const { window, document, create, messages } = fixture('preview.html'); window.formaDesigner.preview = true;
     const pending = []; window.setTimeout = callback => { pending.push(callback); return pending.length; }; window.clearTimeout = () => {};
@@ -1347,7 +1405,7 @@ test('documented JavaScript recipes run against the current preview API', () => 
     for (const [id, kind] of Object.entries(kinds)) create(id, kind, 'root', { text: '', rows: [['Ada']], columns: ['Name'], selectedRow: -1 });
     const source = filename === 'live-input.js' ? 'nameInput' : filename === 'grid-selection.js' ? 'grid' : 'action';
     window.formaCustomization.apply({ controls: Object.entries(kinds).map(([id, kind]) => ({
-      id, name: id, kind, enabled: true, visible: true, customization: id === source ? { behavior: fs.readFileSync(path.join(base, 'docs/examples', filename), 'utf8') } : null
+      id, name: id, kind, enabled: true, visible: true, customization: id === source ? { behavior: fs.readFileSync(path.join(__dirname, 'fixtures/recipes', filename), 'utf8') } : null
     })) }, true);
     document.getElementById('nameInput').value = 'Ada';
     if (filename === 'grid-selection.js') window.forma.update({ id: 'grid', properties: { selectedRow: 0 } });
@@ -1366,13 +1424,13 @@ test('documented JavaScript recipes run against the current preview API', () => 
 });
 
 
-test('documented picker path recipe reads nested values after native selection', () => {
+test('picker path recipe fixture reads nested values after native selection', () => {
   const { window, document, create, messages } = fixture('preview.html'); window.formaDesigner.preview = true;
   const kinds = { inputFile: 'filepicker', outputFolder: 'folderpicker', pathLabel: 'label', readButton: 'button' };
   for (const [id, kind] of Object.entries(kinds)) create(id, kind, 'root');
   window.formaCustomization.apply({ controls: Object.entries(kinds).map(([id, kind]) => ({
     id, name: id, kind, enabled: true, visible: true,
-    customization: id === 'readButton' ? { behavior: fs.readFileSync(path.join(base, 'docs/examples/read-picker-paths.js'), 'utf8') } : null
+    customization: id === 'readButton' ? { behavior: fs.readFileSync(path.join(__dirname, 'fixtures/recipes/read-picker-paths.js'), 'utf8') } : null
   })) }, true);
   document.getElementById('readButton').click();
   assert.equal(messages.at(-1).payload.value, 'File: None\nFolder: None');

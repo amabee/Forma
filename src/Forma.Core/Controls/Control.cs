@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using Forma.Core.Rendering;
 
 namespace Forma.Core.Controls;
 
@@ -127,6 +128,37 @@ public abstract class Control : INotifyPropertyChanged
     /// when the type name and the rendered kind should differ.
     /// </remarks>
     public virtual string ControlType => GetType().Name.ToLowerInvariant();
+
+    /// <summary>
+    /// The state a renderer needs to draw this control, keyed by the runtime's property names.
+    /// </summary>
+    public IReadOnlyDictionary<string, object?> GetRenderState()
+    {
+        var state = new Dictionary<string, object?>();
+        WriteRenderState(state);
+        return state;
+    }
+
+    /// <summary>
+    /// Adds this control's renderable state. Overrides call the base implementation first,
+    /// so a control only describes the properties it introduces.
+    /// </summary>
+    protected virtual void WriteRenderState(IDictionary<string, object?> state)
+    {
+        state["text"] = Text;
+        state["x"] = X;
+        state["y"] = Y;
+        state["layoutSlot"] = LayoutSlot;
+    }
+
+    /// <summary>Applies a user-interface event a renderer received for this control.</summary>
+    public void HandleRuntimeEvent(RuntimeEvent runtimeEvent) => OnRuntimeEvent(runtimeEvent);
+
+    /// <summary>
+    /// Reacts to a user-interface event such as a click or an edit. The payload is untrusted:
+    /// read it through <see cref="RuntimeEvent"/>'s typed accessors and ignore anything invalid.
+    /// </summary>
+    protected virtual void OnRuntimeEvent(RuntimeEvent runtimeEvent) { }
 
     public Control? Parent { get; private set; }
 

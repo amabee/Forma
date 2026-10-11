@@ -4,4 +4,10 @@ public abstract class SelectionGroup : ChoiceControl
 {
     private string _orientation = "horizontal";
     public string Orientation { get => _orientation; set { if (value is "horizontal" or "vertical") SetProperty(ref _orientation, value); } }
+
+    protected override void WriteRenderState(IDictionary<string, object?> state)
+    {
+        base.WriteRenderState(state);
+        state["orientation"] = Orientation;
+    }
 }

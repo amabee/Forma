@@ -1,5 +1,12 @@
 # Forma documentation website
 
+> **Migration pending:** the root `docs/` sources have been removed from this
+> repository. Site generation and builds are unavailable until the guides are
+> restored in the future documentation repository and generator paths are
+> updated. GitHub docs CI is temporarily manual-only. The existing deployed site
+> remains available; this cleanup does not change Vercel dashboard settings.
+> Recover the removed sources from Git history when preparing the migration.
+
 An Astro + Tailwind static documentation site for the current Forma Builder.
 Every implemented Toolbox component and Form has its own reference page, with
 setup, a JavaScript recipe, inspector fields, runtime get/set/bind support, and
@@ -19,9 +26,49 @@ npm run dev
 Open the local URL printed by Astro. `npm run build` creates `dist/` and checks
 all internal links, fragments, images, and component reference sections.
 `npm run preview` serves the production output. `npm run check` checks Astro and
-TypeScript sources. Nothing is published automatically.
+TypeScript sources. Local edits are published only after they are committed and
+pushed to the connected GitHub repository.
 
-## Publish later
+## Automatic deployments on Vercel
+
+The production site is https://forma-documentation.vercel.app/. Vercel's native
+GitHub integration handles deployment; GitHub Actions validates the site. No
+Vercel API token or duplicate deployment action is needed.
+
+Verify these settings on the existing Vercel project:
+
+- Connected Git repository: `amabee/Forma`.
+- Production branch: `master`. Pushes/merges here update the public site;
+  pushes to other branches create preview deployments.
+- Root Directory: `docs-site`, with **Include source files outside of the Root
+  Directory in the Build Step** enabled. The generator reads `../docs/` and
+  `../src/`; omitting them causes the build to fail.
+- Node.js version: `24.x`.
+- Environment variable `DOCS_SITE`: `https://forma-documentation.vercel.app`
+  for Production and Preview. Leave `DOCS_BASE` unset for this domain.
+- If an Ignored Build Step is configured, remove any rule that only watches
+  `docs-site/`. Canonical guides and component metadata outside that folder also
+  affect the site. The default build-on-push behavior is suitable here.
+
+`vercel.json` fixes the Astro preset, `npm ci`, output directory, and build
+command. Every Vercel build runs `npm run check` before building and validating
+generated pages. A failed build does not replace the existing production site.
+
+`.github/workflows/docs-site.yml` is currently manual-only while migration is
+pending and reports the missing documentation sources before installing
+dependencies. Once restored, it installs locked dependencies, checks Astro, builds all
+references, verifies links/assets, and tests desktop/mobile interactions with
+Playwright Chromium. It does not modify files or deploy independently.
+
+GitHub CI and Vercel run independently. To require browser checks before a
+production update, require **Docs build and browser checks** on pull requests
+to `master` in GitHub branch rules and merge only after it passes. This workflow
+does not change repository branch protection or Vercel deployment checks.
+
+After pushing, check GitHub Actions and the Vercel deployment for that commit.
+Uncommitted local edits never reach the public site.
+
+## Other static hosts
 
 Use this folder as the hosting provider's project/root directory, `npm run build`
 as the build command, and `dist` as the output directory. This is static output;
@@ -45,8 +92,8 @@ Remove-Item Env:DOCS_SITE -ErrorAction SilentlyContinue
 Remove-Item Env:DOCS_BASE -ErrorAction SilentlyContinue
 ```
 
-Upload the contents of `dist/` or connect the branch to your static host. No
-domain or deployment is hardcoded and no publish workflow runs on push.
+Upload the contents of `dist/` or connect the branch to your static host. The
+Astro site/base remain configurable through environment variables.
 
 ## Maintain the content
 
@@ -85,4 +132,5 @@ The browser check uses installed Chrome by default. Set `DOCS_BROWSER_CHANNEL`
 to `msedge` to use installed Edge, or install Playwright Chromium with
 `npx playwright install chromium` and set it to `chromium`. It checks the
 greeting demo, component filtering, full-text search, themes, code copying, and
-mobile navigation. Screenshots are saved to ignored `dist/qa/`.
+mobile navigation, the four source tabs, and the event reference on desktop and
+mobile. Screenshots are saved to ignored `dist/qa/`.

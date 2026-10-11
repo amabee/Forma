@@ -21,10 +21,20 @@
     window.formaWorkspace?.measure();
   }
   document.querySelectorAll("[data-left-panel]").forEach(button => button.addEventListener("click", () => showPanel(button.dataset.leftPanel)));
+  // View > Toggle toolbox/explorer: show that panel, or collapse the sidebar when it is already showing.
+  const sidebar = panel.closest(".left-sidebar");
+  function setCollapsed(collapsed) {
+    if (!sidebar) return;
+    sidebar.hidden = collapsed;
+    try { localStorage.setItem("forma.workspace.leftCollapsed", String(collapsed)); } catch {}
+    window.formaWorkspace?.measure();
+  }
   document.addEventListener("click", event => {
-    const toggle = event.target.closest("[data-toggle]");
-    if (toggle?.dataset.toggle === panel.id) showPanel(panel.hidden ? toolbox.id : panel.id);
-    if (toggle?.dataset.toggle === toolbox.id) showPanel(toolbox.hidden ? panel.id : toolbox.id);
+    const target = event.target.closest("[data-toggle]")?.dataset.toggle;
+    if (target !== panel.id && target !== toolbox.id) return;
+    const showing = sidebar && !sidebar.hidden && !document.getElementById(target).hidden;
+    if (showing) setCollapsed(true);
+    else { setCollapsed(false); showPanel(target); }
   });
   document.querySelector(".left-panel-tabs").addEventListener("keydown", event => {
     if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
@@ -70,7 +80,15 @@
       } else { chevron.disabled = true; chevron.setAttribute("aria-hidden", "true"); }
       const label = document.createElement("span"); label.className = "explorer-label"; label.textContent = node.name;
       row.append(chevron, icon(node.kind), label);
-      if (node.locked) { const lock = icon("lock"); lock.classList.add("explorer-lock"); row.append(lock); }
+      if (node.kind === "component" && node.controlId) {
+        // Lock toggle: always visible when locked, on hover/focus otherwise.
+        const lock = document.createElement("button"); lock.type = "button"; lock.tabIndex = -1;
+        lock.className = "explorer-lock-toggle"; lock.setAttribute("aria-pressed", String(!!node.locked));
+        lock.setAttribute("aria-label", `${node.locked ? "Unlock" : "Lock"} ${node.name}`); lock.title = node.locked ? "Unlock" : "Lock";
+        lock.append(icon("lock"));
+        lock.addEventListener("click", event => { event.stopPropagation(); explorerAction(node, "toggle-lock"); });
+        row.append(lock);
+      } else if (node.locked) { const lock = icon("lock"); lock.classList.add("explorer-lock"); row.append(lock); }
       li.append(row);
       if (children.length) {
         const group = document.createElement("ul"); group.setAttribute("role", "group"); group.hidden = !open;
@@ -176,7 +194,7 @@
     } else if (node.kind === "form" || node.kind === "component" || node.kind === "image") {
       add("View Designer / Properties", "select");
       add("Rename…", "rename-control", node.locked); separator();
-      add("View CSS", "view-css", node.locked); add("View Script", "view-script", node.locked); add("View Custom Properties", "view-custom-properties", node.locked);
+      add("View CSS", "view-css", node.locked); add("View Script", "view-script", node.locked); add("View Events", "view-events", node.locked); add("View Custom Properties", "view-custom-properties", node.locked);
       if (node.kind === "image") add("Choose Image…", "choose-image", node.locked);
       if (node.kind !== "image") { separator(); add(node.kind === "form" ? "Remove Form…" : "Delete Component…", node.kind === "form" ? "delete-form" : "delete-control", node.locked || node.kind === "form" && (root.children.find(child => child.key === "forms")?.children.length ?? 1) < 2); }
     } else if (node.command) add("Open", "open", node.locked);
@@ -213,7 +231,7 @@
       expand(node); search.value = ""; render(node.key);
     } else if (action === "select") window.forma.send({ type: "designer", event: "explorer-select", id: node.controlId, payload: {} });
     else if (action === "open") open(node);
-    else if (["view-css", "view-script", "view-custom-properties"].includes(action)) window.forma.send({ type: "designer", event: "command", id: node.controlId ?? node.children?.[0]?.controlId, payload: { command: action } });
+    else if (["view-css", "view-script", "view-events", "view-custom-properties"].includes(action)) window.forma.send({ type: "designer", event: "command", id: node.controlId ?? node.children?.[0]?.controlId, payload: { command: action } });
     else if (["add-form", "save", "global"].includes(action)) window.forma.send({ type: "designer", event: "command", payload: { command: action === "add-form" ? "new" : action === "global" ? "edit-global-script" : "save" } });
     else explorerAction(node, action);
   });
@@ -229,6 +247,7 @@
   window.addEventListener("resize", () => closeMenu()); window.addEventListener("blur", () => closeMenu());
   let initialPanel = panel.id;
   try { if (localStorage.getItem("forma.workspace.leftPanel") === toolbox.id) initialPanel = toolbox.id; } catch {}
+  try { if (sidebar && localStorage.getItem("forma.workspace.leftCollapsed") === "true") sidebar.hidden = true; } catch {}
   showPanel(initialPanel, false);
   window.formaExplorer = { show: showPanel };
 })();

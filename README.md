@@ -18,9 +18,7 @@
 
 **Forma** is an experimental, Windows-first desktop UI framework for **C#/.NET**.
 
-Browse the [documentation index](docs/README.md). Start with [Using components and scripts](docs/components-and-scripting.md) and the [complete component/property reference](docs/component-reference.md). Copyable JavaScript and compiled C# recipes are in [docs/examples](docs/examples).
-
-See [the architecture guide](docs/architecture.md) for current layer boundaries, control organization, and planned refactors.
+Browse the [Forma documentation website](https://forma-documentation.vercel.app/) for component references, scripting, and architecture guides.
 
 It aims to combine the developer experience that made WinForms so productive with the rendering, styling, animation, and component ideas of modern web UI.
 
@@ -332,7 +330,7 @@ Forma/
 │   └── Forma.Demo/
 │
 ├── tests/
-├── docs/
+├── docs-site/       # Site source retained pending migration
 ├── examples/
 │
 ├── build/
@@ -434,10 +432,10 @@ and `forma.shared` share values within one Preview session. Reactive refs and
 bindings keep values current. The supported runtime property API is documented
 with exact types and restrictions.
 
-Start with the [documentation index](docs/README.md),
-[workspace walkthrough](docs/builder-first-interaction.md),
-[runtime property guide](docs/runtime-properties.md), and
-[global script guide](docs/global-scripts.md).
+Start with the [documentation website](https://forma-documentation.vercel.app/),
+[workspace walkthrough](https://forma-documentation.vercel.app/guides/builder-first-interaction/),
+[runtime property guide](https://forma-documentation.vercel.app/guides/runtime-properties/), and
+[global script guide](https://forma-documentation.vercel.app/guides/global-scripts/).
 
 Run the apps from the repository root:
 
@@ -449,7 +447,7 @@ dotnet run --project src/Forma.Builder
 Forma remains experimental. Preview runs within Builder; executable export,
 C# handler generation, installer/file association, and many advanced components
 remain roadmap work. The vision/checklists elsewhere in this README describe
-the broader plan; the [staged roadmap](docs/roadmap-stages.md) tracks current
+the broader plan; the [staged roadmap](https://forma-documentation.vercel.app/guides/roadmap-stages/) tracks current
 implementation status.
 
 ---

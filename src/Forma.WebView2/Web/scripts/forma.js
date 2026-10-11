@@ -9,6 +9,10 @@ const CONTROL_TYPES = {
   sidebar: { tag: "aside", text: "none", init: initContainer },
   appshell: { tag: "div", text: "none", init: initContainer },
   responsivepanel: { tag: "div", text: "none", init: initContainer },
+  responsivegrid: { tag: "div", text: "none", init: initContainer },
+  responsivestack: { tag: "div", text: "none", init: initContainer },
+  breakpointcontainer: { tag: "div", text: "none", init: initContainer },
+  aspectratiocontainer: { tag: "div", text: "none", init: initContainer },
   stackpanel: { tag: "div", text: "none", init: initContainer },
   hstack: { tag: "div", text: "none", init: initContainer },
   vstack: { tag: "div", text: "none", init: initContainer },
@@ -202,18 +206,50 @@ window.formaChildHost = childHost;
 function initContainer(el) {
   const header = document.createElement("div"); header.className = "layout-header";
   const content = document.createElement("div"); content.className = "layout-content";
-  if (["stackpanel", "hstack", "vstack", "wrappanel", "centerpanel", "scrollablepanel", "sidebar", "appshell", "responsivepanel"].includes(el.dataset.formaType)) header.hidden = true;
+  if (["stackpanel", "hstack", "vstack", "wrappanel", "centerpanel", "scrollablepanel", "sidebar", "appshell", "responsivepanel", "responsivegrid", "responsivestack", "aspectratiocontainer"].includes(el.dataset.formaType)) header.hidden = true;
   el.append(header, content);
 }
 
 // Observe only responsive containers; partial property updates retain their configuration.
 function updateResponsiveLayout(element) {
   const props = element._layoutProperties ?? {};
-  const width = element.clientWidth || parseFloat(element.style.width) || 0;
+  const width = element.offsetWidth || element.clientWidth || parseFloat(element.style.width) || 0;
   const narrow = width < (props.breakpoint ?? 600);
+  const previous = element.dataset.narrow;
   element.dataset.narrow = String(narrow);
-  const host = element.querySelector(".layout-content");
-  host.style.flexDirection = narrow ? "column" : (props.orientation === "vertical" ? "column" : "row");
+  const host = element.querySelector(":scope > .layout-content");
+  const kind = element.dataset.formaType;
+  if (kind === "responsivegrid") {
+    host.style.display = "grid";
+    host.style.gridTemplateColumns = `repeat(${narrow ? props.narrowColumns ?? 1 : props.columns ?? 2}, minmax(0, 1fr))`;
+    host.style.alignContent = "start";
+    const columns = narrow ? props.narrowColumns ?? 1 : props.columns ?? 2;
+    host.style.setProperty("--responsive-columns", columns);
+    host.dataset.gridLabel = `${narrow ? "Narrow" : "Wide"}: ${columns} columns`;
+  } else if (kind === "breakpointcontainer") {
+    host.dataset.layoutSlot = narrow ? "2" : "1";
+    element.querySelector(":scope > .layout-header").textContent = narrow ? "Narrow layout (slot 2)" : "Wide layout (slot 1)";
+    for (const child of host.children) {
+      const hidden = child.dataset.modelHidden === "true" || Number(child.dataset.slot ?? 1) !== (narrow ? 2 : 1);
+      const focused = hidden && child.contains(document.activeElement);
+      child.hidden = hidden;
+      if (focused) { element.tabIndex = -1; element.focus(); }
+    }
+    if (previous !== String(narrow) && window.formaDesigner?.state) window.formaLayout?.refresh(window.formaDesigner.state);
+  } else if (kind === "aspectratiocontainer") {
+    const ratio = props.aspectRatio ?? 16 / 9;
+    element.style.aspectRatio = String(ratio);
+    const min = Math.max(20, parseFloat(element.style.minHeight) || 0);
+    const max = Math.max(min, parseFloat(element.style.maxHeight) || 16000);
+    const height = `${Math.max(min, Math.min(max, Math.round(width / ratio)))}px`;
+    if (element.style.height !== height) element.style.height = height;
+  } else {
+    const direction = narrow ? (kind === "responsivestack" ? props.narrowOrientation ?? "vertical" : "vertical") : props.orientation ?? "horizontal";
+    host.style.flexDirection = direction === "vertical" ? "column" : "row";
+    if (kind === "responsivestack") host.style.alignItems = direction === "vertical" ? "stretch" : "flex-start";
+    host.dataset.direction = direction;
+  }
+  window.formaDesigner?.outline();
 }
 
 function richFlags(node, editor) {
@@ -608,10 +644,16 @@ window.forma = {
         input.readOnly = properties.readOnly || input.dataset.entryReadOnly === "true";
       });
     }
+    // Runtime Button.Enabled; in the Builder, appearance Enabled drives the disabled state instead.
+    if (kind === "button" && "enabled" in properties && !window.formaDesigner) element.disabled = properties.enabled === false;
     if (kind === "togglebutton") { element.setAttribute("aria-pressed", String(properties.checked ?? false)); element.classList.toggle("toggle-active", properties.checked ?? false); }
     if (["textbox", "maskedtextbox", "searchbox", "passwordbox", "textarea"].includes(kind) && "placeholder" in properties) element.placeholder = properties.placeholder ?? "";
     if ("layoutSlot" in properties) element.dataset.slot = properties.layoutSlot;
     const parent = element.parentElement?.closest("[data-forma-type]");
+    if (parent?.dataset.formaType === "breakpointcontainer") {
+      if ("visible" in properties) element.dataset.modelHidden = String(properties.visible === false);
+      element.hidden = element.dataset.modelHidden === "true" || Number(element.dataset.slot ?? 1) !== (parent.dataset.narrow === "true" ? 2 : 1);
+    }
     if (["tabcontrol", "accordion"].includes(parent?.dataset.formaType)) element.hidden = Number(element.dataset.slot ?? 1) !== Number(parent.dataset.activeTab ?? 0) + 1 || parent.dataset.formaType === "accordion" && parent.dataset.expanded === "false";
     if (["splitcontainer", "tablelayoutpanel"].includes(parent?.dataset.formaType)) {
       const host = childHost(parent, Number(element.dataset.slot ?? 1));
@@ -632,18 +674,18 @@ window.forma = {
       if (properties.source) element.src = properties.source; else element.removeAttribute("src");
       element.style.objectFit = properties.sizeMode ?? "contain";
     }
-    if (["splitcontainer", "flowlayoutpanel", "tablelayoutpanel", "tabcontrol", "groupbox", "stackpanel", "hstack", "vstack", "wrappanel", "centerpanel", "scrollablepanel", "accordion", "sidebar", "appshell", "responsivepanel"].includes(kind)) {
+    if (["splitcontainer", "flowlayoutpanel", "tablelayoutpanel", "tabcontrol", "groupbox", "stackpanel", "hstack", "vstack", "wrappanel", "centerpanel", "scrollablepanel", "accordion", "sidebar", "appshell", "responsivepanel", "responsivestack", "responsivegrid", "breakpointcontainer", "aspectratiocontainer"].includes(kind)) {
       properties = element._layoutProperties = { ...element._layoutProperties, ...properties };
       const host = element.querySelector(".layout-content");
       element.dataset.orientation = properties.orientation ?? "horizontal";
       host.style.gap = `${properties.gap ?? 8}px`;
-      if (["flowlayoutpanel", "stackpanel", "hstack", "vstack", "wrappanel", "centerpanel", "sidebar", "appshell", "responsivepanel"].includes(kind)) {
+      if (["flowlayoutpanel", "stackpanel", "hstack", "vstack", "wrappanel", "centerpanel", "sidebar", "appshell", "responsivepanel", "responsivestack"].includes(kind)) {
         host.style.display = "flex"; host.style.flexDirection = properties.orientation === "vertical" ? "column" : "row";
         host.style.flexWrap = ["flowlayoutpanel", "wrappanel", "responsivepanel"].includes(kind) ? "wrap" : "nowrap";
         host.style.justifyContent = kind === "centerpanel" ? "center" : "flex-start";
         host.style.alignItems = kind === "centerpanel" ? "center" : "flex-start"; host.style.alignContent = "flex-start";
       }
-      if (["appshell", "responsivepanel"].includes(kind)) {
+      if (["appshell", "responsivepanel", "responsivegrid", "responsivestack", "breakpointcontainer", "aspectratiocontainer"].includes(kind)) {
         if (!element._responsiveObserver && typeof ResizeObserver !== "undefined") {
           element._responsiveObserver = new ResizeObserver(() => updateResponsiveLayout(element));
           element._responsiveObserver.observe(element);
@@ -667,12 +709,32 @@ window.forma = {
         if (kind === "tabcontrol") bar.setAttribute("aria-orientation", element.dataset.orientation);
         host.id = `${element.id}-content`;
         if (kind === "accordion") { host.setAttribute("role", "region"); host.setAttribute("aria-label", (properties.tabs ?? ["Section 1"])[properties.selectedTab ?? 0] ?? "Section"); }
+        if (kind === "tabcontrol" && !bar.dataset.arrowKeys) {
+          bar.dataset.arrowKeys = "true";
+          bar.addEventListener("keydown", event => {
+            const vertical = element.dataset.orientation === "vertical";
+            const keys = vertical ? ["ArrowUp", "ArrowDown"] : ["ArrowLeft", "ArrowRight"];
+            if (![...keys, "Home", "End"].includes(event.key)) return;
+            const tabs = [...bar.querySelectorAll('[role="tab"]')], index = tabs.indexOf(document.activeElement);
+            if (index < 0) return;
+            event.preventDefault();
+            const next = event.key === "Home" ? 0 : event.key === "End" ? tabs.length - 1 : (index + (event.key === keys[1] ? 1 : -1) + tabs.length) % tabs.length;
+            tabs[next].focus(); tabs[next].click();
+          });
+        }
+        const tabHadFocus = bar.contains(document.activeElement);
         bar.replaceChildren(...(properties.tabs ?? ["Tab 1"]).map((text, index) => {
           const button = document.createElement("button"); button.textContent = text; button.dataset.tabIndex = index;
           button.type = "button";
           if (kind === "accordion") { button.setAttribute("aria-expanded", String(properties.expanded !== false && index === (properties.selectedTab ?? 0))); button.setAttribute("aria-controls", host.id); }
           else button.setAttribute("role", "tab");
-          if (kind === "tabcontrol") button.setAttribute("aria-selected", String(index === (properties.selectedTab ?? 0)));
+          if (kind === "tabcontrol") {
+            const selected = index === (properties.selectedTab ?? 0);
+            button.setAttribute("aria-selected", String(selected));
+            button.setAttribute("aria-controls", host.id);
+            // Roving focus: only the active tab is in the Tab order; arrows move between tabs.
+            button.tabIndex = selected ? 0 : -1;
+          }
           button.className = index === (properties.selectedTab ?? 0) ? "tab-active" : "";
           button.addEventListener("click", () => {
             if (element.dataset.disabled === "true") return;
@@ -683,10 +745,15 @@ window.forma = {
           });
           return button;
         }));
-        const addTab = document.createElement("button"); addTab.type = "button"; addTab.textContent = "+";
-        addTab.dataset.tabAdd = "true"; addTab.setAttribute("aria-label", kind === "accordion" ? "Add section" : "Add tab");
-        addTab.addEventListener("click", () => { if (window.formaDesigner?.preview === false) window.forma.send({ type: "designer", id: element.id, event: "command", payload: { command: "add-tab" } }); });
-        bar.appendChild(addTab);
+        // The "+" is a design-time affordance; end-user apps (no Builder) never get it.
+        if (window.formaDesigner) {
+          const addTab = document.createElement("button"); addTab.type = "button"; addTab.textContent = "+";
+          addTab.dataset.tabAdd = "true"; addTab.setAttribute("aria-label", kind === "accordion" ? "Add section" : "Add tab");
+          addTab.addEventListener("click", () => { if (window.formaDesigner?.preview === false) window.forma.send({ type: "designer", id: element.id, event: "command", payload: { command: "add-tab" } }); });
+          bar.appendChild(addTab);
+        }
+        // Rebuilt tab buttons would drop keyboard focus; keep it on the active tab.
+        if (tabHadFocus) bar.querySelector('[aria-selected="true"], .tab-active')?.focus();
         if (kind === "accordion") {
           const active = bar.querySelector(`[data-tab-index="${properties.selectedTab ?? 0}"]`);
           if (active) active.after(host); else bar.append(host);
@@ -708,9 +775,9 @@ window.forma = {
     element.style.left = Number.isFinite(properties.x) ? `${properties.x}px` : "";
     element.style.top = Number.isFinite(properties.y) ? `${properties.y}px` : "";
     const parent = element.parentElement?.closest("[data-forma-type]");
-    if (["flowlayoutpanel", "tablelayoutpanel", "stackpanel", "hstack", "vstack", "wrappanel", "centerpanel", "sidebar", "appshell", "responsivepanel"].includes(parent?.dataset.formaType))
+    if (["flowlayoutpanel", "tablelayoutpanel", "stackpanel", "hstack", "vstack", "wrappanel", "centerpanel", "sidebar", "appshell", "responsivepanel", "responsivegrid", "responsivestack"].includes(parent?.dataset.formaType))
       Object.assign(element.style, { position: "relative", left: "", top: "" });
-    if (["flowlayoutpanel", "stackpanel", "hstack", "vstack", "wrappanel", "centerpanel", "sidebar", "appshell", "responsivepanel"].includes(parent?.dataset.formaType)) element.style.flexShrink = "0";
+    if (["flowlayoutpanel", "stackpanel", "hstack", "vstack", "wrappanel", "centerpanel", "sidebar", "appshell", "responsivepanel", "responsivegrid", "responsivestack"].includes(parent?.dataset.formaType)) element.style.flexShrink = "0";
   },
 
   create(message) {

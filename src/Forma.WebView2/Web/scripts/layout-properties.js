@@ -1,6 +1,6 @@
 // Dock/Anchor are view geometry. The Builder model owns saved bounds and layout settings.
 (() => {
-  const managed = new Set(['flowlayoutpanel', 'stackpanel', 'hstack', 'vstack', 'wrappanel', 'centerpanel', 'sidebar', 'appshell', 'responsivepanel', 'tablelayoutpanel']);
+  const managed = new Set(['flowlayoutpanel', 'stackpanel', 'hstack', 'vstack', 'wrappanel', 'centerpanel', 'sidebar', 'appshell', 'responsivepanel', 'responsivegrid', 'responsivestack', 'tablelayoutpanel']);
   const groups = new Map();
   const number = value => Number.isFinite(Number(value)) ? Number(value) : 0;
   const limit = (value, minimum, maximum) => Math.max(minimum, Math.min(Math.max(minimum, maximum), value));
@@ -13,10 +13,16 @@
     return { width: Math.max(0, host.clientWidth ? host.clientWidth - paddingX : fallback.width),
       height: Math.max(0, host.clientHeight ? host.clientHeight - paddingY : fallback.height), x: px, y: py };
   }
+  // Border width on one edge; "borderSides" limits the border to some edges (default all).
+  function borderEdge(item, side) {
+    const sides = item.borderSides ?? 'all';
+    return sides === 'all' || sides.split(',').includes(side) ? number(item.borderWidth) : 0;
+  }
   function reference(parent) {
     if (parent.kind === 'form') return { width: number(parent.width), height: number(parent.height) };
-    let width = number(parent.width) - number(parent.paddingLeft) - number(parent.paddingRight) - 2 * number(parent.borderWidth);
-    let height = number(parent.height) - number(parent.paddingTop) - number(parent.paddingBottom) - 2 * number(parent.borderWidth);
+    const edge = side => borderEdge(parent, side);
+    let width = number(parent.width) - number(parent.paddingLeft) - number(parent.paddingRight) - edge('left') - edge('right');
+    let height = number(parent.height) - number(parent.paddingTop) - number(parent.paddingBottom) - edge('top') - edge('bottom');
     if (parent.kind === 'groupbox') height -= 28;
     if (parent.kind === 'card' && parent.headerVisible) height -= 56;
     if (parent.kind === 'tabcontrol') { if (parent.orientation === 'vertical') width -= 120; else height -= 36; }
@@ -43,6 +49,10 @@
         x = left + area.x; y = top + area.y;
         if (['top', 'bottom', 'fill'].includes(dock)) width = right - left - ml - mr;
         if (['left', 'right', 'fill'].includes(dock)) height = bottom - top - mt - mb;
+        if (item.kind === 'aspectratiocontainer') {
+          width = limit(width, item.minimumWidth || 24, item.maximumWidth || Math.max(24, area.width - ml - mr));
+          height = limit(Math.round(width / (item.aspectRatio || 16 / 9)), item.minimumHeight || 20, item.maximumHeight || 16000);
+        }
         const takeW = Math.min(right - left, width + ml + mr), takeH = Math.min(bottom - top, height + mt + mb);
         if (dock === 'top') top += takeH;
         if (dock === 'bottom') { y = bottom - takeH + area.y; bottom -= takeH; }

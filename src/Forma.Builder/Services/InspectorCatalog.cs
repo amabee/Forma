@@ -115,6 +115,7 @@ public static class InspectorCatalog
         ),
         new("borderColor", "Border color", "Appearance", "color", ChildOnly: true),
         new("borderWidth", "Border width", "Appearance", "number", 0, 10, ChildOnly: true),
+        new("borderSides", "Border sides", "Appearance", "select", Options: Appearance.BorderSideValues, ChildOnly: true),
         new("borderRadius", "Radius", "Appearance", "number", 0, 100, ChildOnly: true),
         new("opacity", "Opacity (%)", "Appearance", "number", 10, 100, ChildOnly: true),
         new(
@@ -365,7 +366,7 @@ public static class InspectorCatalog
             "Layout",
             "select",
             Options: ["horizontal", "vertical"],
-            Kind: "splitcontainer,flowlayoutpanel,tabcontrol,toolbar,toolstrip,divider,radiogroup,checkboxgroup,segmentedcontrol,chipgroup,buttongroup,sidebar,appshell,responsivepanel,stackpanel,hstack,vstack,wrappanel,centerpanel,sidenavigation"
+            Kind: "splitcontainer,flowlayoutpanel,tabcontrol,toolbar,toolstrip,divider,radiogroup,checkboxgroup,segmentedcontrol,chipgroup,buttongroup,sidebar,appshell,responsivepanel,responsivestack,stackpanel,hstack,vstack,wrappanel,centerpanel,sidenavigation"
         ),
         new(
             "gap",
@@ -374,7 +375,7 @@ public static class InspectorCatalog
             "number",
             0,
             64,
-            Kind: "splitcontainer,flowlayoutpanel,tablelayoutpanel,sidebar,appshell,responsivepanel,accordion,stackpanel,hstack,vstack,wrappanel,centerpanel"
+            Kind: "splitcontainer,flowlayoutpanel,tablelayoutpanel,sidebar,appshell,responsivepanel,responsivegrid,responsivestack,accordion,stackpanel,hstack,vstack,wrappanel,centerpanel"
         ),
         new(
             "scrollDirection",
@@ -388,13 +389,17 @@ public static class InspectorCatalog
         new("rowCount", "Rows", "Layout", "number", 1, 100, Kind: "tablelayoutpanel"),
         new(
             "breakpoint",
-            "Stack below width",
+            "Breakpoint (px)",
             "Layout",
             "number",
             100,
             2400,
-            Kind: "appshell,responsivepanel"
+            Kind: "appshell,responsivepanel,responsivegrid,responsivestack,breakpointcontainer"
         ),
+        new("columns", "Wide columns", "Layout", "number", 1, 12, Kind: "responsivegrid"),
+        new("narrowColumns", "Narrow columns", "Layout", "number", 1, 12, Kind: "responsivegrid"),
+        new("narrowOrientation", "Narrow direction", "Layout", "select", Options: ["horizontal", "vertical"], Kind: "responsivestack"),
+        new("aspectRatio", "Width / height ratio", "Layout", "number", .1, 10, Kind: "aspectratiocontainer"),
         new("tabs", "Sections (one per line)", "General", "textarea", Kind: "accordion"),
         new("expanded", "Expanded", "Behavior", "checkbox", Kind: "accordion"),
         new("selectedTab", "Expanded section", "Behavior", "number", 0, 99, Kind: "accordion"),
@@ -497,5 +502,6 @@ public static class InspectorCatalog
                         or "duration"
                         or "dismissible"
             )
-        );
+        ).Select(property => kind == "aspectratiocontainer" && property.Id == "height"
+            ? property with { ReadOnly = true } : property);
 }

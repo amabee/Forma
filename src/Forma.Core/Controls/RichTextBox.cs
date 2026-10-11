@@ -1,3 +1,6 @@
+using Forma.Core.Rendering;
+using System.Text.Json;
+
 namespace Forma.Core.Controls;
 
 /// <summary>Rich text stored as paragraphs and styled runs, rather than arbitrary HTML.</summary>
@@ -24,4 +27,19 @@ public sealed class RichTextBox : Control
     public bool ReadOnly { get => _readOnly; set => SetProperty(ref _readOnly, value); }
     public event EventHandler? TextChanged;
     public void SetPlainText(string text) => Document = text.Split('\n').Select(line => new RichBlock("paragraph", [new(line.TrimEnd('\r'))])).ToArray();
+
+    protected override void WriteRenderState(IDictionary<string, object?> state)
+    {
+        base.WriteRenderState(state);
+        state["document"] = Document.Select(b => new { kind = b.Kind, runs = b.Runs!.Select(r => new { text = r.Text, bold = r.Bold, italic = r.Italic, underline = r.Underline }).ToArray() }).ToArray();
+        state["readOnly"] = ReadOnly;
+    }
+
+    protected override void OnRuntimeEvent(RuntimeEvent e)
+    {
+        base.OnRuntimeEvent(e);
+        if (e.Name != "rich-input" || ReadOnly || !e.TryGetElement("document", out var document)) return;
+        try { Document = document.Deserialize<RichBlock[]>(new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? []; }
+        catch (Exception error) when (error is JsonException or ArgumentException) { /* Reject malformed editor messages. */ }
+    }
 }

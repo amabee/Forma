@@ -13,12 +13,13 @@ import { linter, lintGutter, openLintPanel, forEachDiagnostic, forceLinting } fr
 import { syntaxTree } from "@codemirror/language";
 import { diagnose, formaCompletions } from "./code-assistance.mjs";
 import { createJavaScriptCompletionClient } from "./javascript-completion.mjs";
+import { prepareHandler } from "./event-handlers.mjs";
 const semanticCompletion = createJavaScriptCompletionClient();
 let completionContext = { controls: [] };
 document.body.classList.toggle("embedded-editor", new URLSearchParams(window.location.search).has("embedded"));
 
-const definitions = { css: { title: "CSS", extension: css() }, behavior: { title: "JavaScript", extension: javascript() }, characteristics: { title: "JSON", extension: json() } };
-const language = key => ({ css: "css", behavior: "javascript", characteristics: "json" })[key];
+const definitions = { css: { title: "CSS", extension: css() }, behavior: { title: "JavaScript", extension: javascript() }, events: { title: "JavaScript", extension: javascript() }, characteristics: { title: "JSON", extension: json() } };
+const language = key => ({ css: "css", behavior: "javascript", events: "javascript", characteristics: "json" })[key];
 const send = message => window.chrome?.webview?.postMessage({ type: "editor", ...message });
 const status = text => { document.getElementById("editor-message").textContent = text; };
 // VS Code "Dark Modern" / "Light Modern" workbench colors with Dark+ / Light+ token colors.
@@ -134,7 +135,7 @@ const themeSlot = new Compartment(); let editorTheme = "dark";
 const themeExtensions = () => editorTheme === "light" ? [lightTheme, lightHighlighting] : [theme, highlighting];
 const savedSources = {};
 let globalDocument = false, singleDocument = null, singleFileName = null;
-const fileName = key => singleFileName ?? ({ css: "component.css", behavior: globalDocument ? "main.js" : "script.js", characteristics: "custom-properties.json" })[key];
+const fileName = key => singleFileName ?? ({ css: "component.css", behavior: globalDocument ? "main.js" : "script.js", events: "event.js", characteristics: "custom-properties.json" })[key];
 const views = new Map(); let active = "css", busy = false, dirty = false, populating = false;
 function source() { if (singleDocument) return { css: "", behavior: views.get(singleDocument).state.doc.toString(), characteristics: "{}" }; return Object.fromEntries([...views].map(([key, view]) => [key, view.state.doc.toString()])); }
 function markDirty(value) {
@@ -162,9 +163,11 @@ const signatureField = StateField.define({
   },
   provide: field => showTooltip.from(field),
 });
-function completionData() {
+function completionData(key = active) {
   let custom = {}; try { custom = JSON.parse(views.get("characteristics")?.state.doc.toString() ?? "{}"); } catch {}
-  return { context: completionContext, custom, globalScript: globalDocument };
+  const eventSource = views.get("events")?.state.doc.toString() ?? "";
+  const context = !globalDocument && !singleDocument ? { ...completionContext, filePath: key === "events" ? "event.js" : "script.js", projectFiles: [...(completionContext.projectFiles ?? []).filter(file => file.path !== "script.js" && (file.path !== "event.js" || !eventSource)), ...(eventSource ? [{ path: "event.js", content: eventSource }] : []), { path: "script.js", content: views.get("behavior").state.doc.toString() }] } : completionContext;
+  return { context, custom, globalScript: globalDocument };
 }
 function informationPanel(info) {
   const dom = document.createElement("div"); dom.className = "completion-information";
@@ -193,9 +196,9 @@ async function updateSignature(view) {
 function extensions(key) {
   return [basicSetup, definitions[key].extension, themeSlot.of(themeExtensions()), EditorState.tabSize.of(2),
     lintGutter(), linter(view => diagnose(language(key), view.state.doc.toString(), completionContext.controls, !singleDocument), { delay: 400 }),
-    ...(key === "behavior" ? [signatureField, hoverTooltip(async (view, position) => {
+    ...(["behavior", "events"].includes(key) ? [signatureField, hoverTooltip(async (view, position) => {
       const source = view.state.doc.toString();
-      const info = await semanticCompletion.hover({ ...completionData(), source, position });
+      const info = await semanticCompletion.hover({ ...completionData(key), source, position });
       if (!info || view.state.doc.toString() !== source) return null;
       return { pos: info.from, end: info.to, above: true, create: () => ({ dom: informationPanel(info) }) };
     }), autocompletion({ override: [async context => {
@@ -204,7 +207,7 @@ function extensions(key) {
       const fast = formaCompletions(context, completionContext.controls, values, completionContext.modules);
       // Literal component names, events and runtime keys retain catalog validation.
       if (fast && /["']/.test(context.state.doc.sliceString(Math.max(0, fast.from - 1), fast.from))) return fast;
-      const semantic = await semanticCompletion.complete(context, { context: completionContext, custom: values, globalScript: globalDocument });
+      const semantic = await semanticCompletion.complete(context, completionData(key));
       if (!semantic) return fast ?? localCompletionSource(context);
       if (fast && fast.from === semantic.from) {
         const labels = new Set(semantic.options.map(option => option.label));
@@ -216,7 +219,7 @@ function extensions(key) {
       { key: "Mod-Shift-f", run: () => { command("format"); return true; } }]),
     EditorView.updateListener.of(update => {
       if (update.docChanged && !populating) markDirty(singleDocument ? views.get(singleDocument).state.doc.toString() !== (savedSources.behavior ?? "") : [...views].some(([name, view]) => view.state.doc.toString() !== (savedSources[name] ?? "")));
-      if (update.selectionSet || update.docChanged) { cursor(); if (key === "behavior" && !populating) updateSignature(update.view); }
+      if (update.selectionSet || update.docChanged) { cursor(); if (["behavior", "events"].includes(key) && !populating) updateSignature(update.view); }
       let count = 0; for (const [name, view] of views) {
         let fileCount = 0; forEachDiagnostic(view.state, () => { count++; fileCount++; });
         const tab = document.querySelector(`[data-tab="${name}"]`);
@@ -284,6 +287,22 @@ function receive(message) {
   if (message.name) document.getElementById("editor-component-name").textContent = message.name;
   if (message.action === "file-name") { singleFileName = message.singleFileName; document.querySelector(`[data-tab="${singleDocument}"] span`).textContent = singleFileName; document.getElementById("editor-file-name").textContent = singleFileName; }
   if (message.action === "activate") activate(message.document);
+  if (message.action === "event-handler") {
+    activate("behavior");
+    const scriptView = views.get("behavior"), eventView = views.get("events"), current = scriptView.state.doc.toString();
+    const result = prepareHandler(current, message.eventName, message.componentName, eventView.state.doc.toString(), message.handlerClass);
+    const target = result.document ?? (result.error?.startsWith("event.js") ? "events" : "behavior");
+    const view = views.get(target);
+    if (result.error) { activate(target); status(`Fix the source before adding a handler: ${result.error}`); openLintPanel(view); view.focus(); return; }
+    if (result.created) {
+      scriptView.dispatch({ changes: result.scriptChanges });
+      eventView.dispatch({ changes: result.eventChange });
+    }
+    activate(result.document);
+    view.dispatch({ selection: { anchor: result.from }, scrollIntoView: true });
+    view.focus();
+    status(result.created ? `${message.eventName} handler added. Save to apply.` : `${message.eventName} handler opened.`);
+  }
   if (message.action === "source") {
     globalDocument = !!message.globalScript; singleDocument = message.singleDocument ?? null; singleFileName = message.singleFileName ?? null;
     Object.assign(savedSources, message.source);
@@ -297,7 +316,7 @@ function receive(message) {
     if (singleDocument) { active = singleDocument; document.querySelector(`[data-tab="${singleDocument}"] span`).textContent = singleFileName; }
     markDirty(false); activate(active);
   }
-  if (message.action === "saved") { Object.assign(savedSources, message.source); const current = source(); markDirty(Object.keys(definitions).some(key => current[key] !== message.source[key])); setBusy(false); }
+  if (message.action === "saved") { Object.assign(savedSources, { events: "", ...message.source }); const current = source(); markDirty(Object.keys(definitions).some(key => (current[key] ?? "") !== (message.source[key] ?? ""))); setBusy(false); }
   if (message.action === "error") setBusy(false);
   if (message.status) status(message.status);
 }

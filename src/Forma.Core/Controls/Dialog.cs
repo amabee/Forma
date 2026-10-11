@@ -1,3 +1,5 @@
+using Forma.Core.Rendering;
+
 namespace Forma.Core.Controls;
 
 /// <summary>Modal message/confirmation state. Open state and results are transient.</summary>
@@ -39,5 +41,19 @@ public class Dialog : Component
         SetProperty(ref _isOpen, false, nameof(IsOpen));
         SetProperty(ref _result, result, nameof(Result));
         Closed?.Invoke(this, new(result));
+    }
+
+    protected override void WriteRenderState(IDictionary<string, object?> state)
+    {
+        base.WriteRenderState(state);
+        state["dialogTitle"] = DialogTitle; state["message"] = Message; state["buttons"] = Buttons; state["canCancel"] = CanCancel; state["isOpen"] = IsOpen;
+    }
+
+    protected override void OnRuntimeEvent(RuntimeEvent e)
+    {
+        base.OnRuntimeEvent(e);
+        if (e.Name == "dialog-result" && e.TryGetString("result", out var result)
+            && (result != "Cancel" || CanCancel || Buttons.Contains("Cancel")))
+            Close(result);
     }
 }

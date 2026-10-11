@@ -24,23 +24,11 @@
     <Using Include="Xunit" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="..\..\src\Forma.Builder\Services\CoalescedRefresh.cs" Link="CoalescedRefresh.cs" />
-    <Compile Include="..\..\src\Forma.Builder\Services\DesignHistory.cs" Link="DesignHistory.cs" />
-    <Compile Include="..\..\src\Forma.Builder\Services\ProjectEntryService.cs" Link="ProjectEntryService.cs" />
-    <Compile Include="..\..\src\Forma.Builder\Services\ProjectFile.cs" Link="ProjectFile.cs" />
-    <Compile Include="..\..\src\Forma.Builder\Services\ProjectExplorerService.cs" Link="ProjectExplorerService.cs" />
-    <Compile Include="..\..\src\Forma.Builder\Services\PreviewSession.cs" Link="PreviewSession.cs" />
-    <Compile Include="..\..\src\Forma.Builder\Services\ComponentEditorService.cs" Link="ComponentEditorService.cs" />
-    <Compile Include="..\..\src\Forma.Builder\Services\ComponentSaveSession.cs" Link="ComponentSaveSession.cs" />
-    <Compile Include="..\..\src\Forma.Builder\Models\ComponentCustomization.cs" Link="ComponentCustomization.cs" />
-    <Compile Include="..\..\src\Forma.Builder\Services\InspectorCatalog.cs" Link="InspectorCatalog.cs" />
-    <Compile Include="..\..\src\Forma.Builder\Models\Appearance.cs" Link="Appearance.cs" />
-    <Compile Include="..\..\src\Forma.Builder\ViewModels\BuilderViewModel.cs" Link="BuilderViewModel.cs" />
-    <Compile Include="..\..\src\Forma.Builder\Services\DesignerEditingService.cs" Link="DesignerEditingService.cs" />
-    <Compile Include="..\..\src\Forma.Builder\Services\LayoutGeometry.cs" Link="LayoutGeometry.cs" />
-    <Compile Include="..\..\src\Forma.Builder\Services\RuntimePropertyService.cs" Link="RuntimePropertyService.cs" />
+    <!-- The Builder's WinForms-free layers are compiled in whole, so new files are tested automatically. -->
+    <Compile Include="..\..\src\Forma.Builder\Services\*.cs" LinkBase="Builder\Services" />
+    <Compile Include="..\..\src\Forma.Builder\Models\*.cs" LinkBase="Builder\Models" />
+    <Compile Include="..\..\src\Forma.Builder\ViewModels\*.cs" LinkBase="Builder\ViewModels" />
     <EmbeddedResource Include="..\..\src\Forma.Builder\DesignerWeb\runtime-script-properties.json" LogicalName="Forma.RuntimeScriptProperties.json" />
-    <Compile Include="..\..\src\Forma.Builder\Models\DesignerEditResult.cs" Link="DesignerEditResult.cs" />
   </ItemGroup>
 
 </Project>

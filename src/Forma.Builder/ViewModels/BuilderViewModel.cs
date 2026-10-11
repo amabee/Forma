@@ -23,6 +23,7 @@ public sealed class BuilderViewModel : INotifyPropertyChanged
     private bool _previewMode;
     private string? _projectPath;
     private string _savedSnapshot = "";
+    private DesignSnapshot? _failedEdit;
     private bool _hasUnsavedChanges;
     private string _windowTitle = "Untitled - Forma Builder";
 
@@ -39,8 +40,31 @@ public sealed class BuilderViewModel : INotifyPropertyChanged
     public Control? SelectedControl
     {
         get => _selectedControl;
-        set { Set(ref _selectedControl, value); if (Form is not null) _formSelections[Form.Id] = value?.Id; }
+        set
+        {
+            Set(ref _selectedControl, value);
+            if (Form is not null) _formSelections[Form.Id] = value?.Id;
+            // Selecting a control outside the current multi-selection starts a new one.
+            if (value is not null && !_selectedIds.Contains(value.Id)) _selectedIds = [value.Id];
+        }
     }
+
+    private IReadOnlyList<string> _selectedIds = [];
+
+    /// <summary>Every selected control ID; <see cref="SelectedControl"/> is the primary one the inspector shows.</summary>
+    public IReadOnlyList<string> SelectedIds =>
+        SelectedControl is null ? [] : _selectedIds.Contains(SelectedControl.Id) ? _selectedIds : [SelectedControl.Id];
+
+    public void SetSelection(IEnumerable<Control> controls)
+    {
+        var list = controls.Distinct().ToList();
+        if (list.Count == 0) return;
+        _selectedIds = list.Select(control => control.Id).ToList();
+        if (SelectedControl is null || !list.Contains(SelectedControl)) SelectedControl = list[^1];
+    }
+
+    /// <summary>Controls copied with Copy or Cut, ready to paste into any form of the project.</summary>
+    public List<ProjectNode> Clipboard { get; set; } = [];
     public bool PreviewMode
     {
         get => _previewMode;
@@ -58,6 +82,8 @@ public sealed class BuilderViewModel : INotifyPropertyChanged
         }
     }
     public bool HasUnsavedChanges => Form is not null && Snapshot() != _savedSnapshot;
+    /// <summary>HasUnsavedChanges as of the last RefreshDocumentState, without re-serializing the project.</summary>
+    public bool IsMarkedUnsaved => _hasUnsavedChanges;
     public string WindowTitle => _windowTitle;
     public bool CanUndo => !PreviewMode && _history.CanUndo;
     public bool CanRedo => !PreviewMode && _history.CanRedo;
@@ -73,13 +99,19 @@ public sealed class BuilderViewModel : INotifyPropertyChanged
     public DesignerEditResult ExecuteEdit(string action, string? id, JsonElement payload)
     {
         var mutates = !PreviewMode && Form is not null
-            && (action is "drop" or "move" or "resize" or "property" or "customize" or "global-script" or "image-source" or "path-source"
+            && (action is "drop" or "move" or "move-many" or "resize" or "property" or "customize" or "global-script" or "image-source" or "path-source"
                 || action == "command" && payload.ValueKind == JsonValueKind.Object
                     && payload.TryGetProperty("command", out var command)
                     && command.ValueKind == JsonValueKind.String
-                    && command.GetString() is "delete" or "bring-front" or "send-back" or "add-tab");
+                    && command.GetString() is "delete" or "cut" or "paste" or "duplicate" or "bring-front" or "send-back" or "add-tab");
         var before = mutates ? CaptureHistory() : null;
         try { return _editing.Execute(action, id, payload); }
+        catch
+        {
+            // Don't record a half-applied edit; the view rolls back via TakeFailedEdit.
+            if (before is not null) { _failedEdit = before; before = null; }
+            throw;
+        }
         finally
         {
             if (before is not null)
@@ -164,9 +196,9 @@ public sealed class BuilderViewModel : INotifyPropertyChanged
         foreach (var descendant in Walk(child)) yield return descendant;
     }
 
-    public ProjectDocument CaptureProject(bool embedImages = false)
+    public ProjectDocument CaptureProject(bool embedImages = false, ICollection<string>? skippedImages = null)
     {
-        var document = ProjectFile.CaptureProject(Forms, control => JsonSerializer.SerializeToElement(Appearance[control.Id]), embedImages);
+        var document = ProjectFile.CaptureProject(Forms, control => JsonSerializer.SerializeToElement(Appearance[control.Id]), embedImages, skippedImages);
         if (Files.Count > 0) {
             document.Forms = document.Version == 1 ? [document.Root] : document.Forms;
             document.Version = 3;
@@ -202,8 +234,19 @@ public sealed class BuilderViewModel : INotifyPropertyChanged
     public DesignSnapshot CaptureHistory()
     {
         // Preserve image data in undo entries even after a source file is moved.
-        try { return new(ProjectFile.Serialize(CaptureProject(embedImages: true)), SelectedControl?.Id, Form?.Id); }
-        catch (IOException) { return new(Snapshot(), SelectedControl?.Id, Form?.Id); }
+        // Embedding is best-effort, so a missing or oversized image can't block edits.
+        return new(ProjectFile.Serialize(CaptureProject(embedImages: true)), SelectedControl?.Id, Form?.Id);
+    }
+
+    /// <summary>
+    /// The state before the last edit that threw, when that edit left partial changes
+    /// behind; null when the failure happened before anything was mutated.
+    /// </summary>
+    public DesignSnapshot? TakeFailedEdit()
+    {
+        var before = _failedEdit;
+        _failedEdit = null;
+        return before is not null && before.Json != CaptureHistory().Json ? before : null;
     }
 
     public void MarkSaved()
