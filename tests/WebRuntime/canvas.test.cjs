@@ -78,3 +78,15 @@ test('Alt+Shift+Arrow resizes the selected control, Ctrl makes bigger steps', ()
   key('ArrowUp', { altKey: true, shiftKey: true, ctrlKey: true });
   assert.deepEqual(plain([last().payload.width, last().payload.height]), [100, 20]);
 });
+
+test('form size presets resize the form in one edit and name the current size', () => {
+  const { document, last } = fixture();
+  assert.equal(document.getElementById('device-caption').textContent, 'Small window (640 × 440)');
+  document.getElementById('device-button').click();
+  const items = [...document.querySelectorAll('#device-menu button')];
+  assert.equal(document.getElementById('device-menu').hidden, false);
+  assert.equal(items.find(item => item.textContent.startsWith('Small window')).getAttribute('aria-checked'), 'true');
+  items.find(item => item.textContent.startsWith('Laptop')).click();
+  assert.deepEqual(plain([last().event, last().id, last().payload]), ['resize', 'root', { width: 1024, height: 640 }]);
+  assert.equal(document.getElementById('device-menu').hidden, true);
+});

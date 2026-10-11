@@ -93,7 +93,8 @@
           <button data-align="distribute-vertical" aria-label="Distribute vertically" title="Distribute vertically (3 or more)"><img class="icon-svg" src="icons/align-vertical-distribute-center.svg" alt="" /></button>
         </div>
         <div class="toolbar-right">
-          <span class="device" title="Form size"><img class="icon-svg" src="icons/monitor.svg" alt="" /><span id="device-caption">Desktop (640 × 440)</span></span>
+          <button id="device-button" class="device" type="button" title="Form size presets" aria-haspopup="menu" aria-expanded="false"><img class="icon-svg" src="icons/monitor.svg" alt="" /><span id="device-caption">Desktop (640 × 440)</span><img class="icon-svg" src="icons/chevron-down.svg" alt="" /></button>
+          <div id="device-menu" class="device-menu" role="menu" aria-label="Form size presets" hidden></div>
           <label class="zoom-label" title="Canvas zoom"><img class="icon-svg" src="icons/search.svg" alt="" />
             <select id="zoom" aria-label="Canvas zoom" title="Zoom (Ctrl+wheel, Ctrl+= / Ctrl+-, Ctrl+0 for 100%)">
               <option value="fit">Fit</option>

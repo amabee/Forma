@@ -84,5 +84,44 @@
     }));
   }
 
-  window.formaCanvas = { setZoom, fitLevel, renderPath };
+  // Form size presets from the toolbar; one resize edit, so a single undo step.
+  const PRESETS = [
+    ["Desktop", 1280, 800], ["Laptop", 1024, 640], ["Window", 800, 600], ["Small window", 640, 440],
+    ["Dialog", 480, 360], ["Tablet", 768, 1024], ["Phone", 390, 844],
+  ];
+  const deviceName = (width, height) => PRESETS.find(([, w, h]) => w === width && h === height)?.[0] ?? "Custom";
+  const deviceButton = document.getElementById("device-button"), deviceMenu = document.getElementById("device-menu");
+  function setDeviceMenu(open) {
+    if (!deviceMenu) return;
+    deviceMenu.hidden = !open;
+    deviceButton.setAttribute("aria-expanded", String(open));
+    if (!open) return;
+    const form = d.controlById(d.rootId);
+    deviceMenu.replaceChildren(...PRESETS.map(([name, width, height]) => {
+      const item = document.createElement("button");
+      item.type = "button"; item.setAttribute("role", "menuitemradio");
+      item.setAttribute("aria-checked", String(form?.width === width && form?.height === height));
+      item.append(Object.assign(document.createElement("span"), { textContent: name }), Object.assign(document.createElement("small"), { textContent: `${width} × ${height}` }));
+      item.disabled = d.preview || !!form?.locked;
+      item.addEventListener("click", () => { setDeviceMenu(false); send("resize", d.rootId, { width, height }); });
+      return item;
+    }));
+    const rect = deviceButton.getBoundingClientRect();
+    Object.assign(deviceMenu.style, { left: `${Math.max(8, rect.right - 220)}px`, top: `${rect.bottom + 4}px` });
+    deviceMenu.querySelector("button:not(:disabled)")?.focus();
+  }
+  deviceButton?.addEventListener("click", () => setDeviceMenu(deviceMenu.hidden));
+  deviceMenu?.addEventListener("keydown", event => {
+    const items = [...deviceMenu.querySelectorAll("button:not(:disabled)")], index = items.indexOf(document.activeElement);
+    if (event.key === "Escape") { event.stopPropagation(); setDeviceMenu(false); deviceButton.focus(); }
+    if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+      event.preventDefault();
+      items[(index + (event.key === "ArrowDown" ? 1 : -1) + items.length) % items.length]?.focus();
+    }
+  });
+  document.addEventListener("pointerdown", event => {
+    if (deviceMenu && !deviceMenu.hidden && !deviceMenu.contains(event.target) && !deviceButton.contains(event.target)) setDeviceMenu(false);
+  });
+
+  window.formaCanvas = { setZoom, fitLevel, renderPath, deviceName };
 })();

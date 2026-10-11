@@ -480,7 +480,7 @@ window.formaDesigner = {
         height: `${(height + 36) * this.zoom}px`,
       });
     const device = byId("device-caption");
-    if (device) device.textContent = `Desktop (${width} × ${height})`;
+    if (device) device.textContent = `${window.formaCanvas?.deviceName(width, height) ?? "Desktop"} (${width} × ${height})`;
   },
   receive(message) {
     if (message.action === "component-event") {

@@ -1329,6 +1329,22 @@
   .zoom-label {
     @apply flex h-9 items-center gap-2 rounded-lg px-3 whitespace-nowrap text-muted;
   }
+  .device:hover {
+    @apply bg-hover text-ink;
+  }
+  .device-menu {
+    @apply fixed z-[1000] flex w-[220px] flex-col rounded-xl border border-line bg-raised p-1.5 text-ink;
+    box-shadow: 0 16px 40px -12px rgb(0 0 0 / 0.45);
+  }
+  .device-menu button {
+    @apply flex items-center justify-between rounded-md px-2.5 py-1.5 text-[13px] hover:bg-hover disabled:opacity-50;
+  }
+  .device-menu button[aria-checked="true"] {
+    @apply bg-accent-soft;
+  }
+  .device-menu small {
+    @apply text-[12px] text-muted tabular-nums;
+  }
   .zoom-label {
     @apply border border-line bg-field pr-1;
   }
