@@ -88,7 +88,7 @@ public sealed partial class BuilderWindow
                 if (payload.ValueKind == JsonValueKind.Object && payload.TryGetProperty("enabled", out var enabled) && enabled.ValueKind == JsonValueKind.True)
                 {
                     _runtimePreview?.Close();
-                    _runtimePreview = new PreviewWindow(new PreviewSession(_viewModel));
+                    _runtimePreview = new PreviewWindow(PreviewProject.Start(_viewModel));
                     _runtimePreview.Show(this);
                 }
                 await StateAsync("Preview opened in its own window");

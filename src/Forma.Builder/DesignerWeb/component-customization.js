@@ -10,6 +10,9 @@
   let sharedState, globalSignature, globalKey, globalFailed = false;
   let runtimeActive = false, runtimeEpoch = 0, eventSequence = 0;
   let controlsById = new Map();
+  // forma.showForm promises waiting for their window to close, by request ID.
+  const pendingForms = new Map();
+  let formRequests = 0;
   const eventMetadata = new WeakMap(), propertyCache = new Map();
   const eventSession = Math.random().toString(36).slice(2);
   const eventLabels = Object.fromEntries(("Click DoubleClick MouseDown MouseUp MouseMove MouseEnter MouseLeave MouseOver MouseOut MouseWheel KeyDown KeyUp KeyPress Input Change BeforeInput Focus Blur FocusIn FocusOut Load Ready Created Mounted Updated Destroyed Resize Move Layout DragStart Drag DragEnd DragEnter DragOver DragLeave Drop Copy Cut Paste Validating Validated Submit Reset PropertyChanged Tick").split(" ").map(name => [({ doubleclick: "dblclick", mousewheel: "wheel" })[name.toLowerCase()] ?? name.toLowerCase(), name]));
@@ -596,6 +599,32 @@
           payload: { sourceId: item.ownerId ?? item.id },
         });
       },
+      /**
+       * Opens another form of the project in its own Preview window. With { modal: true } it
+       * blocks this window like ShowDialog. Resolves with the value passed to closeForm.
+       */
+      showForm(name, options = {}) {
+        if (typeof name !== "string" || !name.trim()) throw new Error("showForm needs a form name.");
+        const requestId = `form-${eventSession}-${++formRequests}`;
+        return new Promise((resolve, reject) => {
+          pendingForms.set(requestId, { resolve, reject });
+          window.forma.send({
+            type: "custom",
+            id: item.ownerId ?? item.id,
+            event: "show-form",
+            payload: { sourceId: item.ownerId ?? item.id, form: name, modal: options?.modal === true, requestId },
+          });
+        });
+      },
+      /** Closes this form's window; the opener's showForm promise receives the result. */
+      closeForm(result = null) {
+        window.forma.send({
+          type: "custom",
+          id: item.ownerId ?? item.id,
+          event: "close-form",
+          payload: { sourceId: item.ownerId ?? item.id, result: result === undefined ? null : JSON.parse(JSON.stringify(result)) },
+        });
+      },
     };
     const component = {
       id: item.ownerId ?? item.id,
@@ -705,7 +734,16 @@
     }
   }
 
+  /** The host reports a window opened by showForm has closed (or could not open). */
+  function formClosed(requestId, result, error) {
+    const pending = pendingForms.get(requestId);
+    if (!pending) return;
+    pendingForms.delete(requestId);
+    if (error) pending.reject(new Error(error));
+    else pending.resolve(result ?? null);
+  }
   window.formaCustomization = {
+    formClosed,
     apply(state, runtime = false) {
       currentState = state;
       controlsById = new Map(state.controls.map(control => [control.id, control]));

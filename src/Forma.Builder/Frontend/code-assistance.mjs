@@ -276,6 +276,8 @@ const methods = {
     "showToast(name, { text, variant, position, duration, dismissible })",
   closeToast: "closeToast(name)",
   showDialog: "showDialog(name)",
+  showForm: "showForm(formName, { modal }) — open another form; resolves with closeForm's result",
+  closeForm: "closeForm(result) — close this form's window",
   addRow: "addRow(gridName, stringCells) — append a row",
   updateRow:
     "updateRow(gridName, rowIndex, stringCells) — replace a source row",

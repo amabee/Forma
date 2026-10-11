@@ -159,6 +159,8 @@ for examples, subscriptions, cleanup, and write semantics.
 | `forma.use(name)` / `forma.shared` | Access a shared module or the session's shallow reactive namespace |
 | `forma.find(nameOrId)` | Get the matched DOM element for advanced local work |
 | `forma.showDialog(nameOrId)` | Open Dialog/ConfirmationDialog |
+| `forma.showForm(formName, { modal })` | Open another form of the project in its own Preview window; `modal: true` blocks the opener like `ShowDialog`. Returns a promise for the value passed to `closeForm` (rejects if the form does not exist) |
+| `forma.closeForm(result)` | Close this form's window and resolve the opener's `showForm` promise with `result` |
 | `forma.showToast(nameOrId)` / `forma.closeToast(nameOrId)` | Notification lifecycle |
 | `forma.cleanup(callback)` | Register cleanup for timers, extra listeners or resources |
 
@@ -301,6 +303,23 @@ forma.on("tick", () => {
 ```
 
 Put `forma.on("click", () => forma.showDialog("confirmDelete"));` on a Button. Configure the named Dialog's message/buttons. A JS promise returning the dialog result is not implemented; C# can subscribe to Closed. The planned event editor is separate future work.
+
+### Opening other forms
+
+Preview starts with the form that is active in the designer and takes a snapshot of the whole project, so every form can be opened while it runs:
+
+```js
+// form1: open the settings form as a dialog and use its result.
+forma.on("click", async () => {
+  const result = await forma.showForm("settingsForm", { modal: true });
+  if (result?.saved) forma.set("statusLabel", "text", "Settings saved");
+});
+
+// settingsForm: hand a result back and close.
+forma.on("click", () => forma.closeForm({ saved: true }));
+```
+
+Each form runs in its own window with its own copy of its controls; `main.js` runs once per window. Closing the first Preview window closes every window it opened.
 
 ## Component families
 

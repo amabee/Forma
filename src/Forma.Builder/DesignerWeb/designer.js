@@ -483,6 +483,10 @@ window.formaDesigner = {
     if (device) device.textContent = `${window.formaCanvas?.deviceName(width, height) ?? "Desktop"} (${width} × ${height})`;
   },
   receive(message) {
+    if (message.action === "form-closed") {
+      window.formaCustomization?.formClosed(message.requestId, message.result, message.error);
+      return;
+    }
     if (message.action === "component-event") {
       window.formaCustomization?.event(message.id, message.event, message.detail);
       return;

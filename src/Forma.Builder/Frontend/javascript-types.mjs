@@ -117,6 +117,10 @@ interface FormaApi {
   cleanup(callback: () => void): void;
   validate(): boolean; submit(): boolean; reset(): boolean;
   showDialog(name: string): void;
+  /** Opens another form in its own window; modal blocks this one. Resolves with closeForm's result. */
+  showForm(name: string, options?: { modal?: boolean }): Promise<unknown>;
+  /** Closes this form's window and hands result to the opener's showForm promise. */
+  closeForm(result?: unknown): void;
   showToast(name: string, options?: { text?: string; variant?: "neutral" | "info" | "success" | "warning" | "caution" | "error" | "danger"; position?: string; duration?: number; dismissible?: boolean }): void;
   closeToast(name: string): void;
   addRow(name: string, cells: string[]): void;

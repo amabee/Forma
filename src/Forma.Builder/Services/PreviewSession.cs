@@ -28,6 +28,15 @@ public sealed class PreviewSession : IDisposable
         _projectFiles = ProjectEntryService.ModuleSources(design.Files);
     }
 
+    /// <summary>A session for one form of a <see cref="PreviewProject"/> snapshot.</summary>
+    internal PreviewSession(Forma.Core.Form form, Dictionary<string, Appearance> appearance, string globalScript, ProjectEntryService.ModuleSource[] files)
+    {
+        Form = form;
+        Appearance = appearance;
+        Appearance[Form.Id].GlobalScript = globalScript;
+        _projectFiles = files;
+    }
+
     private readonly ProjectEntryService.ModuleSource[] _projectFiles;
     private readonly Dictionary<(string Id, string Property), string> _propertyOrigins = new();
     private object[] TakePropertyOrigins()
