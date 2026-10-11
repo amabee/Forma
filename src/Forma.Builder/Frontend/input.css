@@ -392,8 +392,11 @@
   :where(.forma-form) select {
     @apply rounded border border-slate-300 px-2.5 py-2;
   }
-  .forma-form input::placeholder {
-    @apply text-slate-400;
+  /* Placeholders follow the field's Foreground color, just lighter. */
+  .forma-form input::placeholder,
+  .forma-form textarea::placeholder {
+    color: currentColor;
+    opacity: 0.5;
   }
   .forma-form [data-forma-type="label"] {
     @apply flex items-center overflow-hidden whitespace-nowrap font-semibold;

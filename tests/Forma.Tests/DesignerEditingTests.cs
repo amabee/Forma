@@ -103,8 +103,10 @@ public class DesignerEditingTests
         model.ExecuteEdit("resize", button.Id, Payload(new { width = 800, height = 600, x = 900, y = 900 }));
         Assert.Equal(140, model.Appearance[button.Id].Width);
         Assert.Equal(122, model.Appearance[button.Id].Height);
-        Assert.Equal(62, button.X);
-        Assert.Equal(0, button.Y);
+        // Size respects the panel's padding; position may use the whole client area
+        // (220 minus two 1px borders minus the 140px width), as in WinForms.
+        Assert.Equal(78, button.X);
+        Assert.Equal(16, button.Y);
         model.ExecuteEdit("resize", button.Id, Payload(new { width = 1, height = 1 }));
         Assert.Equal(80, model.Appearance[button.Id].Width);
         Assert.Equal(20, model.Appearance[button.Id].Height);

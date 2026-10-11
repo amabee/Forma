@@ -130,6 +130,26 @@ public class RegressionTests
         Assert.Contains("\"BorderSides\": \"bottom\"", json);
     }
 
+    [Fact]
+    public void FreelyPlacedChildrenMayUseAPanelsPaddingButDockedOnesStayInside()
+    {
+        var model = new BuilderViewModel(); model.CreateNew();
+        JsonElement Payload(object value) => JsonSerializer.SerializeToElement(value);
+        var panel = model.ExecuteEdit("drop", model.Form.Id, Payload(new { control = "panel", x = 0, y = 0 })).AddedControl!;
+        model.ExecuteEdit("resize", panel.Id, Payload(new { width = 400, height = 70 }));
+        var button = model.ExecuteEdit("drop", panel.Id, Payload(new { control = "button", x = 10, y = 10 })).AddedControl!;
+        var a = model.Appearance[panel.Id];
+        // Client height is 70 minus the 1px top and bottom borders; padding does not limit Location.
+        model.ExecuteEdit("move", button.Id, Payload(new { x = 10, y = 30 }));
+        Assert.Equal(30, button.Y);
+        model.ExecuteEdit("move", button.Id, Payload(new { x = 10, y = 60 }));
+        Assert.Equal(70 - 2 - model.Appearance[button.Id].Height, button.Y);
+        // Docking still respects padding.
+        var label = model.ExecuteEdit("drop", panel.Id, Payload(new { control = "label", x = 0, y = 0 })).AddedControl!;
+        model.ExecuteEdit("property", label.Id, Payload(new { property = "dock", value = "fill" }));
+        Assert.Equal(400 - a.PaddingLeft - a.PaddingRight - 2, model.Appearance[label.Id].Width);
+    }
+
     private sealed class QueueContext : SynchronizationContext
     {
         private readonly ConcurrentQueue<(SendOrPostCallback Callback, object? State)> _queue = new();

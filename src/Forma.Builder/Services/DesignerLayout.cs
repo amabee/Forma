@@ -10,7 +10,12 @@ public sealed class DesignerLayout(BuilderViewModel viewModel)
 {
     private readonly BuilderViewModel _viewModel = viewModel;
 
-    private (int Width, int Height) AvailableBounds(FControl parent)
+    /// <summary>
+    /// The space a container gives its children. <paramref name="content"/> excludes Padding,
+    /// which (as in WinForms) only applies to docked and anchored layout; freely positioned
+    /// children may use the whole client area.
+    /// </summary>
+    private (int Width, int Height) AvailableBounds(FControl parent, bool content = true)
     {
         var a = _viewModel.Appearance[parent.Id];
         if (parent is Forma.Core.Controls.ScrollablePanel) return (1600, 1600);
@@ -36,13 +41,20 @@ public sealed class DesignerLayout(BuilderViewModel viewModel)
             var rows = Math.Max(table.RowCount, (table.Children.Select(child => child.LayoutSlot).DefaultIfEmpty(1).Max() + table.Columns - 1) / table.Columns);
             height = (height - (rows - 1) * table.Gap) / rows;
         }
+        else if (!content && parent is not Forma.Core.Controls.SplitContainer)
+        {
+            width += a.PaddingLeft + a.PaddingRight;
+            height += a.PaddingTop + a.PaddingBottom;
+        }
         return (Math.Max(24, width), Math.Max(20, height));
     }
 
     public void Position(FControl control, int x, int y)
     {
         var bounds = _viewModel.Appearance[control.Id];
-        var parentBounds = AvailableBounds(control.Parent ?? _viewModel.Form!);
+        // Free positions use the client area: the designer page lets a drag reach the padding,
+        // so clamping to the content box made controls jump back on release.
+        var parentBounds = AvailableBounds(control.Parent ?? _viewModel.Form!, content: false);
         control.X = Math.Clamp(
             x,
             0,
