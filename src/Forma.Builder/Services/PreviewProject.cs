@@ -12,6 +12,30 @@ public sealed class PreviewProject
     private readonly List<ProjectNode> _forms;
     private readonly string _globalScript;
     private readonly ProjectEntryService.ModuleSource[] _files;
+    private readonly Dictionary<string, JsonElement> _shared = new(StringComparer.Ordinal);
+    private const int MaxSharedKeys = 1000, MaxSharedValueLength = 1_000_000;
+
+    /// <summary>forma.shared for the whole run: every window reads and writes the same values.</summary>
+    public IReadOnlyDictionary<string, JsonElement> SharedState => _shared;
+
+    /// <summary>Raised when a window changes a shared value; other windows pass it to their page.</summary>
+    public event EventHandler<SharedChange>? SharedChanged;
+
+    public sealed record SharedChange(string Key, JsonElement? Value, object Source);
+
+    /// <summary>Stores (or with a null value, deletes) one shared value and tells the other windows.</summary>
+    public void SetShared(string key, JsonElement? value, object source)
+    {
+        if (string.IsNullOrEmpty(key) || key.Length > 128) throw new ArgumentException("Shared value names must be 1–128 characters.");
+        if (value is { } json)
+        {
+            if (json.GetRawText().Length > MaxSharedValueLength) throw new ArgumentException($"Shared value '{key}' is too large.");
+            if (!_shared.ContainsKey(key) && _shared.Count >= MaxSharedKeys) throw new ArgumentException("Too many shared values.");
+            _shared[key] = json.Clone();
+        }
+        else if (!_shared.Remove(key)) return;
+        SharedChanged?.Invoke(this, new(key, value?.Clone(), source));
+    }
 
     private PreviewProject(List<ProjectNode> forms, string globalScript, ProjectEntryService.ModuleSource[] files, string startFormId)
     {
@@ -44,6 +68,6 @@ public sealed class PreviewProject
             ?? throw new ArgumentException($"There is no form named '{nameOrId}'.");
         var (form, appearance) = ProjectFile.Restore(new ProjectDocument { Root = node });
         var appearances = appearance.ToDictionary(pair => pair.Key, pair => pair.Value.Deserialize<Appearance>()!);
-        return new PreviewSession(form, appearances, _globalScript, _files);
+        return new PreviewSession(form, appearances, _globalScript, _files, _shared);
     }
 }

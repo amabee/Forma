@@ -319,7 +319,13 @@ forma.on("click", async () => {
 forma.on("click", () => forma.closeForm({ saved: true }));
 ```
 
-Each form runs in its own window with its own copy of its controls; `main.js` runs once per window. Closing the first Preview window closes every window it opened.
+Each form runs in its own window with its own copy of its controls, and `main.js` runs in each window so its `forma.provide` modules are available everywhere. `forma.shared` is one store for the whole run:
+
+- Assigning `forma.shared.name = value` in any form updates every open form, reactively.
+- A form opened later starts from the current values. While its `main.js` runs, assignments only fill values that no other form has set, so `forma.shared.count = 0;` initializes once instead of resetting the app.
+- Shared values must be JSON-compatible (numbers, strings, booleans, arrays, plain objects). Reassign to share a change (`forma.shared.items = [...forma.shared.items, item]`); mutating a nested object in place stays in that window. Functions, refs and reactive objects stay local to the window that assigned them.
+
+Closing the first Preview window closes every window it opened.
 
 ## Component families
 

@@ -67,6 +67,7 @@ public sealed class PreviewWindow : System.Windows.Forms.Form
             _bridge = new WebView2Bridge(_web.CoreWebView2);
             _renderer = new WebView2Renderer(_bridge);
             _bridge.MessageReceived += CustomMessage;
+            _project.SharedChanged += SharedChanged;
             await _renderer.InitializeAsync();
             await _renderer.RenderAsync(_session.Form);
             foreach (var control in _session.Controls)
@@ -118,6 +119,13 @@ public sealed class PreviewWindow : System.Windows.Forms.Form
                 var requestId = payload.TryGetProperty("requestId", out var request) && request.ValueKind == JsonValueKind.String ? request.GetString() : null;
                 // A dialog needs its own modal loop, which WebView2 forbids inside its callbacks.
                 BeginInvoke(() => OpenForm(name, modal, requestId));
+                return;
+            }
+            if (message.Event == "shared-set")
+            {
+                var key = payload.GetProperty("key").GetString() ?? "";
+                var deleted = payload.TryGetProperty("deleted", out var removed) && removed.ValueKind == JsonValueKind.True;
+                _project.SetShared(key, deleted ? null : payload.GetProperty("value"), this);
                 return;
             }
             if (message.Event == "close-form")
@@ -187,6 +195,14 @@ public sealed class PreviewWindow : System.Windows.Forms.Form
 
     private PreviewWindow Root => _opener?.Root ?? this;
 
+    // Another window changed forma.shared; mirror it in this page without echoing it back.
+    private async void SharedChanged(object? sender, PreviewProject.SharedChange change)
+    {
+        if (ReferenceEquals(change.Source, this) || !_ready || IsDisposed || _bridge is null) return;
+        try { await _bridge.SendAsync(new { type = "designer", action = "shared-changed", key = change.Key, value = change.Value, deleted = change.Value is null }); }
+        catch (Exception error) when (IsDisposed || error is ObjectDisposedException) { }
+    }
+
     private void OpenForm(string name, bool modal, string? requestId)
     {
         if (IsDisposed) return;
@@ -240,6 +256,7 @@ public sealed class PreviewWindow : System.Windows.Forms.Form
             if (control is Forma.Core.Controls.Timer timer) timer.Tick -= TimerTick;
             if (control is CommandControl commands) commands.ItemClicked -= CommandInvoked;
         }
+        _project.SharedChanged -= SharedChanged;
         if (_bridge is not null) _bridge.MessageReceived -= CustomMessage;
         _bridge?.Dispose();
         _session.Dispose();

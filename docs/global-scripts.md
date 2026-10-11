@@ -143,6 +143,11 @@ forma.watch(() => forma.shared.userName, name => {
 
 The shared namespace is shallow reactive state. Assign its top-level fields, or
 store a ref/reactive object for nested data. Do not replace forma.shared itself.
+
+In Preview, plain values (numbers, strings, booleans, arrays and plain objects)
+assigned to top-level fields are shared with every open form, and a form opened
+later starts from them; see "Opening other forms" in components-and-scripting.md.
+Refs, reactive objects and functions stay local to the window that stored them.
 Reading a primitive into const name = shared.userName still takes a snapshot;
 retain the shared object or use a getter/watch/ref to read the current value.
 

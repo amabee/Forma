@@ -10,6 +10,9 @@
   let sharedState, globalSignature, globalKey, globalFailed = false;
   let runtimeActive = false, runtimeEpoch = 0, eventSequence = 0;
   let controlsById = new Map();
+  // forma.shared across Preview windows: values other forms already set when this window
+  // starts, the raw reactive store behind the synced proxy, and guards for the sync.
+  let sharedSeed = {}, sharedStore, initializingShared = false, applyingRemoteShared = false;
   // forma.showForm promises waiting for their window to close, by request ID.
   const pendingForms = new Map();
   let formRequests = 0;
@@ -684,7 +687,7 @@
       "bind",
     ])
       api[name] = reactiveScope[name];
-    if (item.globalElement) sharedState = reactiveScope.reactive({});
+    if (item.globalElement) sharedState = createShared(reactiveScope, item.ownerId);
     cleanups.push(() => reactiveScope.dispose());
     if (window.ResizeObserver && !item.globalElement) {
       let lastSize;
@@ -734,6 +737,52 @@
     }
   }
 
+  /**
+   * forma.shared for this window. Top-level assignments are sent to the host, which keeps the
+   * values for the whole Preview run and forwards them to every other form's window. While
+   * main.js first runs here, assignments only fill values no other form has set yet, so
+   * `forma.shared.count = 0` initializes once instead of resetting the app.
+   * Values must be JSON-compatible; reassign rather than mutating nested objects.
+   */
+  function createShared(scope, rootId) {
+    const seeded = new Set(Object.keys(sharedSeed));
+    const store = scope.reactive({ ...sharedSeed });
+    sharedStore = store;
+    const publish = (key, value, deleted) => {
+      if (applyingRemoteShared || !runtimeActive) return;
+      // Refs and reactive objects are live state for this page; only plain data is shared.
+      if (!deleted && window.formaReactivity?.isLive(value)) return;
+      let json;
+      try { json = deleted ? null : JSON.stringify(value); } catch { return; }
+      if (!deleted && json === undefined) return; // functions and undefined stay local to this window
+      window.forma.send({ type: "custom", id: rootId, event: "shared-set",
+        payload: { sourceId: rootId, key, value: deleted ? null : JSON.parse(json), deleted } });
+    };
+    return new Proxy(store, {
+      set(target, key, value) {
+        if (typeof key === "symbol") return Reflect.set(target, key, value);
+        if (initializingShared && seeded.has(key)) return true;
+        target[key] = value;
+        publish(key, value, false);
+        return true;
+      },
+      deleteProperty(target, key) {
+        if (typeof key === "symbol") return Reflect.deleteProperty(target, key);
+        delete target[key];
+        publish(key, undefined, true);
+        return true;
+      },
+    });
+  }
+
+  /** Another Preview window changed forma.shared. */
+  function sharedChanged(key, value, deleted) {
+    if (!sharedStore) return;
+    applyingRemoteShared = true;
+    try { if (deleted) delete sharedStore[key]; else sharedStore[key] = value; }
+    finally { applyingRemoteShared = false; }
+  }
+
   /** The host reports a window opened by showForm has closed (or could not open). */
   function formClosed(requestId, result, error) {
     const pending = pendingForms.get(requestId);
@@ -744,6 +793,7 @@
   }
   window.formaCustomization = {
     formClosed,
+    sharedChanged,
     apply(state, runtime = false) {
       currentState = state;
       controlsById = new Map(state.controls.map(control => [control.id, control]));
@@ -766,10 +816,14 @@
           modules.clear(); sharedState = undefined; globalFailed = false; globalSignature = signature;
           globalKey = "__global__" + root.id;
           moduleSession = window.formaModuleRuntime?.createModuleSession(state.projectFiles ?? []);
+          // Start from what other Preview windows already put in forma.shared.
+          sharedSeed = runtime && state.sharedState && typeof state.sharedState === "object" ? { ...state.sharedState } : {};
+          initializingShared = runtime;
           try {
             const record = installBehavior({ id: globalKey, ownerId: root.id, name: "main.js", kind: "form", enabled: true, visible: true, globalElement: document.createElement("div") }, state, source, "{}");
             pending.push(() => { for (const event of ["created", "mounted", "ready", "load"]) emit(record, event); });
           } catch (error) { globalFailed = true; modules.clear(); sharedState = undefined; report(root.id, error); }
+          finally { initializingShared = false; }
         }
         live.add(globalKey);
       } else {

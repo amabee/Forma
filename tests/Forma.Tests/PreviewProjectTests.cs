@@ -33,4 +33,29 @@ public class PreviewProjectTests
         Assert.NotSame(opened.Form, again.Form);
         Assert.Throws<ArgumentException>(() => project.Open("missing"));
     }
+
+    [Fact]
+    public void SharedValuesAreKeptForTheRunAndReachEveryOtherWindow()
+    {
+        var design = new BuilderViewModel(); design.CreateNew();
+        var project = PreviewProject.Start(design);
+        var changes = new List<PreviewProject.SharedChange>();
+        project.SharedChanged += (_, change) => changes.Add(change);
+        var window = new object();
+        project.SetShared("count", JsonSerializer.SerializeToElement(5), window);
+        Assert.Equal(5, project.SharedState["count"].GetInt32());
+        Assert.Same(window, Assert.Single(changes).Source);
+
+        // A window opened later receives the current values with its first state.
+        using var later = project.Open(project.StartFormId);
+        var state = JsonSerializer.SerializeToElement(later.State());
+        Assert.Equal(5, state.GetProperty("sharedState").GetProperty("count").GetInt32());
+
+        project.SetShared("count", null, window);
+        Assert.False(project.SharedState.ContainsKey("count"));
+        project.SetShared("missing", null, window);
+        Assert.Equal(2, changes.Count);
+        Assert.Throws<ArgumentException>(() => project.SetShared("", JsonSerializer.SerializeToElement(1), window));
+        Assert.Throws<ArgumentException>(() => project.SetShared("big", JsonSerializer.SerializeToElement(new string('x', 1_000_001)), window));
+    }
 }

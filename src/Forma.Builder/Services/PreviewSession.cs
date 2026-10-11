@@ -29,8 +29,10 @@ public sealed class PreviewSession : IDisposable
     }
 
     /// <summary>A session for one form of a <see cref="PreviewProject"/> snapshot.</summary>
-    internal PreviewSession(Forma.Core.Form form, Dictionary<string, Appearance> appearance, string globalScript, ProjectEntryService.ModuleSource[] files)
+    internal PreviewSession(Forma.Core.Form form, Dictionary<string, Appearance> appearance, string globalScript, ProjectEntryService.ModuleSource[] files,
+        IReadOnlyDictionary<string, JsonElement>? sharedState = null)
     {
+        _sharedState = sharedState;
         Form = form;
         Appearance = appearance;
         Appearance[Form.Id].GlobalScript = globalScript;
@@ -38,6 +40,8 @@ public sealed class PreviewSession : IDisposable
     }
 
     private readonly ProjectEntryService.ModuleSource[] _projectFiles;
+    // Values forma.shared already holds when this window starts (other forms set them).
+    private readonly IReadOnlyDictionary<string, JsonElement>? _sharedState;
     private readonly Dictionary<(string Id, string Property), string> _propertyOrigins = new();
     private object[] TakePropertyOrigins()
     {
@@ -50,6 +54,7 @@ public sealed class PreviewSession : IDisposable
     {
         type = "designer", action = "runtime-preview", id = Form.Id, globalScript = Appearance[Form.Id].GlobalScript, projectFiles = _projectFiles.Select(file => new { path = file.Path, content = file.Content }).ToArray(),
         propertyOrigins = TakePropertyOrigins(),
+        sharedState = _sharedState,
         controls = Controls.Select(control =>
         {
             var item = JsonSerializer.Deserialize<Dictionary<string, object?>>(
