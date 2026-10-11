@@ -128,14 +128,23 @@
     @apply flex-col items-stretch flex-nowrap;
   }
   [data-forma-type="chipgroup"] button {
-    @apply rounded-full border border-slate-300 bg-slate-100 text-slate-700 px-3 py-1;
+    @apply rounded-full border-0 bg-slate-100 px-3 py-1 font-medium text-slate-700 hover:bg-slate-200;
+  }
+  [data-forma-type="chipgroup"] button.selected {
+    @apply bg-blue-600 text-white hover:bg-blue-700;
+  }
+  /* Button group: one joined bar; neighbours share a border instead of doubling it. */
+  [data-forma-type="buttongroup"] {
+    @apply gap-0;
   }
   [data-forma-type="buttongroup"] button {
-    @apply flex-1 rounded border border-slate-300 bg-white text-slate-700 px-3 py-1;
+    @apply -ml-px flex-1 rounded-none border border-slate-300 bg-white px-3 py-1 font-medium text-slate-700 first:ml-0 first:rounded-l-md last:rounded-r-md hover:bg-slate-50;
   }
-  [data-forma-type="chipgroup"] button.selected,
+  [data-forma-type="buttongroup"][data-orientation="vertical"] button {
+    @apply ml-0 -mt-px first:mt-0 first:rounded-t-md first:rounded-bl-none last:rounded-b-md last:rounded-tr-none;
+  }
   [data-forma-type="buttongroup"] button.selected {
-    @apply bg-blue-600 border-blue-600 text-white;
+    @apply relative z-10 border-blue-600 bg-blue-600 text-white hover:bg-blue-700;
   }
   [data-forma-type="chipgroup"] button:focus-visible,
   [data-forma-type="buttongroup"] button:focus-visible,
@@ -160,11 +169,15 @@
   [data-forma-type="checkboxgroup"] input {
     @apply accent-blue-600;
   }
+  /* Segmented control: a soft track with the selected segment raised on it. */
+  [data-forma-type="segmentedcontrol"] {
+    @apply flex-nowrap gap-1;
+  }
   [data-forma-type="segmentedcontrol"] button {
-    @apply flex-1 rounded border border-slate-300 px-3 py-1 text-inherit;
+    @apply flex-1 rounded-md border-0 bg-transparent px-3 py-1 font-medium text-slate-600 hover:text-slate-900;
   }
   [data-forma-type="segmentedcontrol"] button.selected {
-    @apply bg-blue-600 border-blue-600 text-white;
+    @apply bg-white text-slate-900 shadow-sm;
   }
   [data-forma-type="rating"] {
     @apply flex items-center gap-1 overflow-auto;
@@ -238,7 +251,7 @@
     @apply flex items-center justify-between gap-2;
   }
   .forma-form [data-forma-type="pagination"] button {
-    @apply border-slate-300 bg-slate-50 px-2 text-slate-800;
+    @apply rounded-md border-slate-200 bg-white px-3 font-medium text-slate-700 hover:bg-slate-50;
   }
   .forma-form [data-forma-type="richtextbox"] {
     @apply flex flex-col overflow-hidden;
@@ -280,8 +293,15 @@
   .forma-form textarea {
     @apply resize-none rounded border border-slate-300 p-2;
   }
+  /* Progress: a rounded fill on a soft track instead of the browser's default bar. */
   .forma-form progress {
-    @apply accent-blue-500;
+    @apply appearance-none overflow-hidden rounded-full;
+  }
+  .forma-form progress::-webkit-progress-bar {
+    @apply rounded-full bg-slate-200;
+  }
+  .forma-form progress::-webkit-progress-value {
+    @apply rounded-full bg-blue-500 transition-[width];
   }
   .forma-form [type="range"] {
     @apply accent-blue-500;
@@ -363,11 +383,13 @@
   .forma-form [data-forma-type] {
     @apply box-border cursor-move touch-none select-none;
   }
-  .forma-form button {
+  /* Baseline for form elements. :where() keeps these at the lowest specificity so every
+     control-specific rule below (chips, stars, segments, toolbar items...) wins over them. */
+  :where(.forma-form) button {
     @apply overflow-hidden text-ellipsis whitespace-nowrap rounded border border-blue-600 px-2 py-1 font-semibold;
   }
-  .forma-form input,
-  .forma-form select {
+  :where(.forma-form) input,
+  :where(.forma-form) select {
     @apply rounded border border-slate-300 px-2.5 py-2;
   }
   .forma-form input::placeholder {
@@ -420,7 +442,7 @@
   [data-forma-type="toolbar"] button,
   [data-forma-type="toolstrip"] button,
   .command-menu > summary {
-    @apply cursor-pointer list-none whitespace-nowrap rounded px-2 py-1 text-sm hover:bg-blue-100 focus-visible:outline-blue-500 disabled:cursor-default disabled:opacity-40;
+    @apply cursor-pointer list-none whitespace-nowrap rounded border-0 bg-transparent px-2 py-1 text-sm font-normal text-inherit hover:bg-slate-900/5 focus-visible:outline-blue-500 disabled:cursor-default disabled:opacity-40;
   }
   .command-menu {
     @apply relative;

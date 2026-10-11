@@ -37,6 +37,12 @@ public class ControlCatalogTests
         Assert.True(Of("passwordbox").Password);
         Assert.False(Of("timer").Enabled);
         Assert.Equal(("transparent", 32), (Of("icon").BackColor, Of("icon").Width));
+        // Controls that draw their own items or fill have no box of their own.
+        foreach (var kind in new[] { "label", "chipgroup", "radiogroup", "rating", "buttongroup", "breadcrumb", "pagination", "slider", "progressbar" })
+            Assert.Equal((0, "transparent"), (Of(kind).BorderWidth, Of(kind).BackColor));
+        Assert.Equal((0, 18), (Of("chip").BorderWidth, Of("chip").BorderRadius));
+        Assert.Equal(0, Of("button").BorderWidth);
+        Assert.Equal(("bottom", "top"), (Of("menustrip").BorderSides, Of("statusbar").BorderSides));
         // Each call returns a fresh instance so edits never leak between controls.
         Assert.NotSame(Of("panel"), Of("panel"));
     }

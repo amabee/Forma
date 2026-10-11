@@ -29,8 +29,8 @@ public static class ControlCatalog
         new("form", typeof(Forma.Core.Form), null, () => new Appearance(), true),
 
         // Common controls
-        Define<C.Button>(() => new C.Button { Text = "Continue" }),
-        Define<C.Label>(() => new C.Label { Text = "Welcome to Forma" }, () => Sized(260, 40, a => a.FontSize = 22)),
+        Define<C.Button>(() => new C.Button { Text = "Continue" }, Solid),
+        Define<C.Label>(() => new C.Label { Text = "Welcome to Forma" }, () => Bare(Sized(260, 40, a => { a.FontSize = 22; a.TextAlign = "left"; }))),
         Define<C.LinkLabel>(() => new C.LinkLabel { Text = "Visit website" }, () => With(new Appearance(), a =>
         {
             a.Width = 180; a.ForeColor = "#2563eb"; a.BackColor = White; a.BorderWidth = 0; a.Cursor = "pointer";
@@ -44,51 +44,58 @@ public static class ControlCatalog
         Define<C.CheckBox>(() => new C.CheckBox { Text = "CheckBox" }, Toggle),
         Define<C.RadioButton>(() => new C.RadioButton { Text = "RadioButton" }, Toggle),
         Define<C.ToggleSwitch>(() => new C.ToggleSwitch { Text = "Toggle" }, Toggle),
-        Define<C.ToggleButton>(() => new C.ToggleButton { Text = "Toggle" }),
+        Define<C.ToggleButton>(() => new C.ToggleButton { Text = "Toggle" }, Solid),
         Define<C.ComboBox>(appearance: () => Sized(180, 36)),
         Define<C.ListBox>(appearance: List),
         Define<C.ListView>(appearance: List),
         Define<C.CheckedListBox>(appearance: List),
         Define<C.TreeView>(appearance: () => Sized(260, 200)),
         Define<C.DataGridView>(appearance: () => Unpadded(Sized(320, 180))),
-        Define<C.Pagination>(appearance: () => Sized(300, 40)),
+        Define<C.Pagination>(appearance: () => Bare(Sized(300, 40))),
         Define<C.PropertyGrid>(appearance: () => Unpadded(Sized(300, 200))),
         Define<C.Image>(() => new C.Image { Text = "Image" }, Picture),
         Define<C.PictureBox>(() => new C.PictureBox { Text = "Picture" }, Picture),
 
         // Inputs and progress
         Define<C.NumericUpDown>(appearance: Field),
-        Define<C.Slider>(() => new C.Slider { Value = 25 }, Field),
-        Define<C.ProgressBar>(() => new C.ProgressBar { Value = 50 }, Field),
-        Define<C.CircularProgress>(() => new C.CircularProgress { Value = 50 }, () => Sized(120, 120, a => a.BorderRadius = 100)),
+        Define<C.Slider>(() => new C.Slider { Value = 25 }, () => Bare(Field())),
+        Define<C.ProgressBar>(() => new C.ProgressBar { Value = 50 }, () => Bare(Unpadded(Sized(240, 20, a => a.BorderRadius = 10)))),
+        Define<C.CircularProgress>(() => new C.CircularProgress { Value = 50 }, () => Bare(Sized(120, 120, a => a.BorderRadius = 100))),
         Define<C.DatePicker>(appearance: Field),
         Define<C.TimePicker>(appearance: Field),
         Define<C.DateTimePicker>(appearance: Field),
         Define<C.ColorPicker>(appearance: Field),
         Define<C.FilePicker>(appearance: Picker),
         Define<C.FolderPicker>(appearance: Picker),
-        Define<C.RadioGroup>(appearance: () => Sized(280, 100)),
-        Define<C.CheckBoxGroup>(appearance: () => Sized(280, 100)),
-        Define<C.ChipGroup>(appearance: () => Sized(280, 100)),
-        Define<C.SegmentedControl>(appearance: () => Sized(280, 44)),
-        Define<C.Rating>(appearance: () => Sized(280, 44)),
-        Define<C.ButtonGroup>(appearance: () => Sized(280, 44)),
-        Define<C.Chip>(appearance: () => Sized(120, 36, a => a.BorderRadius = 18)),
+        // Groups draw their own items, so the group itself has no box around it.
+        Define<C.RadioGroup>(appearance: () => Bare(Sized(280, 100))),
+        Define<C.CheckBoxGroup>(appearance: () => Bare(Sized(280, 100))),
+        Define<C.ChipGroup>(appearance: () => Bare(Sized(280, 100))),
+        Define<C.SegmentedControl>(appearance: () => Unpadded(Sized(280, 44, a =>
+        {
+            a.BackColor = "#f1f5f9"; a.BorderWidth = 0; a.BorderRadius = 10;
+            a.PaddingTop = a.PaddingBottom = a.PaddingLeft = a.PaddingRight = 4;
+        }))),
+        Define<C.Rating>(appearance: () => Bare(Sized(280, 44))),
+        Define<C.ButtonGroup>(appearance: () => Bare(Sized(280, 44))),
+        // A chip is a pill: a soft fill, no outline.
+        Define<C.Chip>(appearance: () => Unpadded(Sized(120, 36, a => { a.BorderRadius = 18; a.BorderWidth = 0; a.BackColor = "#f1f5f9"; }))),
 
         // Buttons and commands
-        Define<C.IconButton>(appearance: () => With(new Appearance(), a => { a.Width = 44; a.Height = 44; })),
-        Define<C.FloatingActionButton>(appearance: () => With(new Appearance(), a => { a.Width = 56; a.Height = 56; a.BorderRadius = 28; })),
+        Define<C.IconButton>(appearance: () => With(Solid(), a => { a.Width = 44; a.Height = 44; })),
+        Define<C.FloatingActionButton>(appearance: () => With(Solid(), a => { a.Width = 56; a.Height = 56; a.BorderRadius = 28; })),
         Define<C.DropdownButton>(appearance: CommandMenu),
         Define<C.SplitButton>(appearance: CommandMenu),
-        Define<C.CommandButton>(appearance: () => With(new Appearance(), a => { a.Width = 240; a.Height = 64; })),
-        Define<C.MenuStrip>(appearance: Bar),
-        Define<C.Toolbar>(appearance: Bar),
-        Define<C.ToolStrip>(appearance: Bar),
-        Define<C.StatusBar>(appearance: Bar),
+        Define<C.CommandButton>(appearance: () => With(Solid(), a => { a.Width = 240; a.Height = 64; a.BorderRadius = 8; })),
+        // Bars separate themselves from content with a single edge, not a full box.
+        Define<C.MenuStrip>(appearance: () => With(Bar(), a => a.BorderSides = "bottom")),
+        Define<C.Toolbar>(appearance: () => With(Bar(), a => a.BorderSides = "bottom")),
+        Define<C.ToolStrip>(appearance: () => With(Bar(), a => a.BorderSides = "bottom")),
+        Define<C.StatusBar>(appearance: () => With(Bar(), a => a.BorderSides = "top")),
         Define<C.ContextMenu>(),
         Define<C.ContextMenuStrip>(),
-        Define<C.Breadcrumb>(appearance: () => Sized(320, 40, a => { a.PaddingTop = 0; a.PaddingBottom = 0; })),
-        Define<C.SideNavigation>(appearance: () => Sized(200, 220)),
+        Define<C.Breadcrumb>(appearance: () => Bare(Sized(320, 40, a => { a.PaddingTop = 0; a.PaddingBottom = 0; }))),
+        Define<C.SideNavigation>(appearance: () => Sized(200, 220, a => a.BorderSides = "right")),
 
         // Overlays
         Define<C.Dialog>(),
@@ -165,9 +172,13 @@ public static class ControlCatalog
     private static Appearance List() => Sized(180, 140);
     private static Appearance Toggle() => Sized(160, 36, a => { a.TextAlign = "left"; a.BorderWidth = 0; });
     private static Appearance Picker() => Unpadded(Sized(320, 40));
-    private static Appearance Picture() => Unpadded(Sized(180, 120, a => a.BackColor = Tint));
+    private static Appearance Picture() => Unpadded(Sized(180, 120, a => { a.BackColor = Tint; a.BorderWidth = 0; }));
     private static Appearance Container() => Unpadded(Sized(300, 200));
-    private static Appearance CommandMenu() => Unpadded(With(new Appearance(), a => { a.Width = 160; a.Height = 40; }));
+    private static Appearance CommandMenu() => Unpadded(With(Solid(), a => { a.Width = 160; a.Height = 40; }));
+    // Filled buttons: the fill is the edge, so no outline; slightly rounder corners.
+    private static Appearance Solid() => With(new Appearance(), a => { a.BorderWidth = 0; a.BorderRadius = 6; });
+    // No box of its own: transparent and borderless (labels, groups, progress, navigation).
+    private static Appearance Bare(Appearance appearance) => With(appearance, a => { a.BackColor = "transparent"; a.BorderWidth = 0; });
     private static Appearance Disabled() => new() { Enabled = false };
 
     private static Appearance Bar() => new()
