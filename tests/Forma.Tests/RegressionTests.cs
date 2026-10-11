@@ -107,6 +107,29 @@ public class RegressionTests
             Assert.DoesNotContain(declaration, active.Replace("/* Add a hover style here. */", ""));
     }
 
+    [Fact]
+    public void BorderSidesLimitTheBorderAndOnlyThoseEdgesTakeLayoutSpace()
+    {
+        var model = new BuilderViewModel(); model.CreateNew();
+        var panel = model.ExecuteEdit("drop", model.Form.Id, JsonSerializer.SerializeToElement(new { control = "panel", x = 0, y = 0 })).AddedControl!;
+        void Set(string property, object value) => model.ExecuteEdit("property", panel.Id, JsonSerializer.SerializeToElement(new { property, value }));
+        Set("borderWidth", 4);
+        Set("borderSides", "bottom");
+        var appearance = model.Appearance[panel.Id];
+        Assert.Equal("bottom", appearance.BorderSides);
+        Assert.Equal((0, 0, 4, 0), (appearance.BorderOn("top"), appearance.BorderOn("left"), appearance.BorderOn("bottom"), appearance.BorderOn("right")));
+        // A docked child fills the full width because no side border takes horizontal space.
+        var child = model.ExecuteEdit("drop", panel.Id, JsonSerializer.SerializeToElement(new { control = "button", x = 0, y = 0 })).AddedControl!;
+        model.ExecuteEdit("property", child.Id, JsonSerializer.SerializeToElement(new { property = "dock", value = "fill" }));
+        Assert.Equal(appearance.Width - appearance.PaddingLeft - appearance.PaddingRight, model.Appearance[child.Id].Width);
+        Assert.Equal(appearance.Height - appearance.PaddingTop - appearance.PaddingBottom - 4, model.Appearance[child.Id].Height);
+        // Unknown values are rejected and saved projects keep the setting.
+        Set("borderSides", "diagonal");
+        Assert.Equal("bottom", appearance.BorderSides);
+        var json = ProjectFile.Serialize(model.CaptureProject());
+        Assert.Contains("\"BorderSides\": \"bottom\"", json);
+    }
+
     private sealed class QueueContext : SynchronizationContext
     {
         private readonly ConcurrentQueue<(SendOrPostCallback Callback, object? State)> _queue = new();

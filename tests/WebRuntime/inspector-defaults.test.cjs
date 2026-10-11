@@ -77,3 +77,12 @@ test('layout-shifting component.css without its own field gets a notice that rem
   notice.querySelector('button').click();
   assert.equal(plain(messages.at(-1).payload).css, ':host {\n  color: #fff;\n}');
 });
+
+test('Border sides draws the border only on the chosen edges', () => {
+  const { document, state } = fixture({ name: 'button1', text: 'Continue', width: 120, borderWidth: 2, borderStyle: 'solid', borderColor: '#000000', borderSides: 'bottom' });
+  assert.equal(document.getElementById('go').style.borderWidth, '0px 0px 2px');
+  state({ name: 'button1', text: 'Continue', width: 120, borderWidth: 2, borderStyle: 'solid', borderColor: '#000000', borderSides: 'left,right' });
+  assert.equal(document.getElementById('go').style.borderWidth, '0px 2px');
+  state({ name: 'button1', text: 'Continue', width: 120, borderWidth: 2, borderStyle: 'solid', borderColor: '#000000' });
+  assert.equal(document.getElementById('go').style.borderWidth, '2px', 'missing borderSides means all edges');
+});
