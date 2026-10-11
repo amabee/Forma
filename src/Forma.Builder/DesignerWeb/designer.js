@@ -500,6 +500,7 @@ window.formaDesigner = {
       window.formaLayout?.refresh(message);
       window.formaCustomization?.apply(message);
       this.select(message.selectedId);
+      window.formaSelection?.sync(message);
       this.inspector();
     }
   },
@@ -520,6 +521,7 @@ window.formaDesigner = {
       .forEach((el) => el.classList.remove("forma-selected"));
     byId(id)?.classList.add("forma-selected");
     this.outline();
+    window.formaSelection?.primaryChanged(id);
   },
   controlById(id) {
     const controls = this.state?.controls;
@@ -884,9 +886,11 @@ window.formaDesigner = {
     }
     if (byId("selection-status"))
       byId("selection-status").textContent =
-        selected.id === this.rootId
-          ? "Form selected"
-          : `Selected ${selected.name}`;
+        (window.formaSelection?.ids.length ?? 0) > 1
+          ? `${window.formaSelection.ids.length} controls selected`
+          : selected.id === this.rootId
+            ? "Form selected"
+            : `Selected ${selected.name}`;
     this.coordinates(selected.x, selected.y);
   },
   buildEditors(schema) {

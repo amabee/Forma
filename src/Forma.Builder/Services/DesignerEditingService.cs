@@ -19,6 +19,9 @@ public sealed partial class DesignerEditingService(BuilderViewModel viewModel)
         if (action == "select" && control is not null)
         {
             _viewModel.SelectedControl = control;
+            // Ctrl/Shift-click and marquee selection send every selected ID; the clicked one is primary.
+            var ids = IdList(payload) ?? [];
+            _viewModel.SetSelection(Walk(form).Where(item => item != form && ids.Contains(item.Id)).Append(control));
             return new("Ready");
         }
         if (action == "preview")
@@ -51,8 +54,28 @@ public sealed partial class DesignerEditingService(BuilderViewModel viewModel)
             var added = AddControl(String(payload, "control"), x, y, control, Number(payload, "layoutSlot"), Number(payload, "index"));
             return new(added is null ? "Ready" : $"Added {added.Name}", added);
         }
+        if (action == "move-many") return new(MoveControls(payload));
         if (action == "command")
         {
+            switch (String(payload, "command"))
+            {
+                case "delete":
+                    return new(DeleteControls(Targets(payload)));
+                case "copy":
+                case "cut":
+                    var copied = Targets(payload);
+                    if (copied.Count == 0) return new("Nothing to copy");
+                    _viewModel.Clipboard = CopyNodes(copied);
+                    if (String(payload, "command") == "copy") return new($"Copied {Describe(copied.Count)}");
+                    DeleteControls(copied);
+                    return new($"Cut {Describe(copied.Count)}");
+                case "paste":
+                    var pasted = PasteNodes(_viewModel.Clipboard);
+                    return new(pasted.Count == 0 ? "Nothing to paste" : $"Pasted {Describe(pasted.Count)}", pasted.FirstOrDefault(), pasted);
+                case "duplicate":
+                    var duplicates = PasteNodes(CopyNodes(Targets(payload)));
+                    return new(duplicates.Count == 0 ? "Ready" : $"Duplicated {Describe(duplicates.Count)}", duplicates.FirstOrDefault(), duplicates);
+            }
             if (String(payload, "command") == "add-tab" && control is Forma.Core.Controls.TabControl tabControl
                 && !_viewModel.Appearance[control.Id].Locked)
             {
@@ -67,22 +90,6 @@ public sealed partial class DesignerEditingService(BuilderViewModel viewModel)
                 || appearance.Locked || !Walk(form).Contains(selected)) return new("Ready");
             switch (String(payload, "command"))
             {
-                case "delete":
-                    var removed = Walk(selected).ToArray();
-                    selected.Parent?.Remove(selected);
-                    foreach (var child in removed)
-                    {
-                        _viewModel.Appearance.Remove(child.Id);
-                        (child as IDisposable)?.Dispose();
-                    }
-                    foreach (var menu in Walk(form).OfType<Forma.Core.Controls.ContextMenu>())
-                        if (removed.Any(item => item.Id == menu.TargetId)) menu.TargetId = "";
-                    foreach (var tooltip in Walk(form).OfType<Forma.Core.Controls.Tooltip>())
-                        if (removed.Any(item => item.Id == tooltip.TargetId)) tooltip.TargetId = "";
-                    foreach (var overlay in Walk(form).OfType<Forma.Core.Controls.LoadingOverlay>())
-                        if (removed.Any(item => item.Id == overlay.TargetId)) overlay.TargetId = "";
-                    _viewModel.SelectedControl = form;
-                    return new("Control deleted");
                 case "bring-front":
                 case "send-back":
                     var siblings = selected.Parent!.Children.OrderBy(item => _viewModel.Appearance[item.Id].ZIndex).ToList();
@@ -189,6 +196,8 @@ public sealed partial class DesignerEditingService(BuilderViewModel viewModel)
         _viewModel.SelectedControl = control;
         return control;
     }
+
+    private static string Describe(int count) => count == 1 ? "1 control" : $"{count} controls";
 
     private static string[] Lines(string text) =>
         text.Split('\n').Select(s => s.TrimEnd('\r')).Where(s => s.Length > 0).ToArray();

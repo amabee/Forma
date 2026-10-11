@@ -47,6 +47,19 @@ const names = [
   "toolbox",
   "sun",
   "moon",
+  // Multi-selection: align, distribute and clipboard commands.
+  "align-start-vertical",
+  "align-center-vertical",
+  "align-end-vertical",
+  "align-start-horizontal",
+  "align-center-horizontal",
+  "align-end-horizontal",
+  "align-horizontal-distribute-center",
+  "align-vertical-distribute-center",
+  "copy",
+  "clipboard-paste",
+  "copy-plus",
+  "scissors",
 ];
 fs.mkdirSync(destination, { recursive: true });
 for (const name of names)

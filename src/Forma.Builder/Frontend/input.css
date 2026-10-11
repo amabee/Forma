@@ -497,6 +497,14 @@
   .forma-form.drop-target {
     @apply ring-2 ring-inset ring-blue-500;
   }
+  /* Multi-selection: every member is outlined; the primary also gets resize handles. */
+  .forma-form .forma-multi-selected {
+    outline: 2px solid rgb(59 130 246 / 0.85);
+    outline-offset: 1px;
+  }
+  #selection-marquee {
+    @apply pointer-events-none absolute z-[900] border border-blue-500 bg-blue-500/10;
+  }
   .design-muted {
     @apply opacity-50;
   }

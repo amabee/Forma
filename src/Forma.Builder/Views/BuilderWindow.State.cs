@@ -37,6 +37,8 @@ public sealed partial class BuilderWindow
                 explorer = ProjectExplorerService.Build(_viewModel),
                 forms = _viewModel.Forms.Select(form => new { id = form.Id, name = form.Name, title = form.Title }).ToArray(),
                 selectedId = _viewModel.SelectedControl.Id,
+                selectedIds = _viewModel.SelectedIds,
+                canPaste = _viewModel.Clipboard.Count > 0,
                 canUndo = _viewModel.CanUndo, canRedo = _viewModel.CanRedo,
                 hasUnsavedChanges = _viewModel.IsMarkedUnsaved,
                 status,

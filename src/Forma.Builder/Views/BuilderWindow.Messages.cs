@@ -149,7 +149,7 @@ public sealed partial class BuilderWindow
                 }
             }
             var edit = _viewModel.ExecuteEdit(message.Event ?? "", message.Id, payload);
-            if (edit.AddedControl is not null) SubscribeControl(edit.AddedControl);
+            foreach (var added in edit.Added.SelectMany(Walk)) SubscribeControl(added);
             await StateAsync(edit.Status);
         }
         catch (Exception error)
