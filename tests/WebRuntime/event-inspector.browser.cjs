@@ -1,7 +1,7 @@
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
-const { chromium } = require('../../docs-site/node_modules/playwright');
+const { chromium } = require('../../src/Forma.Builder/Frontend/node_modules/playwright');
 const root = path.join(__dirname, '../..');
 const read = file => fs.readFileSync(path.join(root, 'src/Forma.Builder/DesignerWeb', file), 'utf8');
 (async () => {

@@ -1,5 +1,5 @@
 // Builds the Forma logo files from forma-mark.svg, then renders PNG sizes.
-// Usage: node branding/logo/build.cjs   (needs Microsoft Edge + docs-site's Playwright)
+// Usage: node branding/logo/build.cjs   (needs Microsoft Edge + Builder Frontend's Playwright)
 const fs = require("node:fs");
 const path = require("node:path");
 const { pathToFileURL } = require("node:url");
@@ -73,7 +73,7 @@ for (const [name, content] of Object.entries(files)) fs.writeFileSync(path.join(
 console.log("wrote", Object.keys(files).join(", "));
 
 (async () => {
-  const { chromium } = require("../../docs-site/node_modules/playwright");
+  const { chromium } = require("../../src/Forma.Builder/Frontend/node_modules/playwright");
   const browser = await chromium.launch({ channel: "msedge" });
   const page = await browser.newPage();
   const render = async (file, out, width, height) => {

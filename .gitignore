@@ -113,6 +113,9 @@ appsettings.*.Local.json
 # Web / Node
 # --------------------------------------------
 
+# Documentation is maintained in a separate private repository.
+/docs-site/
+
 # If we introduce npm later
 node_modules/
 npm-debug.log*
