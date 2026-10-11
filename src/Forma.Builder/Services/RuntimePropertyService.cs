@@ -54,6 +54,7 @@ public static class RuntimePropertyService
     public static bool TrySet(Control control, Appearance appearance, string property, JsonElement value)
     {
         if (!Available(control).Contains(property)) return false;
+        if (control is AspectRatioContainer && property == "height") throw new ArgumentException("AspectRatioContainer controls its height. Set width or aspectRatio instead.");
         if ((Properties.ReadOnly.GetValueOrDefault(control.ControlType) ?? []).Contains(property)) throw new ArgumentException($"Property '{property}' is read-only.");
         var descriptor = InspectorCatalog.ForKind(control.ControlType).First(p => p.Id == property);
         if (descriptor.ReadOnly) throw new ArgumentException($"Property '{property}' is read-only.");
@@ -79,6 +80,7 @@ public static class RuntimePropertyService
             converted = text;
         }
         else throw new ArgumentException($"Property '{property}' requires a {type.Name} value.");
+        if (property == "layoutSlot" && control.Parent is BreakpointContainer && converted is int slot) converted = Math.Clamp(slot, 1, 2);
         if (property is "x" or "y" && (control.Parent is LinearLayout or Forma.Core.Controls.TableLayoutPanel || appearance.Dock != "none")) throw new ArgumentException("The parent layout or Dock controls this component's position.");
         if (property == "url" && converted is string url && (!Uri.TryCreate(url, UriKind.Absolute, out var uri) || uri.Scheme is not ("https" or "http"))) throw new ArgumentException("Use an http or https URL.");
         try { member.SetValue(target, converted); }
@@ -102,6 +104,7 @@ public static class RuntimePropertyService
             appearance.Height = Math.Clamp(appearance.Height, Math.Max(20, appearance.MinimumHeight), Math.Max(Math.Max(20, appearance.MinimumHeight), appearance.MaximumHeight == 0 ? 1200 : appearance.MaximumHeight));
             if (control is Forma.Core.Form form) { form.Width = appearance.Width = Math.Max(240, appearance.Width); form.Height = appearance.Height = Math.Max(160, appearance.Height); }
         }
+        if (control is AspectRatioContainer aspect) appearance.Height = LayoutGeometry.AspectHeight(appearance, aspect.AspectRatio);
         return true;
     }
 }

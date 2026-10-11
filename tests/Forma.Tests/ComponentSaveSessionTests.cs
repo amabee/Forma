@@ -19,6 +19,20 @@ public class ComponentSaveSessionTests
     }
 
     [Fact]
+    public async Task EventOnlyChangesApplyAndValidateLikeOtherComponentSources()
+    {
+        var commits = 0;
+        var session = new ComponentSaveSession(new(), _ => { commits++; return Task.CompletedTask; });
+        session.Synchronize(new());
+        Assert.True(await session.ApplyAsync(new() { Events = "export class ButtonEventHandler {}" }));
+        Assert.Equal(1, commits);
+        Assert.False(await session.ApplyAsync(new() { Events = "export class ButtonEventHandler {}" }));
+        Assert.Throws<ArgumentException>(() => ComponentCustomization.Validate(new() { Events = new string('x', 200_001) }));
+        Assert.Throws<ArgumentException>(() => ComponentCustomization.Validate(new() { Events = null! }));
+        Assert.Equal("export class ButtonEventHandler {}", session.Current.Events);
+    }
+
+    [Fact]
     public async Task InvalidAndFailedSavesRetainTheLastAppliedVersionAndCanBeRetried()
     {
         var fail = false;

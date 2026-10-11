@@ -82,7 +82,7 @@ public static class ProjectFile
         typeof(C.RadioGroup), typeof(C.CheckBoxGroup), typeof(C.SegmentedControl), typeof(C.Rating),
         typeof(C.Chip), typeof(C.ChipGroup), typeof(C.ButtonGroup), typeof(C.IconButton), typeof(C.FloatingActionButton),
         typeof(C.DropdownButton), typeof(C.SplitButton), typeof(C.CommandButton),
-        typeof(C.Accordion), typeof(C.Sidebar), typeof(C.AppShell), typeof(C.ResponsivePanel), typeof(C.StackPanel), typeof(C.HStack), typeof(C.VStack), typeof(C.WrapPanel), typeof(C.CenterPanel), typeof(C.ScrollablePanel), typeof(C.Breadcrumb), typeof(C.SideNavigation),
+        typeof(C.Accordion), typeof(C.Sidebar), typeof(C.AppShell), typeof(C.ResponsivePanel), typeof(C.ResponsiveGrid), typeof(C.ResponsiveStack), typeof(C.BreakpointContainer), typeof(C.AspectRatioContainer), typeof(C.StackPanel), typeof(C.HStack), typeof(C.VStack), typeof(C.WrapPanel), typeof(C.CenterPanel), typeof(C.ScrollablePanel), typeof(C.Breadcrumb), typeof(C.SideNavigation),
         typeof(C.RichTextBox),
         typeof(C.PictureBox),
         typeof(C.ListView),
@@ -148,7 +148,7 @@ public static class ProjectFile
         "CheckedIndices",
         "Stars",
         "Removable", "ShowText",
-        "PrimaryEnabled",
+        "PrimaryEnabled", "NarrowColumns", "NarrowOrientation", "AspectRatio",
         "ScrollDirection",
         "WorkerReportsProgress",
         "WorkerSupportsCancellation",
@@ -300,7 +300,7 @@ public static class ProjectFile
                         or "splitcontainer"
                         or "tabcontrol"
                         or "flowlayoutpanel"
-                        or "accordion" or "sidebar" or "appshell" or "responsivepanel" or "stackpanel" or "hstack" or "vstack" or "wrappanel" or "centerpanel" or "scrollablepanel"
+                        or "accordion" or "sidebar" or "appshell" or "responsivepanel" or "responsivegrid" or "responsivestack" or "breakpointcontainer" or "aspectratiocontainer" or "stackpanel" or "hstack" or "vstack" or "wrappanel" or "centerpanel" or "scrollablepanel"
                         or "tablelayoutpanel"
                     )
             )

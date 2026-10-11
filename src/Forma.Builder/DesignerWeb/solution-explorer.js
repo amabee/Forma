@@ -176,7 +176,7 @@
     } else if (node.kind === "form" || node.kind === "component" || node.kind === "image") {
       add("View Designer / Properties", "select");
       add("Rename…", "rename-control", node.locked); separator();
-      add("View CSS", "view-css", node.locked); add("View Script", "view-script", node.locked); add("View Custom Properties", "view-custom-properties", node.locked);
+      add("View CSS", "view-css", node.locked); add("View Script", "view-script", node.locked); add("View Events", "view-events", node.locked); add("View Custom Properties", "view-custom-properties", node.locked);
       if (node.kind === "image") add("Choose Image…", "choose-image", node.locked);
       if (node.kind !== "image") { separator(); add(node.kind === "form" ? "Remove Form…" : "Delete Component…", node.kind === "form" ? "delete-form" : "delete-control", node.locked || node.kind === "form" && (root.children.find(child => child.key === "forms")?.children.length ?? 1) < 2); }
     } else if (node.command) add("Open", "open", node.locked);
@@ -213,7 +213,7 @@
       expand(node); search.value = ""; render(node.key);
     } else if (action === "select") window.forma.send({ type: "designer", event: "explorer-select", id: node.controlId, payload: {} });
     else if (action === "open") open(node);
-    else if (["view-css", "view-script", "view-custom-properties"].includes(action)) window.forma.send({ type: "designer", event: "command", id: node.controlId ?? node.children?.[0]?.controlId, payload: { command: action } });
+    else if (["view-css", "view-script", "view-events", "view-custom-properties"].includes(action)) window.forma.send({ type: "designer", event: "command", id: node.controlId ?? node.children?.[0]?.controlId, payload: { command: action } });
     else if (["add-form", "save", "global"].includes(action)) window.forma.send({ type: "designer", event: "command", payload: { command: action === "add-form" ? "new" : action === "global" ? "edit-global-script" : "save" } });
     else explorerAction(node, action);
   });

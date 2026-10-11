@@ -144,3 +144,12 @@ test('runtime enum suggestions use current inspector options for each component'
   const result = formaCompletions(context('forma.set("userAvatar", "shape", "'), [{ name: 'userAvatar', kind: 'avatar', properties: [{ key: 'shape', options: ['circle', 'rounded', 'square'] }] }]);
   assert.deepEqual(result.options.map(option => option.label), ['circle', 'rounded', 'square']);
 });
+
+test('responsive container completion exposes contextual settings and read-only aspect height', async () => {
+  const { propertiesFor } = await load();
+  assert.ok(propertiesFor('responsivegrid', 'set').includes('narrowColumns'));
+  assert.ok(propertiesFor('responsivestack', 'set').includes('narrowOrientation'));
+  assert.ok(propertiesFor('breakpointcontainer', 'set').includes('breakpoint'));
+  assert.ok(propertiesFor('aspectratiocontainer', 'get').includes('height'));
+  assert.equal(propertiesFor('aspectratiocontainer', 'set').includes('height'), false);
+});

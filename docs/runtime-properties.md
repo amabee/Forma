@@ -99,6 +99,33 @@ forma.set("pages", "pageSize", 25);
 const count = forma.get("pages", "pageCount");
 ```
 
+## Responsive container properties
+
+| Component | Writable properties | Read-only properties |
+| --- | --- | --- |
+| ResponsiveGrid | columns, narrowColumns, breakpoint, gap | — |
+| ResponsiveStack | orientation, narrowOrientation, breakpoint, gap | — |
+| BreakpointContainer | breakpoint; layoutSlot on its children | — |
+| AspectRatioContainer | aspectRatio, width | height |
+
+Grid column counts are integers from 1–12. Breakpoints are integers from 100–2400
+pixels measured on the container, not the window. A width equal to the breakpoint
+uses the wide layout. Stack directions are horizontal or vertical. Aspect ratio
+is a finite number from 0.1–10; use 16 / 9 rather than the string "16:9".
+The frame derives height from width; active height constraints can override that
+preferred ratio. Managed grid/stack children retain the layout's authority over
+rendered position and width. get reports model geometry, not browser measurements.
+
+```js
+forma.set("cards", "columns", 3);
+forma.set("cards", "narrowColumns", 1);
+forma.set("cards", "breakpoint", 640);
+forma.set("actions", "narrowOrientation", "vertical");
+forma.set("videoFrame", "aspectRatio", 16 / 9);
+const ratio = forma.bind("videoFrame", "aspectRatio");
+console.log(ratio.value);
+```
+
 ## Structured data
 
 Pass arrays directly, not JSON strings. Core model validation still enforces

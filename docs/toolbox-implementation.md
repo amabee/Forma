@@ -272,6 +272,15 @@ Typed editors, grouping, binding and virtualization remain future enhancements.
 
 ## Modern UI batch
 
+ResponsiveGrid, ResponsiveStack, BreakpointContainer and AspectRatioContainer
+are implemented with model notifications, contextual properties, Preview
+get/set/bind, editor suggestions, Save/Open and Undo/Redo. Breakpoints measure
+the container width. Grid changes its column count; Stack changes direction;
+BreakpointContainer switches between wide slot 1 and narrow slot 2; the aspect
+frame derives height from width. Grid/stack child order is managed, while the
+two-layout and aspect containers support free placement with Dock and Anchor.
+See the individual component reference pages on the documentation website.
+
 The next layout/navigation batches add StackPanel, HStack, VStack, WrapPanel,
 CenterPanel, ScrollablePanel, Breadcrumb and SideNavigation. Linear containers
 support managed child ordering and grouping; ScrollablePanel retains free

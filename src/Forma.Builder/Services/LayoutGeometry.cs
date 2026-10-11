@@ -4,6 +4,8 @@ namespace Forma.Builder;
 public static class LayoutGeometry
 {
     public readonly record struct Bounds(int X, int Y, int Width, int Height);
+    public static int AspectHeight(Appearance appearance, double ratio, int? width = null) => Math.Clamp((int)Math.Round((width ?? appearance.Width) / ratio, MidpointRounding.AwayFromZero),
+        Math.Max(20, appearance.MinimumHeight), Math.Max(Math.Max(20, appearance.MinimumHeight), appearance.MaximumHeight == 0 ? 16000 : appearance.MaximumHeight));
     public static Bounds Anchor(Bounds bounds, string anchor, int dx, int dy)
     {
         var edges = anchor.Split(',');
@@ -13,10 +15,16 @@ public static class LayoutGeometry
             bounds.Y + (top ? 0 : bottom ? dy : dy / 2),
             bounds.Width + (left && right ? dx : 0), bounds.Height + (top && bottom ? dy : 0));
     }
-    public static Bounds Dock(string dock, Appearance appearance, ref Bounds remaining)
+    public static Bounds Dock(string dock, Appearance appearance, ref Bounds remaining, double? aspectRatio = null)
     {
         var width = Math.Clamp(appearance.Width + appearance.MarginLeft + appearance.MarginRight, 0, remaining.Width);
         var height = Math.Clamp(appearance.Height + appearance.MarginTop + appearance.MarginBottom, 0, remaining.Height);
+        if (aspectRatio is double ratio && dock is "top" or "bottom") {
+            var availableWidth = Math.Max(24, remaining.Width - appearance.MarginLeft - appearance.MarginRight);
+            var minimumWidth = Math.Clamp(appearance.MinimumWidth, 24, availableWidth);
+            var frameWidth = Math.Clamp(availableWidth, minimumWidth, appearance.MaximumWidth == 0 ? availableWidth : Math.Clamp(appearance.MaximumWidth, minimumWidth, availableWidth));
+            height = Math.Clamp(AspectHeight(appearance, ratio, frameWidth) + appearance.MarginTop + appearance.MarginBottom, 0, remaining.Height);
+        }
         var occupied = remaining;
         switch (dock)
         {

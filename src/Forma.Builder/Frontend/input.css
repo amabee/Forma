@@ -607,6 +607,31 @@
   .layout-content {
     @apply relative h-full min-h-0 overflow-auto;
   }
+  [data-forma-type="responsivegrid"] > .layout-content > [data-forma-type],
+  [data-forma-type="responsivestack"] > .layout-content[data-direction="vertical"] > [data-forma-type] {
+    width: auto !important;
+    @apply min-w-0;
+    box-sizing: border-box;
+  }
+  [data-forma-type="responsivegrid"] > .layout-content {
+    @apply grid items-start;
+    grid-auto-rows: max-content;
+  }
+  [data-forma-type="breakpointcontainer"] > .layout-header {
+    @apply pointer-events-none absolute top-1 right-1 z-10 rounded bg-blue-50 px-2 text-[10px] leading-5 text-blue-600;
+  }
+  .preview-mode [data-forma-type="breakpointcontainer"] > .layout-header { display: none; }
+  body:not(.preview-mode) [data-forma-type="responsivegrid"] > .layout-content {
+    background-image: linear-gradient(to right, transparent calc(100% - 1px), #3b82f626 0);
+    background-size: calc(100% / var(--responsive-columns, 2)) 100%;
+  }
+  body:not(.preview-mode) [data-forma-type="responsivegrid"] > .layout-content:empty::after {
+    @apply pointer-events-none absolute top-1 right-1 rounded bg-blue-50 px-2 text-[10px] leading-5 text-blue-600;
+    content: attr(data-grid-label);
+  }
+  [data-forma-type="aspectratiocontainer"] {
+    box-sizing: border-box;
+  }
   [data-forma-type="sidebar"] > .layout-content {
     @apply overflow-x-hidden overflow-y-auto;
   }
@@ -618,7 +643,7 @@
   }
   [data-forma-type="appshell"][data-narrow="false"][data-orientation="horizontal"]
     > .layout-content
-    > [data-forma-type] {
+    > [data-forma-type]:not([data-forma-type="aspectratiocontainer"]) {
     height: 100% !important;
   }
   [data-forma-type="appshell"][data-narrow="true"]
@@ -1413,9 +1438,14 @@
   .tabs {
     @apply flex h-full items-stretch gap-5;
   }
-  .tabs span {
+  .tabs span, .tabs button {
     @apply relative flex items-center text-muted;
   }
+  .tabs button { @apply cursor-pointer bg-transparent focus-visible:outline-2 focus-visible:outline-accent; }
+  .event-note { @apply px-1 py-3 text-xs leading-relaxed text-muted; }
+  .event-handler { @apply flex w-full items-center justify-between gap-3 rounded px-2 py-2 text-left text-xs text-ink hover:bg-hover focus-visible:outline-2 focus-visible:outline-accent; }
+  .event-handler small { @apply max-w-[55%] truncate text-muted; }
+  .event-handler:disabled { @apply cursor-default opacity-50; }
   .tabs .active {
     @apply text-ink;
   }

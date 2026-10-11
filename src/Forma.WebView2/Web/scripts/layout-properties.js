@@ -1,6 +1,6 @@
 // Dock/Anchor are view geometry. The Builder model owns saved bounds and layout settings.
 (() => {
-  const managed = new Set(['flowlayoutpanel', 'stackpanel', 'hstack', 'vstack', 'wrappanel', 'centerpanel', 'sidebar', 'appshell', 'responsivepanel', 'tablelayoutpanel']);
+  const managed = new Set(['flowlayoutpanel', 'stackpanel', 'hstack', 'vstack', 'wrappanel', 'centerpanel', 'sidebar', 'appshell', 'responsivepanel', 'responsivegrid', 'responsivestack', 'tablelayoutpanel']);
   const groups = new Map();
   const number = value => Number.isFinite(Number(value)) ? Number(value) : 0;
   const limit = (value, minimum, maximum) => Math.max(minimum, Math.min(Math.max(minimum, maximum), value));
@@ -43,6 +43,10 @@
         x = left + area.x; y = top + area.y;
         if (['top', 'bottom', 'fill'].includes(dock)) width = right - left - ml - mr;
         if (['left', 'right', 'fill'].includes(dock)) height = bottom - top - mt - mb;
+        if (item.kind === 'aspectratiocontainer') {
+          width = limit(width, item.minimumWidth || 24, item.maximumWidth || Math.max(24, area.width - ml - mr));
+          height = limit(Math.round(width / (item.aspectRatio || 16 / 9)), item.minimumHeight || 20, item.maximumHeight || 16000);
+        }
         const takeW = Math.min(right - left, width + ml + mr), takeH = Math.min(bottom - top, height + mt + mb);
         if (dock === 'top') top += takeH;
         if (dock === 'bottom') { y = bottom - takeH + area.y; bottom -= takeH; }

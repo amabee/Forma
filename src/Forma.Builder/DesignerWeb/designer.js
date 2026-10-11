@@ -72,9 +72,9 @@ const containerKinds = new Set([
   "flowlayoutpanel",
   "tablelayoutpanel",
 ]);
-const linearKinds = new Set(["flowlayoutpanel", "stackpanel", "hstack", "vstack", "wrappanel", "centerpanel", "sidebar", "appshell", "responsivepanel"]);
+const linearKinds = new Set(["flowlayoutpanel", "stackpanel", "hstack", "vstack", "wrappanel", "centerpanel", "sidebar", "appshell", "responsivepanel", "responsivegrid", "responsivestack"]);
 const managedKinds = new Set([...linearKinds, "tablelayoutpanel"]);
-for (const kind of [...linearKinds, "scrollablepanel", "accordion"]) containerKinds.add(kind);
+for (const kind of [...linearKinds, "scrollablepanel", "accordion", "breakpointcontainer", "aspectratiocontainer"]) containerKinds.add(kind);
 document.querySelectorAll("[data-kind]").forEach(tool => supportedKinds.add(tool.dataset.kind));
 const byId = (id) => document.getElementById(id);
 const send = (event, id, payload = {}) =>
@@ -153,7 +153,8 @@ function containerHost(container, x, y) {
   return host;
 }
 function flowInsertion(container, movingId, x, y) {
-  const vertical = container.dataset.orientation === "vertical";
+  const direction = containerHost(container).style.flexDirection;
+  const vertical = direction ? direction === "column" : container.dataset.orientation === "vertical";
   const siblings = Array.from(containerHost(container).children).filter(
     (child) => child.dataset.formaType && child.id !== movingId,
   );
@@ -250,13 +251,19 @@ function managedResizeBounds(item, direction, dx, dy, parentWidth, parentHeight)
 
 function controlledAxes(item) {
   const d = window.formaDesigner, parent = d?.controlById(item?.parentId);
+  const aspect = item?.kind === "aspectratiocontainer";
+  if (parent?.kind === "responsivegrid") return { width: true, height: aspect, position: true };
+  if (parent?.kind === "responsivestack") {
+    const direction = byId(parent.id)?.dataset.narrow === "true" ? parent.narrowOrientation : parent.orientation;
+    return { width: direction === "vertical", height: aspect, position: true };
+  }
   if (parent?.kind === "appshell") {
     const narrow = byId(parent.id)?.dataset.narrow === "true", main = d.state.controls.filter(c => c.parentId === parent.id)[0]?.id !== item.id;
-    return { width: narrow || main, height: main || !narrow && parent.orientation !== "vertical", position: true };
+    return { width: narrow || main, height: aspect || main || !narrow && parent.orientation !== "vertical", position: true };
   }
-  if (parent?.kind === "responsivepanel" && byId(parent.id)?.dataset.narrow === "true") return { width: true, height: false, position: true };
+  if (parent?.kind === "responsivepanel" && byId(parent.id)?.dataset.narrow === "true") return { width: true, height: aspect, position: true };
   const dock = managedKinds.has(parent?.kind) ? "none" : item?.dock ?? "none";
-  return { width: ["top", "bottom", "fill"].includes(dock), height: ["left", "right", "fill"].includes(dock), position: dock !== "none" || managedKinds.has(parent?.kind) };
+  return { width: ["top", "bottom", "fill"].includes(dock), height: aspect || ["left", "right", "fill"].includes(dock), position: dock !== "none" || managedKinds.has(parent?.kind) };
 }
 
 function resizeBounds(
@@ -677,10 +684,12 @@ window.formaDesigner = {
       }
       el.classList.toggle("design-muted", !item.enabled || !item.visible);
       const parent = this.controlById(item.parentId);
+      if (parent?.kind === "breakpointcontainer") el.dataset.modelHidden = String(this.preview && !item.visible);
       el.hidden =
         (this.preview && (!item.visible || item.kind === "chip" && item.isRemoved)) ||
         (["tabcontrol", "accordion"].includes(parent?.kind) &&
-          (item.layoutSlot !== parent.selectedTab + 1 || parent.kind === "accordion" && parent.expanded === false));
+          (item.layoutSlot !== parent.selectedTab + 1 || parent.kind === "accordion" && parent.expanded === false)) ||
+        (parent?.kind === "breakpointcontainer" && item.layoutSlot !== (byId(parent.id)?.dataset.narrow === "true" ? 2 : 1));
       if (["treeview", "pagination"].includes(item.kind))
         el.querySelectorAll("button").forEach((button) => {
           button.disabled =

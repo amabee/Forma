@@ -64,6 +64,7 @@ fs.writeFileSync(
 );
 
 require("esbuild").buildSync({ entryPoints: [path.join(__dirname, "code-editor.mjs")], bundle: true, minify: true, format: "iife", target: "es2022", outfile: path.join(__dirname, "../DesignerWeb/code-editor.bundle.js"), legalComments: "external" });
+require("esbuild").buildSync({ entryPoints: [path.join(__dirname, "event-inspector.mjs")], bundle: true, minify: true, format: "iife", target: "es2022", outfile: path.join(__dirname, "../DesignerWeb/event-inspector.bundle.js"), legalComments: "external" });
 
 require("esbuild").buildSync({ entryPoints: [path.join(__dirname, "module-runtime.mjs")], bundle: true, minify: true, format: "iife", platform: "browser", target: "es2022", outfile: path.join(__dirname, "../DesignerWeb/module-runtime.bundle.js"), legalComments: "external" });
 fs.copyFileSync(path.join(__dirname, "node_modules/sucrase/LICENSE"), path.join(__dirname, "../DesignerWeb/LICENSE-SUCRASE.txt"));

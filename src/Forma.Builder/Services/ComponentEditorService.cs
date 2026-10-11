@@ -8,6 +8,7 @@ namespace Forma.Builder;
 public static class ComponentEditorService
 {
     public const string ScriptFile = "script.js";
+    public const string EventsFile = "event.js";
     public static string[] ModuleNames(string source) => System.Text.RegularExpressions.Regex.Matches(source,
         "(?:forma|api)\\.provide\\(\\s*[\"'](?<name>[A-Za-z][\\w.-]{0,63})[\"']")
         .Select(match => match.Groups["name"].Value).Distinct().ToArray();
@@ -79,11 +80,8 @@ public static class ComponentEditorService
 
                 // command-item supplies event.detail.itemId, text, and checked.
                 // primary-click is the SplitButton's main action, separate from its menu.
-                forma.on("{{eventName}}", event => {
-                  // Example (uncomment and replace label1 with your label's Name):
-                  // component.properties.clicks += 1;
-                  // forma.set("label1", "text", `Clicked ${component.properties.clicks} times`);
-                });
+                // Add handlers from the Events inspector. Methods go in event.js;
+                // imports and forma.on("{{eventName}}", handler) subscriptions go here.
                 """,
             Characteristics = """
                 {
@@ -108,6 +106,7 @@ public static class ComponentEditorService
         Directory.CreateDirectory(folder);
         File.WriteAllText(Path.Combine(folder, "component.css"), source.Css);
         File.WriteAllText(Path.Combine(folder, ScriptFile), source.Behavior);
+        File.WriteAllText(Path.Combine(folder, EventsFile), source.Events);
         File.WriteAllText(Path.Combine(folder, PropertiesFile), source.Characteristics);
     }
 
@@ -115,6 +114,7 @@ public static class ComponentEditorService
     {
         Css = ReadFile(Path.Combine(folder, "component.css")),
         Behavior = ReadFile(File.Exists(Path.Combine(folder, ScriptFile)) ? Path.Combine(folder, ScriptFile) : Path.Combine(folder, "behavior.js")),
+        Events = File.Exists(Path.Combine(folder, EventsFile)) ? ReadFile(Path.Combine(folder, EventsFile)) : "",
         Characteristics = ReadFile(File.Exists(Path.Combine(folder, PropertiesFile))
             ? Path.Combine(folder, PropertiesFile) : Path.Combine(folder, "characteristics.json"))
     });

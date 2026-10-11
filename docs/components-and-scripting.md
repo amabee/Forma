@@ -1,6 +1,6 @@
 # Using Forma components, properties, and code
 
-This guide describes the current Builder and its 84 toolbox entries. The [component reference](component-reference.md) lists every implemented control, contextual inspector property, range, C# property, constructor default, and declared method/event. The [roadmap](roadmap-stages.md) tracks features still pending.
+This guide describes the current Builder and its 88 toolbox entries. The [component reference](component-reference.md) lists every implemented control, contextual inspector property, range, C# property, constructor default, and declared method/event. The [roadmap](roadmap-stages.md) tracks features still pending.
 
 ## Contents
 

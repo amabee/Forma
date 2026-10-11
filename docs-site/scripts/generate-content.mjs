@@ -79,14 +79,15 @@ const notes = {
   text: 'Display text; use value to read live text input.', value: 'Typed live value. Text inputs are written with text; a value binding writes through that alias.',
   source: 'Image source. Choose an image in the inspector; use source rather than text in scripts.', interval: 'Milliseconds; integer 10–3,600,000. Only fires while Timer is enabled.',
   selectedPath: 'Native picker result; read-only. Choose a path through the picker.', selectedIndex: 'Zero-based; -1 clears selection.', selectedTab: 'Zero-based active tab/section.',
-  layoutSlot: 'One-based parent pane, page, or table cell.', rows: 'Array of string arrays. Each cell must be a string.', columns: 'DataGridView: string array; TableLayoutPanel: column count.',
+  layoutSlot: 'One-based parent pane, page, or table cell.', rows: 'Array of string arrays. Each cell must be a string.', columns: 'DataGridView: string array; TableLayoutPanel/ResponsiveGrid: column count.',
   items: 'String array; inspector uses one item per line.', tabs: 'String array of page/section captions.', checkedIndices: 'Array of zero-based checked item indices.',
   commandItems: 'Command object array; use camelCase keys. Inspector uses Commands JSON.', targetId: 'Visual control Name or ID; reads return its stable ID.',
   dock: 'Parent-managed edge/fill layout. Takes priority over Anchor.', anchor: 'Comma-separated edges; opposite edges stretch. Use exact option strings.',
   width: 'Configured model width; managed layouts/custom CSS can change rendered size.', height: 'Configured model height; managed layouts/custom CSS can change rendered size.',
   x: 'Parent-content X coordinate. Writes are rejected for managed/docked children.', y: 'Parent-content Y coordinate. Writes are rejected for managed/docked children.',
   page: 'One-based current page.', pageCount: 'Calculated from totalItems and pageSize; read-only.', result: 'Last dialog result; read-only.', isBusy: 'Worker status; read-only.', isOpen: 'Current open status; read-only.',
-  gap: 'Spacing between managed children in pixels.', breakpoint: 'Container width below which responsive children stack.', speed: 'Spinner animation duration, in milliseconds.',
+  narrowColumns: 'ResponsiveGrid column count below its breakpoint (1-12).', narrowOrientation: 'ResponsiveStack direction below its breakpoint.', aspectRatio: 'Width divided by height (0.1-10); height is derived.',
+  gap: 'Spacing between managed children in pixels.', breakpoint: 'Container width below which the narrow layout applies.', speed: 'Spinner animation duration, in milliseconds.',
   document: 'Structured blocks/runs, not HTML. See Runtime properties.', nodes: 'Tree node objects with unique IDs and optional children.', entries: 'Property entry objects with string names/values.',
 };
 for (const kind of implemented) {

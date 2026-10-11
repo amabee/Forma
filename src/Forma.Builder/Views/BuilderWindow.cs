@@ -252,11 +252,15 @@ public sealed class BuilderWindow : System.Windows.Forms.Form
                     case "edit-global-script":
                     case "view-css":
                     case "view-script":
+                    case "view-events":
+                    case "edit-event":
                     case "view-custom-properties":
                         var globalEditor = String(payload, "command") == "edit-global-script";
                         var sourceCommand = String(payload, "command");
-                        var document = globalEditor || sourceCommand == "view-script" ? "behavior" : sourceCommand == "view-custom-properties" ? "characteristics" : "css";
-                        var editorControl = globalEditor ? _viewModel.ProjectRoot : sourceCommand?.StartsWith("view-", StringComparison.Ordinal) == true
+                        var eventName = sourceCommand == "edit-event" ? String(payload, "eventName") : null;
+                        if (sourceCommand == "edit-event" && (string.IsNullOrWhiteSpace(eventName) || eventName.Length > 64 || eventName.Any(c => !char.IsAsciiLetter(c) && c != '-'))) return;
+                        var document = globalEditor || sourceCommand is "view-script" or "edit-event" ? "behavior" : sourceCommand == "view-events" ? "events" : sourceCommand == "view-custom-properties" ? "characteristics" : "css";
+                        var editorControl = globalEditor ? _viewModel.ProjectRoot : sourceCommand == "edit-event" || sourceCommand?.StartsWith("view-", StringComparison.Ordinal) == true
                             ? _viewModel.ProjectControls.FirstOrDefault(c => c.Id == message.Id) : _viewModel.SelectedControl;
                         if (editorControl is FControl selected && !_viewModel.PreviewMode && (globalEditor || !_viewModel.Appearance[selected.Id].Locked))
                         {
@@ -270,6 +274,7 @@ public sealed class BuilderWindow : System.Windows.Forms.Form
                             if (_editors.TryGetValue(targetKey, out var existing)) {
                                 ActivateEditor(targetKey);
                                 existing.ActivateDocument(document);
+                                if (eventName is not null) existing.OpenEventHandler(eventName);
                                 await PublishEditorTabsAsync(true);
                                 return;
                             }
@@ -287,10 +292,11 @@ public sealed class BuilderWindow : System.Windows.Forms.Form
                                     var result = globalEditor ? _viewModel.ExecuteEdit("global-script", selected.Id, JsonSerializer.SerializeToElement(new { script = source.Behavior }))
                                         : _viewModel.ExecuteEdit("customize", selected.Id, JsonSerializer.SerializeToElement(source));
                                     await StateAsync(result.Status);
-                                }, () => new { controls = Walk(globalEditor ? _viewModel.Form : _viewModel.Forms.FirstOrDefault(form => Walk(form).Any(control => control.Id == selected.Id)) ?? _viewModel.Form).Select(c => new { id = c.Id, name = c.Name, kind = c.ControlType, properties = InspectorCatalog.ForKind(c.ControlType).Select(p => new { key = p.Id, type = p.Editor, options = p.Options }).ToArray() }).ToArray(), modules = ComponentEditorService.ModuleNames(_viewModel.GlobalScript), globalSource = _viewModel.GlobalScript, projectFiles = ProjectEntryService.ModuleSources(_viewModel.Files).Select(file => new { path = file.Path, content = file.Content }).ToArray() }, globalScript: globalEditor);
+                                }, () => new { controls = Walk(globalEditor ? _viewModel.Form : _viewModel.Forms.FirstOrDefault(form => Walk(form).Any(control => control.Id == selected.Id)) ?? _viewModel.Form).Select(c => new { id = c.Id, name = c.Name, kind = c.ControlType, properties = InspectorCatalog.ForKind(c.ControlType).Select(p => new { key = p.Id, type = p.Editor, options = p.Options }).ToArray() }).ToArray(), modules = ComponentEditorService.ModuleNames(_viewModel.GlobalScript), globalSource = _viewModel.GlobalScript, projectFiles = ProjectEntryService.ModuleSources(_viewModel.Files).Select(file => new { path = file.Path, content = file.Content }).ToArray() }, globalScript: globalEditor, componentKind: selected.ControlType);
                             _editors.Add(targetKey, editor);
                             ActivateEditor(targetKey);
                             editor.ActivateDocument(document);
+                            if (eventName is not null) editor.OpenEventHandler(eventName);
                             editor.ApplyTheme(_workspaceTheme);
                             editor.MinimumSize = Size.Empty;
                             editor.Bounds = new Rectangle(300, Math.Max(120, ClientSize.Height / 2), Math.Max(100, ClientSize.Width - 590), Math.Max(100, ClientSize.Height / 2 - 32));
@@ -545,7 +551,10 @@ public sealed class BuilderWindow : System.Windows.Forms.Form
                         cssClass = _viewModel.Appearance[c.Id].CssClass,
                         customCss = _viewModel.Appearance[c.Id].CustomCss,
                         expanded = (c as Forma.Core.Controls.Accordion)?.Expanded ?? true,
-                        breakpoint = (c as Forma.Core.Controls.ResponsiveLayout)?.Breakpoint ?? 600,
+                        breakpoint = (c as Forma.Core.Controls.ResponsiveLayout)?.Breakpoint ?? (c as Forma.Core.Controls.BreakpointContainer)?.Breakpoint ?? 600,
+                        narrowColumns = (c as Forma.Core.Controls.ResponsiveGrid)?.NarrowColumns ?? 1,
+                        narrowOrientation = (c as Forma.Core.Controls.ResponsiveStack)?.NarrowOrientation ?? "vertical",
+                        aspectRatio = (c as Forma.Core.Controls.AspectRatioContainer)?.AspectRatio ?? 16d / 9d,
                         scrollDirection = (c as Forma.Core.Controls.ScrollablePanel)?.ScrollDirection ?? "both",
                         primaryEnabled = (c as Forma.Core.Controls.SplitButton)?.PrimaryEnabled ?? true,
                         description = (c as Forma.Core.Controls.CommandButton)?.Description ?? (c as Forma.Core.Controls.Card)?.Description ?? (c as Forma.Core.Controls.EmptyState)?.Description ?? "",

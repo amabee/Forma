@@ -581,7 +581,7 @@
         "min": 0,
         "max": 64,
         "options": null,
-        "kind": "splitcontainer,flowlayoutpanel,tablelayoutpanel,sidebar,appshell,responsivepanel,accordion,stackpanel,hstack,vstack,wrappanel,centerpanel",
+        "kind": "splitcontainer,flowlayoutpanel,tablelayoutpanel,sidebar,appshell,responsivepanel,responsivegrid,responsivestack,accordion,stackpanel,hstack,vstack,wrappanel,centerpanel",
         "readOnly": false,
         "childOnly": false
       },
@@ -1402,7 +1402,7 @@
           "horizontal",
           "vertical"
         ],
-        "kind": "splitcontainer,flowlayoutpanel,tabcontrol,toolbar,toolstrip,divider,radiogroup,checkboxgroup,segmentedcontrol,chipgroup,buttongroup,sidebar,appshell,responsivepanel,stackpanel,hstack,vstack,wrappanel,centerpanel,sidenavigation",
+        "kind": "splitcontainer,flowlayoutpanel,tabcontrol,toolbar,toolstrip,divider,radiogroup,checkboxgroup,segmentedcontrol,chipgroup,buttongroup,sidebar,appshell,responsivepanel,responsivestack,stackpanel,hstack,vstack,wrappanel,centerpanel,sidenavigation",
         "readOnly": false,
         "childOnly": false
       },
@@ -1414,19 +1414,19 @@
         "min": 0,
         "max": 64,
         "options": null,
-        "kind": "splitcontainer,flowlayoutpanel,tablelayoutpanel,sidebar,appshell,responsivepanel,accordion,stackpanel,hstack,vstack,wrappanel,centerpanel",
+        "kind": "splitcontainer,flowlayoutpanel,tablelayoutpanel,sidebar,appshell,responsivepanel,responsivegrid,responsivestack,accordion,stackpanel,hstack,vstack,wrappanel,centerpanel",
         "readOnly": false,
         "childOnly": false
       },
       {
         "id": "breakpoint",
-        "label": "Stack below width",
+        "label": "Breakpoint (px)",
         "category": "Layout",
         "editor": "number",
         "min": 100,
         "max": 2400,
         "options": null,
-        "kind": "appshell,responsivepanel",
+        "kind": "appshell,responsivepanel,responsivegrid,responsivestack,breakpointcontainer",
         "readOnly": false,
         "childOnly": false
       },
@@ -1590,6 +1590,788 @@
         "type": "String",
         "writable": false,
         "value": "appshell"
+      }
+    ],
+    "events": [
+      "ChildAdded",
+      "ChildRemoved",
+      "PropertyChanged"
+    ],
+    "methods": [
+      {
+        "name": "Add",
+        "parameters": [
+          "child"
+        ]
+      },
+      {
+        "name": "Insert",
+        "parameters": [
+          "index",
+          "child"
+        ]
+      },
+      {
+        "name": "MoveChild",
+        "parameters": [
+          "child",
+          "index"
+        ]
+      },
+      {
+        "name": "Remove",
+        "parameters": [
+          "child"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "AspectRatioContainer",
+    "kind": "aspectratiocontainer",
+    "tray": false,
+    "inspector": [
+      {
+        "id": "name",
+        "label": "Name",
+        "category": "General",
+        "editor": "text",
+        "min": null,
+        "max": null,
+        "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": false
+      },
+      {
+        "id": "id",
+        "label": "ID",
+        "category": "General",
+        "editor": "text",
+        "min": null,
+        "max": null,
+        "options": null,
+        "kind": null,
+        "readOnly": true,
+        "childOnly": false
+      },
+      {
+        "id": "text",
+        "label": "Text / Title",
+        "category": "General",
+        "editor": "text",
+        "min": null,
+        "max": null,
+        "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": false
+      },
+      {
+        "id": "tag",
+        "label": "Tag",
+        "category": "General",
+        "editor": "text",
+        "min": null,
+        "max": null,
+        "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": false
+      },
+      {
+        "id": "locked",
+        "label": "Locked",
+        "category": "General",
+        "editor": "checkbox",
+        "min": null,
+        "max": null,
+        "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": false
+      },
+      {
+        "id": "backColor",
+        "label": "Background",
+        "category": "Appearance",
+        "editor": "color",
+        "min": null,
+        "max": null,
+        "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": false
+      },
+      {
+        "id": "foreColor",
+        "label": "Foreground",
+        "category": "Appearance",
+        "editor": "color",
+        "min": null,
+        "max": null,
+        "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": false
+      },
+      {
+        "id": "borderStyle",
+        "label": "Border style",
+        "category": "Appearance",
+        "editor": "select",
+        "min": null,
+        "max": null,
+        "options": [
+          "none",
+          "solid",
+          "dashed",
+          "dotted"
+        ],
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "borderColor",
+        "label": "Border color",
+        "category": "Appearance",
+        "editor": "color",
+        "min": null,
+        "max": null,
+        "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "borderWidth",
+        "label": "Border width",
+        "category": "Appearance",
+        "editor": "number",
+        "min": 0,
+        "max": 10,
+        "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "borderRadius",
+        "label": "Radius",
+        "category": "Appearance",
+        "editor": "number",
+        "min": 0,
+        "max": 100,
+        "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "opacity",
+        "label": "Opacity (%)",
+        "category": "Appearance",
+        "editor": "number",
+        "min": 10,
+        "max": 100,
+        "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "shadow",
+        "label": "Shadow",
+        "category": "Appearance",
+        "editor": "select",
+        "min": null,
+        "max": null,
+        "options": [
+          "None",
+          "Small",
+          "Medium",
+          "Large"
+        ],
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "cursor",
+        "label": "Cursor",
+        "category": "Appearance",
+        "editor": "select",
+        "min": null,
+        "max": null,
+        "options": [
+          "default",
+          "pointer",
+          "text",
+          "crosshair",
+          "help",
+          "not-allowed"
+        ],
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "fontFamily",
+        "label": "Font family",
+        "category": "Typography",
+        "editor": "select",
+        "min": null,
+        "max": null,
+        "options": [
+          "Segoe UI",
+          "Arial",
+          "Consolas",
+          "Georgia"
+        ],
+        "kind": null,
+        "readOnly": false,
+        "childOnly": false
+      },
+      {
+        "id": "fontSize",
+        "label": "Font size",
+        "category": "Typography",
+        "editor": "number",
+        "min": 8,
+        "max": 48,
+        "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": false
+      },
+      {
+        "id": "fontWeight",
+        "label": "Weight",
+        "category": "Typography",
+        "editor": "select",
+        "min": null,
+        "max": null,
+        "options": [
+          "normal",
+          "bold",
+          "100",
+          "200",
+          "300",
+          "400",
+          "500",
+          "600",
+          "700",
+          "800",
+          "900"
+        ],
+        "kind": null,
+        "readOnly": false,
+        "childOnly": false
+      },
+      {
+        "id": "fontStyle",
+        "label": "Font style",
+        "category": "Typography",
+        "editor": "select",
+        "min": null,
+        "max": null,
+        "options": [
+          "normal",
+          "italic"
+        ],
+        "kind": null,
+        "readOnly": false,
+        "childOnly": false
+      },
+      {
+        "id": "textAlign",
+        "label": "Alignment",
+        "category": "Typography",
+        "editor": "select",
+        "min": null,
+        "max": null,
+        "options": [
+          "left",
+          "center",
+          "right"
+        ],
+        "kind": null,
+        "readOnly": false,
+        "childOnly": false
+      },
+      {
+        "id": "lineHeight",
+        "label": "Line height",
+        "category": "Typography",
+        "editor": "number",
+        "min": 0.5,
+        "max": 4,
+        "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": false
+      },
+      {
+        "id": "letterSpacing",
+        "label": "Letter spacing",
+        "category": "Typography",
+        "editor": "number",
+        "min": -5,
+        "max": 20,
+        "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": false
+      },
+      {
+        "id": "x",
+        "label": "X",
+        "category": "Layout",
+        "editor": "number",
+        "min": 0,
+        "max": 1600,
+        "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "y",
+        "label": "Y",
+        "category": "Layout",
+        "editor": "number",
+        "min": 0,
+        "max": 1200,
+        "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "width",
+        "label": "Width",
+        "category": "Layout",
+        "editor": "number",
+        "min": 24,
+        "max": 1600,
+        "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": false
+      },
+      {
+        "id": "height",
+        "label": "Height",
+        "category": "Layout",
+        "editor": "number",
+        "min": 20,
+        "max": 1200,
+        "options": null,
+        "kind": null,
+        "readOnly": true,
+        "childOnly": false
+      },
+      {
+        "id": "minimumWidth",
+        "label": "Min width",
+        "category": "Layout",
+        "editor": "number",
+        "min": 0,
+        "max": 1600,
+        "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": false
+      },
+      {
+        "id": "minimumHeight",
+        "label": "Min height",
+        "category": "Layout",
+        "editor": "number",
+        "min": 0,
+        "max": 1200,
+        "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": false
+      },
+      {
+        "id": "maximumWidth",
+        "label": "Max width (0=auto)",
+        "category": "Layout",
+        "editor": "number",
+        "min": 0,
+        "max": 1600,
+        "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": false
+      },
+      {
+        "id": "maximumHeight",
+        "label": "Max height (0=auto)",
+        "category": "Layout",
+        "editor": "number",
+        "min": 0,
+        "max": 1200,
+        "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": false
+      },
+      {
+        "id": "marginTop",
+        "label": "Margin top",
+        "category": "Layout",
+        "editor": "number",
+        "min": 0,
+        "max": 64,
+        "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "marginRight",
+        "label": "Margin right",
+        "category": "Layout",
+        "editor": "number",
+        "min": 0,
+        "max": 64,
+        "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "marginBottom",
+        "label": "Margin bottom",
+        "category": "Layout",
+        "editor": "number",
+        "min": 0,
+        "max": 64,
+        "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "marginLeft",
+        "label": "Margin left",
+        "category": "Layout",
+        "editor": "number",
+        "min": 0,
+        "max": 64,
+        "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "paddingTop",
+        "label": "Padding top",
+        "category": "Layout",
+        "editor": "number",
+        "min": 0,
+        "max": 64,
+        "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "paddingRight",
+        "label": "Padding right",
+        "category": "Layout",
+        "editor": "number",
+        "min": 0,
+        "max": 64,
+        "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "paddingBottom",
+        "label": "Padding bottom",
+        "category": "Layout",
+        "editor": "number",
+        "min": 0,
+        "max": 64,
+        "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "paddingLeft",
+        "label": "Padding left",
+        "category": "Layout",
+        "editor": "number",
+        "min": 0,
+        "max": 64,
+        "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "enabled",
+        "label": "Enabled",
+        "category": "Behavior",
+        "editor": "checkbox",
+        "min": null,
+        "max": null,
+        "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "visible",
+        "label": "Visible",
+        "category": "Behavior",
+        "editor": "checkbox",
+        "min": null,
+        "max": null,
+        "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "focusable",
+        "label": "Focusable",
+        "category": "Behavior",
+        "editor": "checkbox",
+        "min": null,
+        "max": null,
+        "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "tabIndex",
+        "label": "Tab index",
+        "category": "Behavior",
+        "editor": "number",
+        "min": 0,
+        "max": 32767,
+        "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "toolTip",
+        "label": "Tooltip",
+        "category": "Behavior",
+        "editor": "text",
+        "min": null,
+        "max": null,
+        "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "cssClass",
+        "label": "CSS class",
+        "category": "Advanced",
+        "editor": "text",
+        "min": null,
+        "max": null,
+        "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": false
+      },
+      {
+        "id": "id",
+        "label": "CSS ID",
+        "category": "Advanced",
+        "editor": "text",
+        "min": null,
+        "max": null,
+        "options": null,
+        "kind": null,
+        "readOnly": true,
+        "childOnly": false
+      },
+      {
+        "id": "aspectRatio",
+        "label": "Width / height ratio",
+        "category": "Layout",
+        "editor": "number",
+        "min": 0.1,
+        "max": 10,
+        "options": null,
+        "kind": "aspectratiocontainer",
+        "readOnly": false,
+        "childOnly": false
+      },
+      {
+        "id": "layoutSlot",
+        "label": "Pane / tab / cell",
+        "category": "Layout",
+        "editor": "number",
+        "min": 1,
+        "max": 100,
+        "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "dock",
+        "label": "Dock",
+        "category": "Layout",
+        "editor": "select",
+        "min": null,
+        "max": null,
+        "options": [
+          "none",
+          "top",
+          "bottom",
+          "left",
+          "right",
+          "fill"
+        ],
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "anchor",
+        "label": "Anchor",
+        "category": "Layout",
+        "editor": "select",
+        "min": null,
+        "max": null,
+        "options": [
+          "none",
+          "top,left",
+          "top,right",
+          "bottom,left",
+          "bottom,right",
+          "top,left,right",
+          "bottom,left,right",
+          "top,bottom,left",
+          "top,bottom,right",
+          "top,bottom,left,right",
+          "top",
+          "bottom",
+          "left",
+          "right",
+          "top,bottom",
+          "left,right"
+        ],
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      }
+    ],
+    "model": [
+      {
+        "name": "AspectRatio",
+        "type": "Double",
+        "writable": true,
+        "value": 1.7777777777777777
+      },
+      {
+        "name": "Orientation",
+        "type": "String",
+        "writable": true,
+        "value": "horizontal"
+      },
+      {
+        "name": "Gap",
+        "type": "Int32",
+        "writable": true,
+        "value": 8
+      },
+      {
+        "name": "Columns",
+        "type": "Int32",
+        "writable": true,
+        "value": 2
+      },
+      {
+        "name": "Tabs",
+        "type": "String[]",
+        "writable": true,
+        "value": [
+          "Tab 1",
+          "Tab 2"
+        ]
+      },
+      {
+        "name": "RowCount",
+        "type": "Int32",
+        "writable": true,
+        "value": 2
+      },
+      {
+        "name": "SelectedTab",
+        "type": "Int32",
+        "writable": true,
+        "value": 0
+      },
+      {
+        "name": "Name",
+        "type": "String",
+        "writable": true,
+        "value": null
+      },
+      {
+        "name": "LayoutSlot",
+        "type": "Int32",
+        "writable": true,
+        "value": 1
+      },
+      {
+        "name": "X",
+        "type": "Nullable\u00601",
+        "writable": true,
+        "value": null
+      },
+      {
+        "name": "Y",
+        "type": "Nullable\u00601",
+        "writable": true,
+        "value": null
+      },
+      {
+        "name": "Text",
+        "type": "String",
+        "writable": true,
+        "value": null
+      },
+      {
+        "name": "Value",
+        "type": "String",
+        "writable": true,
+        "value": null
+      },
+      {
+        "name": "Placeholder",
+        "type": "String",
+        "writable": true,
+        "value": null
+      },
+      {
+        "name": "Label",
+        "type": "String",
+        "writable": true,
+        "value": null
+      },
+      {
+        "name": "ControlType",
+        "type": "String",
+        "writable": false,
+        "value": "aspectratiocontainer"
       }
     ],
     "events": [
@@ -4185,6 +4967,788 @@
     ]
   },
   {
+    "name": "BreakpointContainer",
+    "kind": "breakpointcontainer",
+    "tray": false,
+    "inspector": [
+      {
+        "id": "name",
+        "label": "Name",
+        "category": "General",
+        "editor": "text",
+        "min": null,
+        "max": null,
+        "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": false
+      },
+      {
+        "id": "id",
+        "label": "ID",
+        "category": "General",
+        "editor": "text",
+        "min": null,
+        "max": null,
+        "options": null,
+        "kind": null,
+        "readOnly": true,
+        "childOnly": false
+      },
+      {
+        "id": "text",
+        "label": "Text / Title",
+        "category": "General",
+        "editor": "text",
+        "min": null,
+        "max": null,
+        "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": false
+      },
+      {
+        "id": "tag",
+        "label": "Tag",
+        "category": "General",
+        "editor": "text",
+        "min": null,
+        "max": null,
+        "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": false
+      },
+      {
+        "id": "locked",
+        "label": "Locked",
+        "category": "General",
+        "editor": "checkbox",
+        "min": null,
+        "max": null,
+        "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": false
+      },
+      {
+        "id": "backColor",
+        "label": "Background",
+        "category": "Appearance",
+        "editor": "color",
+        "min": null,
+        "max": null,
+        "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": false
+      },
+      {
+        "id": "foreColor",
+        "label": "Foreground",
+        "category": "Appearance",
+        "editor": "color",
+        "min": null,
+        "max": null,
+        "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": false
+      },
+      {
+        "id": "borderStyle",
+        "label": "Border style",
+        "category": "Appearance",
+        "editor": "select",
+        "min": null,
+        "max": null,
+        "options": [
+          "none",
+          "solid",
+          "dashed",
+          "dotted"
+        ],
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "borderColor",
+        "label": "Border color",
+        "category": "Appearance",
+        "editor": "color",
+        "min": null,
+        "max": null,
+        "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "borderWidth",
+        "label": "Border width",
+        "category": "Appearance",
+        "editor": "number",
+        "min": 0,
+        "max": 10,
+        "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "borderRadius",
+        "label": "Radius",
+        "category": "Appearance",
+        "editor": "number",
+        "min": 0,
+        "max": 100,
+        "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "opacity",
+        "label": "Opacity (%)",
+        "category": "Appearance",
+        "editor": "number",
+        "min": 10,
+        "max": 100,
+        "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "shadow",
+        "label": "Shadow",
+        "category": "Appearance",
+        "editor": "select",
+        "min": null,
+        "max": null,
+        "options": [
+          "None",
+          "Small",
+          "Medium",
+          "Large"
+        ],
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "cursor",
+        "label": "Cursor",
+        "category": "Appearance",
+        "editor": "select",
+        "min": null,
+        "max": null,
+        "options": [
+          "default",
+          "pointer",
+          "text",
+          "crosshair",
+          "help",
+          "not-allowed"
+        ],
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "fontFamily",
+        "label": "Font family",
+        "category": "Typography",
+        "editor": "select",
+        "min": null,
+        "max": null,
+        "options": [
+          "Segoe UI",
+          "Arial",
+          "Consolas",
+          "Georgia"
+        ],
+        "kind": null,
+        "readOnly": false,
+        "childOnly": false
+      },
+      {
+        "id": "fontSize",
+        "label": "Font size",
+        "category": "Typography",
+        "editor": "number",
+        "min": 8,
+        "max": 48,
+        "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": false
+      },
+      {
+        "id": "fontWeight",
+        "label": "Weight",
+        "category": "Typography",
+        "editor": "select",
+        "min": null,
+        "max": null,
+        "options": [
+          "normal",
+          "bold",
+          "100",
+          "200",
+          "300",
+          "400",
+          "500",
+          "600",
+          "700",
+          "800",
+          "900"
+        ],
+        "kind": null,
+        "readOnly": false,
+        "childOnly": false
+      },
+      {
+        "id": "fontStyle",
+        "label": "Font style",
+        "category": "Typography",
+        "editor": "select",
+        "min": null,
+        "max": null,
+        "options": [
+          "normal",
+          "italic"
+        ],
+        "kind": null,
+        "readOnly": false,
+        "childOnly": false
+      },
+      {
+        "id": "textAlign",
+        "label": "Alignment",
+        "category": "Typography",
+        "editor": "select",
+        "min": null,
+        "max": null,
+        "options": [
+          "left",
+          "center",
+          "right"
+        ],
+        "kind": null,
+        "readOnly": false,
+        "childOnly": false
+      },
+      {
+        "id": "lineHeight",
+        "label": "Line height",
+        "category": "Typography",
+        "editor": "number",
+        "min": 0.5,
+        "max": 4,
+        "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": false
+      },
+      {
+        "id": "letterSpacing",
+        "label": "Letter spacing",
+        "category": "Typography",
+        "editor": "number",
+        "min": -5,
+        "max": 20,
+        "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": false
+      },
+      {
+        "id": "x",
+        "label": "X",
+        "category": "Layout",
+        "editor": "number",
+        "min": 0,
+        "max": 1600,
+        "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "y",
+        "label": "Y",
+        "category": "Layout",
+        "editor": "number",
+        "min": 0,
+        "max": 1200,
+        "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "width",
+        "label": "Width",
+        "category": "Layout",
+        "editor": "number",
+        "min": 24,
+        "max": 1600,
+        "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": false
+      },
+      {
+        "id": "height",
+        "label": "Height",
+        "category": "Layout",
+        "editor": "number",
+        "min": 20,
+        "max": 1200,
+        "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": false
+      },
+      {
+        "id": "minimumWidth",
+        "label": "Min width",
+        "category": "Layout",
+        "editor": "number",
+        "min": 0,
+        "max": 1600,
+        "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": false
+      },
+      {
+        "id": "minimumHeight",
+        "label": "Min height",
+        "category": "Layout",
+        "editor": "number",
+        "min": 0,
+        "max": 1200,
+        "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": false
+      },
+      {
+        "id": "maximumWidth",
+        "label": "Max width (0=auto)",
+        "category": "Layout",
+        "editor": "number",
+        "min": 0,
+        "max": 1600,
+        "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": false
+      },
+      {
+        "id": "maximumHeight",
+        "label": "Max height (0=auto)",
+        "category": "Layout",
+        "editor": "number",
+        "min": 0,
+        "max": 1200,
+        "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": false
+      },
+      {
+        "id": "marginTop",
+        "label": "Margin top",
+        "category": "Layout",
+        "editor": "number",
+        "min": 0,
+        "max": 64,
+        "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "marginRight",
+        "label": "Margin right",
+        "category": "Layout",
+        "editor": "number",
+        "min": 0,
+        "max": 64,
+        "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "marginBottom",
+        "label": "Margin bottom",
+        "category": "Layout",
+        "editor": "number",
+        "min": 0,
+        "max": 64,
+        "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "marginLeft",
+        "label": "Margin left",
+        "category": "Layout",
+        "editor": "number",
+        "min": 0,
+        "max": 64,
+        "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "paddingTop",
+        "label": "Padding top",
+        "category": "Layout",
+        "editor": "number",
+        "min": 0,
+        "max": 64,
+        "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "paddingRight",
+        "label": "Padding right",
+        "category": "Layout",
+        "editor": "number",
+        "min": 0,
+        "max": 64,
+        "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "paddingBottom",
+        "label": "Padding bottom",
+        "category": "Layout",
+        "editor": "number",
+        "min": 0,
+        "max": 64,
+        "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "paddingLeft",
+        "label": "Padding left",
+        "category": "Layout",
+        "editor": "number",
+        "min": 0,
+        "max": 64,
+        "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "enabled",
+        "label": "Enabled",
+        "category": "Behavior",
+        "editor": "checkbox",
+        "min": null,
+        "max": null,
+        "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "visible",
+        "label": "Visible",
+        "category": "Behavior",
+        "editor": "checkbox",
+        "min": null,
+        "max": null,
+        "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "focusable",
+        "label": "Focusable",
+        "category": "Behavior",
+        "editor": "checkbox",
+        "min": null,
+        "max": null,
+        "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "tabIndex",
+        "label": "Tab index",
+        "category": "Behavior",
+        "editor": "number",
+        "min": 0,
+        "max": 32767,
+        "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "toolTip",
+        "label": "Tooltip",
+        "category": "Behavior",
+        "editor": "text",
+        "min": null,
+        "max": null,
+        "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "cssClass",
+        "label": "CSS class",
+        "category": "Advanced",
+        "editor": "text",
+        "min": null,
+        "max": null,
+        "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": false
+      },
+      {
+        "id": "id",
+        "label": "CSS ID",
+        "category": "Advanced",
+        "editor": "text",
+        "min": null,
+        "max": null,
+        "options": null,
+        "kind": null,
+        "readOnly": true,
+        "childOnly": false
+      },
+      {
+        "id": "breakpoint",
+        "label": "Breakpoint (px)",
+        "category": "Layout",
+        "editor": "number",
+        "min": 100,
+        "max": 2400,
+        "options": null,
+        "kind": "appshell,responsivepanel,responsivegrid,responsivestack,breakpointcontainer",
+        "readOnly": false,
+        "childOnly": false
+      },
+      {
+        "id": "layoutSlot",
+        "label": "Pane / tab / cell",
+        "category": "Layout",
+        "editor": "number",
+        "min": 1,
+        "max": 100,
+        "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "dock",
+        "label": "Dock",
+        "category": "Layout",
+        "editor": "select",
+        "min": null,
+        "max": null,
+        "options": [
+          "none",
+          "top",
+          "bottom",
+          "left",
+          "right",
+          "fill"
+        ],
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "anchor",
+        "label": "Anchor",
+        "category": "Layout",
+        "editor": "select",
+        "min": null,
+        "max": null,
+        "options": [
+          "none",
+          "top,left",
+          "top,right",
+          "bottom,left",
+          "bottom,right",
+          "top,left,right",
+          "bottom,left,right",
+          "top,bottom,left",
+          "top,bottom,right",
+          "top,bottom,left,right",
+          "top",
+          "bottom",
+          "left",
+          "right",
+          "top,bottom",
+          "left,right"
+        ],
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      }
+    ],
+    "model": [
+      {
+        "name": "Breakpoint",
+        "type": "Int32",
+        "writable": true,
+        "value": 600
+      },
+      {
+        "name": "Orientation",
+        "type": "String",
+        "writable": true,
+        "value": "horizontal"
+      },
+      {
+        "name": "Gap",
+        "type": "Int32",
+        "writable": true,
+        "value": 8
+      },
+      {
+        "name": "Columns",
+        "type": "Int32",
+        "writable": true,
+        "value": 2
+      },
+      {
+        "name": "Tabs",
+        "type": "String[]",
+        "writable": true,
+        "value": [
+          "Tab 1",
+          "Tab 2"
+        ]
+      },
+      {
+        "name": "RowCount",
+        "type": "Int32",
+        "writable": true,
+        "value": 2
+      },
+      {
+        "name": "SelectedTab",
+        "type": "Int32",
+        "writable": true,
+        "value": 0
+      },
+      {
+        "name": "Name",
+        "type": "String",
+        "writable": true,
+        "value": null
+      },
+      {
+        "name": "LayoutSlot",
+        "type": "Int32",
+        "writable": true,
+        "value": 1
+      },
+      {
+        "name": "X",
+        "type": "Nullable\u00601",
+        "writable": true,
+        "value": null
+      },
+      {
+        "name": "Y",
+        "type": "Nullable\u00601",
+        "writable": true,
+        "value": null
+      },
+      {
+        "name": "Text",
+        "type": "String",
+        "writable": true,
+        "value": null
+      },
+      {
+        "name": "Value",
+        "type": "String",
+        "writable": true,
+        "value": null
+      },
+      {
+        "name": "Placeholder",
+        "type": "String",
+        "writable": true,
+        "value": null
+      },
+      {
+        "name": "Label",
+        "type": "String",
+        "writable": true,
+        "value": null
+      },
+      {
+        "name": "ControlType",
+        "type": "String",
+        "writable": false,
+        "value": "breakpointcontainer"
+      }
+    ],
+    "events": [
+      "ChildAdded",
+      "ChildRemoved",
+      "PropertyChanged"
+    ],
+    "methods": [
+      {
+        "name": "Add",
+        "parameters": [
+          "child"
+        ]
+      },
+      {
+        "name": "Insert",
+        "parameters": [
+          "index",
+          "child"
+        ]
+      },
+      {
+        "name": "MoveChild",
+        "parameters": [
+          "child",
+          "index"
+        ]
+      },
+      {
+        "name": "Remove",
+        "parameters": [
+          "child"
+        ]
+      }
+    ]
+  },
+  {
     "name": "Button",
     "kind": "button",
     "tray": false,
@@ -5551,7 +7115,7 @@
           "horizontal",
           "vertical"
         ],
-        "kind": "splitcontainer,flowlayoutpanel,tabcontrol,toolbar,toolstrip,divider,radiogroup,checkboxgroup,segmentedcontrol,chipgroup,buttongroup,sidebar,appshell,responsivepanel,stackpanel,hstack,vstack,wrappanel,centerpanel,sidenavigation",
+        "kind": "splitcontainer,flowlayoutpanel,tabcontrol,toolbar,toolstrip,divider,radiogroup,checkboxgroup,segmentedcontrol,chipgroup,buttongroup,sidebar,appshell,responsivepanel,responsivestack,stackpanel,hstack,vstack,wrappanel,centerpanel,sidenavigation",
         "readOnly": false,
         "childOnly": false
       },
@@ -7114,7 +8678,7 @@
           "horizontal",
           "vertical"
         ],
-        "kind": "splitcontainer,flowlayoutpanel,tabcontrol,toolbar,toolstrip,divider,radiogroup,checkboxgroup,segmentedcontrol,chipgroup,buttongroup,sidebar,appshell,responsivepanel,stackpanel,hstack,vstack,wrappanel,centerpanel,sidenavigation",
+        "kind": "splitcontainer,flowlayoutpanel,tabcontrol,toolbar,toolstrip,divider,radiogroup,checkboxgroup,segmentedcontrol,chipgroup,buttongroup,sidebar,appshell,responsivepanel,responsivestack,stackpanel,hstack,vstack,wrappanel,centerpanel,sidenavigation",
         "readOnly": false,
         "childOnly": false
       },
@@ -7126,7 +8690,7 @@
         "min": 0,
         "max": 64,
         "options": null,
-        "kind": "splitcontainer,flowlayoutpanel,tablelayoutpanel,sidebar,appshell,responsivepanel,accordion,stackpanel,hstack,vstack,wrappanel,centerpanel",
+        "kind": "splitcontainer,flowlayoutpanel,tablelayoutpanel,sidebar,appshell,responsivepanel,responsivegrid,responsivestack,accordion,stackpanel,hstack,vstack,wrappanel,centerpanel",
         "readOnly": false,
         "childOnly": false
       },
@@ -8673,7 +10237,7 @@
           "horizontal",
           "vertical"
         ],
-        "kind": "splitcontainer,flowlayoutpanel,tabcontrol,toolbar,toolstrip,divider,radiogroup,checkboxgroup,segmentedcontrol,chipgroup,buttongroup,sidebar,appshell,responsivepanel,stackpanel,hstack,vstack,wrappanel,centerpanel,sidenavigation",
+        "kind": "splitcontainer,flowlayoutpanel,tabcontrol,toolbar,toolstrip,divider,radiogroup,checkboxgroup,segmentedcontrol,chipgroup,buttongroup,sidebar,appshell,responsivepanel,responsivestack,stackpanel,hstack,vstack,wrappanel,centerpanel,sidenavigation",
         "readOnly": false,
         "childOnly": false
       },
@@ -11041,7 +12605,7 @@
           "horizontal",
           "vertical"
         ],
-        "kind": "splitcontainer,flowlayoutpanel,tabcontrol,toolbar,toolstrip,divider,radiogroup,checkboxgroup,segmentedcontrol,chipgroup,buttongroup,sidebar,appshell,responsivepanel,stackpanel,hstack,vstack,wrappanel,centerpanel,sidenavigation",
+        "kind": "splitcontainer,flowlayoutpanel,tabcontrol,toolbar,toolstrip,divider,radiogroup,checkboxgroup,segmentedcontrol,chipgroup,buttongroup,sidebar,appshell,responsivepanel,responsivestack,stackpanel,hstack,vstack,wrappanel,centerpanel,sidenavigation",
         "readOnly": false,
         "childOnly": false
       },
@@ -18383,7 +19947,7 @@
           "horizontal",
           "vertical"
         ],
-        "kind": "splitcontainer,flowlayoutpanel,tabcontrol,toolbar,toolstrip,divider,radiogroup,checkboxgroup,segmentedcontrol,chipgroup,buttongroup,sidebar,appshell,responsivepanel,stackpanel,hstack,vstack,wrappanel,centerpanel,sidenavigation",
+        "kind": "splitcontainer,flowlayoutpanel,tabcontrol,toolbar,toolstrip,divider,radiogroup,checkboxgroup,segmentedcontrol,chipgroup,buttongroup,sidebar,appshell,responsivepanel,responsivestack,stackpanel,hstack,vstack,wrappanel,centerpanel,sidenavigation",
         "readOnly": false,
         "childOnly": false
       },
@@ -22247,7 +23811,7 @@
           "horizontal",
           "vertical"
         ],
-        "kind": "splitcontainer,flowlayoutpanel,tabcontrol,toolbar,toolstrip,divider,radiogroup,checkboxgroup,segmentedcontrol,chipgroup,buttongroup,sidebar,appshell,responsivepanel,stackpanel,hstack,vstack,wrappanel,centerpanel,sidenavigation",
+        "kind": "splitcontainer,flowlayoutpanel,tabcontrol,toolbar,toolstrip,divider,radiogroup,checkboxgroup,segmentedcontrol,chipgroup,buttongroup,sidebar,appshell,responsivepanel,responsivestack,stackpanel,hstack,vstack,wrappanel,centerpanel,sidenavigation",
         "readOnly": false,
         "childOnly": false
       },
@@ -22259,7 +23823,7 @@
         "min": 0,
         "max": 64,
         "options": null,
-        "kind": "splitcontainer,flowlayoutpanel,tablelayoutpanel,sidebar,appshell,responsivepanel,accordion,stackpanel,hstack,vstack,wrappanel,centerpanel",
+        "kind": "splitcontainer,flowlayoutpanel,tablelayoutpanel,sidebar,appshell,responsivepanel,responsivegrid,responsivestack,accordion,stackpanel,hstack,vstack,wrappanel,centerpanel",
         "readOnly": false,
         "childOnly": false
       },
@@ -24971,7 +26535,7 @@
           "horizontal",
           "vertical"
         ],
-        "kind": "splitcontainer,flowlayoutpanel,tabcontrol,toolbar,toolstrip,divider,radiogroup,checkboxgroup,segmentedcontrol,chipgroup,buttongroup,sidebar,appshell,responsivepanel,stackpanel,hstack,vstack,wrappanel,centerpanel,sidenavigation",
+        "kind": "splitcontainer,flowlayoutpanel,tabcontrol,toolbar,toolstrip,divider,radiogroup,checkboxgroup,segmentedcontrol,chipgroup,buttongroup,sidebar,appshell,responsivepanel,responsivestack,stackpanel,hstack,vstack,wrappanel,centerpanel,sidenavigation",
         "readOnly": false,
         "childOnly": false
       },
@@ -24983,7 +26547,7 @@
         "min": 0,
         "max": 64,
         "options": null,
-        "kind": "splitcontainer,flowlayoutpanel,tablelayoutpanel,sidebar,appshell,responsivepanel,accordion,stackpanel,hstack,vstack,wrappanel,centerpanel",
+        "kind": "splitcontainer,flowlayoutpanel,tablelayoutpanel,sidebar,appshell,responsivepanel,responsivegrid,responsivestack,accordion,stackpanel,hstack,vstack,wrappanel,centerpanel",
         "readOnly": false,
         "childOnly": false
       },
@@ -39369,7 +40933,7 @@
           "horizontal",
           "vertical"
         ],
-        "kind": "splitcontainer,flowlayoutpanel,tabcontrol,toolbar,toolstrip,divider,radiogroup,checkboxgroup,segmentedcontrol,chipgroup,buttongroup,sidebar,appshell,responsivepanel,stackpanel,hstack,vstack,wrappanel,centerpanel,sidenavigation",
+        "kind": "splitcontainer,flowlayoutpanel,tabcontrol,toolbar,toolstrip,divider,radiogroup,checkboxgroup,segmentedcontrol,chipgroup,buttongroup,sidebar,appshell,responsivepanel,responsivestack,stackpanel,hstack,vstack,wrappanel,centerpanel,sidenavigation",
         "readOnly": false,
         "childOnly": false
       },
@@ -40340,6 +41904,830 @@
     ]
   },
   {
+    "name": "ResponsiveGrid",
+    "kind": "responsivegrid",
+    "tray": false,
+    "inspector": [
+      {
+        "id": "name",
+        "label": "Name",
+        "category": "General",
+        "editor": "text",
+        "min": null,
+        "max": null,
+        "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": false
+      },
+      {
+        "id": "id",
+        "label": "ID",
+        "category": "General",
+        "editor": "text",
+        "min": null,
+        "max": null,
+        "options": null,
+        "kind": null,
+        "readOnly": true,
+        "childOnly": false
+      },
+      {
+        "id": "text",
+        "label": "Text / Title",
+        "category": "General",
+        "editor": "text",
+        "min": null,
+        "max": null,
+        "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": false
+      },
+      {
+        "id": "tag",
+        "label": "Tag",
+        "category": "General",
+        "editor": "text",
+        "min": null,
+        "max": null,
+        "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": false
+      },
+      {
+        "id": "locked",
+        "label": "Locked",
+        "category": "General",
+        "editor": "checkbox",
+        "min": null,
+        "max": null,
+        "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": false
+      },
+      {
+        "id": "backColor",
+        "label": "Background",
+        "category": "Appearance",
+        "editor": "color",
+        "min": null,
+        "max": null,
+        "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": false
+      },
+      {
+        "id": "foreColor",
+        "label": "Foreground",
+        "category": "Appearance",
+        "editor": "color",
+        "min": null,
+        "max": null,
+        "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": false
+      },
+      {
+        "id": "borderStyle",
+        "label": "Border style",
+        "category": "Appearance",
+        "editor": "select",
+        "min": null,
+        "max": null,
+        "options": [
+          "none",
+          "solid",
+          "dashed",
+          "dotted"
+        ],
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "borderColor",
+        "label": "Border color",
+        "category": "Appearance",
+        "editor": "color",
+        "min": null,
+        "max": null,
+        "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "borderWidth",
+        "label": "Border width",
+        "category": "Appearance",
+        "editor": "number",
+        "min": 0,
+        "max": 10,
+        "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "borderRadius",
+        "label": "Radius",
+        "category": "Appearance",
+        "editor": "number",
+        "min": 0,
+        "max": 100,
+        "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "opacity",
+        "label": "Opacity (%)",
+        "category": "Appearance",
+        "editor": "number",
+        "min": 10,
+        "max": 100,
+        "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "shadow",
+        "label": "Shadow",
+        "category": "Appearance",
+        "editor": "select",
+        "min": null,
+        "max": null,
+        "options": [
+          "None",
+          "Small",
+          "Medium",
+          "Large"
+        ],
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "cursor",
+        "label": "Cursor",
+        "category": "Appearance",
+        "editor": "select",
+        "min": null,
+        "max": null,
+        "options": [
+          "default",
+          "pointer",
+          "text",
+          "crosshair",
+          "help",
+          "not-allowed"
+        ],
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "fontFamily",
+        "label": "Font family",
+        "category": "Typography",
+        "editor": "select",
+        "min": null,
+        "max": null,
+        "options": [
+          "Segoe UI",
+          "Arial",
+          "Consolas",
+          "Georgia"
+        ],
+        "kind": null,
+        "readOnly": false,
+        "childOnly": false
+      },
+      {
+        "id": "fontSize",
+        "label": "Font size",
+        "category": "Typography",
+        "editor": "number",
+        "min": 8,
+        "max": 48,
+        "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": false
+      },
+      {
+        "id": "fontWeight",
+        "label": "Weight",
+        "category": "Typography",
+        "editor": "select",
+        "min": null,
+        "max": null,
+        "options": [
+          "normal",
+          "bold",
+          "100",
+          "200",
+          "300",
+          "400",
+          "500",
+          "600",
+          "700",
+          "800",
+          "900"
+        ],
+        "kind": null,
+        "readOnly": false,
+        "childOnly": false
+      },
+      {
+        "id": "fontStyle",
+        "label": "Font style",
+        "category": "Typography",
+        "editor": "select",
+        "min": null,
+        "max": null,
+        "options": [
+          "normal",
+          "italic"
+        ],
+        "kind": null,
+        "readOnly": false,
+        "childOnly": false
+      },
+      {
+        "id": "textAlign",
+        "label": "Alignment",
+        "category": "Typography",
+        "editor": "select",
+        "min": null,
+        "max": null,
+        "options": [
+          "left",
+          "center",
+          "right"
+        ],
+        "kind": null,
+        "readOnly": false,
+        "childOnly": false
+      },
+      {
+        "id": "lineHeight",
+        "label": "Line height",
+        "category": "Typography",
+        "editor": "number",
+        "min": 0.5,
+        "max": 4,
+        "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": false
+      },
+      {
+        "id": "letterSpacing",
+        "label": "Letter spacing",
+        "category": "Typography",
+        "editor": "number",
+        "min": -5,
+        "max": 20,
+        "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": false
+      },
+      {
+        "id": "x",
+        "label": "X",
+        "category": "Layout",
+        "editor": "number",
+        "min": 0,
+        "max": 1600,
+        "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "y",
+        "label": "Y",
+        "category": "Layout",
+        "editor": "number",
+        "min": 0,
+        "max": 1200,
+        "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "width",
+        "label": "Width",
+        "category": "Layout",
+        "editor": "number",
+        "min": 24,
+        "max": 1600,
+        "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": false
+      },
+      {
+        "id": "height",
+        "label": "Height",
+        "category": "Layout",
+        "editor": "number",
+        "min": 20,
+        "max": 1200,
+        "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": false
+      },
+      {
+        "id": "minimumWidth",
+        "label": "Min width",
+        "category": "Layout",
+        "editor": "number",
+        "min": 0,
+        "max": 1600,
+        "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": false
+      },
+      {
+        "id": "minimumHeight",
+        "label": "Min height",
+        "category": "Layout",
+        "editor": "number",
+        "min": 0,
+        "max": 1200,
+        "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": false
+      },
+      {
+        "id": "maximumWidth",
+        "label": "Max width (0=auto)",
+        "category": "Layout",
+        "editor": "number",
+        "min": 0,
+        "max": 1600,
+        "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": false
+      },
+      {
+        "id": "maximumHeight",
+        "label": "Max height (0=auto)",
+        "category": "Layout",
+        "editor": "number",
+        "min": 0,
+        "max": 1200,
+        "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": false
+      },
+      {
+        "id": "marginTop",
+        "label": "Margin top",
+        "category": "Layout",
+        "editor": "number",
+        "min": 0,
+        "max": 64,
+        "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "marginRight",
+        "label": "Margin right",
+        "category": "Layout",
+        "editor": "number",
+        "min": 0,
+        "max": 64,
+        "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "marginBottom",
+        "label": "Margin bottom",
+        "category": "Layout",
+        "editor": "number",
+        "min": 0,
+        "max": 64,
+        "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "marginLeft",
+        "label": "Margin left",
+        "category": "Layout",
+        "editor": "number",
+        "min": 0,
+        "max": 64,
+        "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "paddingTop",
+        "label": "Padding top",
+        "category": "Layout",
+        "editor": "number",
+        "min": 0,
+        "max": 64,
+        "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "paddingRight",
+        "label": "Padding right",
+        "category": "Layout",
+        "editor": "number",
+        "min": 0,
+        "max": 64,
+        "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "paddingBottom",
+        "label": "Padding bottom",
+        "category": "Layout",
+        "editor": "number",
+        "min": 0,
+        "max": 64,
+        "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "paddingLeft",
+        "label": "Padding left",
+        "category": "Layout",
+        "editor": "number",
+        "min": 0,
+        "max": 64,
+        "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "enabled",
+        "label": "Enabled",
+        "category": "Behavior",
+        "editor": "checkbox",
+        "min": null,
+        "max": null,
+        "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "visible",
+        "label": "Visible",
+        "category": "Behavior",
+        "editor": "checkbox",
+        "min": null,
+        "max": null,
+        "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "focusable",
+        "label": "Focusable",
+        "category": "Behavior",
+        "editor": "checkbox",
+        "min": null,
+        "max": null,
+        "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "tabIndex",
+        "label": "Tab index",
+        "category": "Behavior",
+        "editor": "number",
+        "min": 0,
+        "max": 32767,
+        "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "toolTip",
+        "label": "Tooltip",
+        "category": "Behavior",
+        "editor": "text",
+        "min": null,
+        "max": null,
+        "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "cssClass",
+        "label": "CSS class",
+        "category": "Advanced",
+        "editor": "text",
+        "min": null,
+        "max": null,
+        "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": false
+      },
+      {
+        "id": "id",
+        "label": "CSS ID",
+        "category": "Advanced",
+        "editor": "text",
+        "min": null,
+        "max": null,
+        "options": null,
+        "kind": null,
+        "readOnly": true,
+        "childOnly": false
+      },
+      {
+        "id": "gap",
+        "label": "Gap",
+        "category": "Layout",
+        "editor": "number",
+        "min": 0,
+        "max": 64,
+        "options": null,
+        "kind": "splitcontainer,flowlayoutpanel,tablelayoutpanel,sidebar,appshell,responsivepanel,responsivegrid,responsivestack,accordion,stackpanel,hstack,vstack,wrappanel,centerpanel",
+        "readOnly": false,
+        "childOnly": false
+      },
+      {
+        "id": "breakpoint",
+        "label": "Breakpoint (px)",
+        "category": "Layout",
+        "editor": "number",
+        "min": 100,
+        "max": 2400,
+        "options": null,
+        "kind": "appshell,responsivepanel,responsivegrid,responsivestack,breakpointcontainer",
+        "readOnly": false,
+        "childOnly": false
+      },
+      {
+        "id": "columns",
+        "label": "Wide columns",
+        "category": "Layout",
+        "editor": "number",
+        "min": 1,
+        "max": 12,
+        "options": null,
+        "kind": "responsivegrid",
+        "readOnly": false,
+        "childOnly": false
+      },
+      {
+        "id": "narrowColumns",
+        "label": "Narrow columns",
+        "category": "Layout",
+        "editor": "number",
+        "min": 1,
+        "max": 12,
+        "options": null,
+        "kind": "responsivegrid",
+        "readOnly": false,
+        "childOnly": false
+      },
+      {
+        "id": "layoutSlot",
+        "label": "Pane / tab / cell",
+        "category": "Layout",
+        "editor": "number",
+        "min": 1,
+        "max": 100,
+        "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "dock",
+        "label": "Dock",
+        "category": "Layout",
+        "editor": "select",
+        "min": null,
+        "max": null,
+        "options": [
+          "none",
+          "top",
+          "bottom",
+          "left",
+          "right",
+          "fill"
+        ],
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "anchor",
+        "label": "Anchor",
+        "category": "Layout",
+        "editor": "select",
+        "min": null,
+        "max": null,
+        "options": [
+          "none",
+          "top,left",
+          "top,right",
+          "bottom,left",
+          "bottom,right",
+          "top,left,right",
+          "bottom,left,right",
+          "top,bottom,left",
+          "top,bottom,right",
+          "top,bottom,left,right",
+          "top",
+          "bottom",
+          "left",
+          "right",
+          "top,bottom",
+          "left,right"
+        ],
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      }
+    ],
+    "model": [
+      {
+        "name": "NarrowColumns",
+        "type": "Int32",
+        "writable": true,
+        "value": 1
+      },
+      {
+        "name": "Breakpoint",
+        "type": "Int32",
+        "writable": true,
+        "value": 600
+      },
+      {
+        "name": "Orientation",
+        "type": "String",
+        "writable": true,
+        "value": "horizontal"
+      },
+      {
+        "name": "Gap",
+        "type": "Int32",
+        "writable": true,
+        "value": 8
+      },
+      {
+        "name": "Columns",
+        "type": "Int32",
+        "writable": true,
+        "value": 2
+      },
+      {
+        "name": "Tabs",
+        "type": "String[]",
+        "writable": true,
+        "value": [
+          "Tab 1",
+          "Tab 2"
+        ]
+      },
+      {
+        "name": "RowCount",
+        "type": "Int32",
+        "writable": true,
+        "value": 2
+      },
+      {
+        "name": "SelectedTab",
+        "type": "Int32",
+        "writable": true,
+        "value": 0
+      },
+      {
+        "name": "Name",
+        "type": "String",
+        "writable": true,
+        "value": null
+      },
+      {
+        "name": "LayoutSlot",
+        "type": "Int32",
+        "writable": true,
+        "value": 1
+      },
+      {
+        "name": "X",
+        "type": "Nullable\u00601",
+        "writable": true,
+        "value": null
+      },
+      {
+        "name": "Y",
+        "type": "Nullable\u00601",
+        "writable": true,
+        "value": null
+      },
+      {
+        "name": "Text",
+        "type": "String",
+        "writable": true,
+        "value": null
+      },
+      {
+        "name": "Value",
+        "type": "String",
+        "writable": true,
+        "value": null
+      },
+      {
+        "name": "Placeholder",
+        "type": "String",
+        "writable": true,
+        "value": null
+      },
+      {
+        "name": "Label",
+        "type": "String",
+        "writable": true,
+        "value": null
+      },
+      {
+        "name": "ControlType",
+        "type": "String",
+        "writable": false,
+        "value": "responsivegrid"
+      }
+    ],
+    "events": [
+      "ChildAdded",
+      "ChildRemoved",
+      "PropertyChanged"
+    ],
+    "methods": [
+      {
+        "name": "Add",
+        "parameters": [
+          "child"
+        ]
+      },
+      {
+        "name": "Insert",
+        "parameters": [
+          "index",
+          "child"
+        ]
+      },
+      {
+        "name": "MoveChild",
+        "parameters": [
+          "child",
+          "index"
+        ]
+      },
+      {
+        "name": "Remove",
+        "parameters": [
+          "child"
+        ]
+      }
+    ]
+  },
+  {
     "name": "ResponsivePanel",
     "kind": "responsivepanel",
     "tray": false,
@@ -40924,7 +43312,7 @@
           "horizontal",
           "vertical"
         ],
-        "kind": "splitcontainer,flowlayoutpanel,tabcontrol,toolbar,toolstrip,divider,radiogroup,checkboxgroup,segmentedcontrol,chipgroup,buttongroup,sidebar,appshell,responsivepanel,stackpanel,hstack,vstack,wrappanel,centerpanel,sidenavigation",
+        "kind": "splitcontainer,flowlayoutpanel,tabcontrol,toolbar,toolstrip,divider,radiogroup,checkboxgroup,segmentedcontrol,chipgroup,buttongroup,sidebar,appshell,responsivepanel,responsivestack,stackpanel,hstack,vstack,wrappanel,centerpanel,sidenavigation",
         "readOnly": false,
         "childOnly": false
       },
@@ -40936,19 +43324,19 @@
         "min": 0,
         "max": 64,
         "options": null,
-        "kind": "splitcontainer,flowlayoutpanel,tablelayoutpanel,sidebar,appshell,responsivepanel,accordion,stackpanel,hstack,vstack,wrappanel,centerpanel",
+        "kind": "splitcontainer,flowlayoutpanel,tablelayoutpanel,sidebar,appshell,responsivepanel,responsivegrid,responsivestack,accordion,stackpanel,hstack,vstack,wrappanel,centerpanel",
         "readOnly": false,
         "childOnly": false
       },
       {
         "id": "breakpoint",
-        "label": "Stack below width",
+        "label": "Breakpoint (px)",
         "category": "Layout",
         "editor": "number",
         "min": 100,
         "max": 2400,
         "options": null,
-        "kind": "appshell,responsivepanel",
+        "kind": "appshell,responsivepanel,responsivegrid,responsivestack,breakpointcontainer",
         "readOnly": false,
         "childOnly": false
       },
@@ -41112,6 +43500,836 @@
         "type": "String",
         "writable": false,
         "value": "responsivepanel"
+      }
+    ],
+    "events": [
+      "ChildAdded",
+      "ChildRemoved",
+      "PropertyChanged"
+    ],
+    "methods": [
+      {
+        "name": "Add",
+        "parameters": [
+          "child"
+        ]
+      },
+      {
+        "name": "Insert",
+        "parameters": [
+          "index",
+          "child"
+        ]
+      },
+      {
+        "name": "MoveChild",
+        "parameters": [
+          "child",
+          "index"
+        ]
+      },
+      {
+        "name": "Remove",
+        "parameters": [
+          "child"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "ResponsiveStack",
+    "kind": "responsivestack",
+    "tray": false,
+    "inspector": [
+      {
+        "id": "name",
+        "label": "Name",
+        "category": "General",
+        "editor": "text",
+        "min": null,
+        "max": null,
+        "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": false
+      },
+      {
+        "id": "id",
+        "label": "ID",
+        "category": "General",
+        "editor": "text",
+        "min": null,
+        "max": null,
+        "options": null,
+        "kind": null,
+        "readOnly": true,
+        "childOnly": false
+      },
+      {
+        "id": "text",
+        "label": "Text / Title",
+        "category": "General",
+        "editor": "text",
+        "min": null,
+        "max": null,
+        "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": false
+      },
+      {
+        "id": "tag",
+        "label": "Tag",
+        "category": "General",
+        "editor": "text",
+        "min": null,
+        "max": null,
+        "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": false
+      },
+      {
+        "id": "locked",
+        "label": "Locked",
+        "category": "General",
+        "editor": "checkbox",
+        "min": null,
+        "max": null,
+        "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": false
+      },
+      {
+        "id": "backColor",
+        "label": "Background",
+        "category": "Appearance",
+        "editor": "color",
+        "min": null,
+        "max": null,
+        "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": false
+      },
+      {
+        "id": "foreColor",
+        "label": "Foreground",
+        "category": "Appearance",
+        "editor": "color",
+        "min": null,
+        "max": null,
+        "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": false
+      },
+      {
+        "id": "borderStyle",
+        "label": "Border style",
+        "category": "Appearance",
+        "editor": "select",
+        "min": null,
+        "max": null,
+        "options": [
+          "none",
+          "solid",
+          "dashed",
+          "dotted"
+        ],
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "borderColor",
+        "label": "Border color",
+        "category": "Appearance",
+        "editor": "color",
+        "min": null,
+        "max": null,
+        "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "borderWidth",
+        "label": "Border width",
+        "category": "Appearance",
+        "editor": "number",
+        "min": 0,
+        "max": 10,
+        "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "borderRadius",
+        "label": "Radius",
+        "category": "Appearance",
+        "editor": "number",
+        "min": 0,
+        "max": 100,
+        "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "opacity",
+        "label": "Opacity (%)",
+        "category": "Appearance",
+        "editor": "number",
+        "min": 10,
+        "max": 100,
+        "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "shadow",
+        "label": "Shadow",
+        "category": "Appearance",
+        "editor": "select",
+        "min": null,
+        "max": null,
+        "options": [
+          "None",
+          "Small",
+          "Medium",
+          "Large"
+        ],
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "cursor",
+        "label": "Cursor",
+        "category": "Appearance",
+        "editor": "select",
+        "min": null,
+        "max": null,
+        "options": [
+          "default",
+          "pointer",
+          "text",
+          "crosshair",
+          "help",
+          "not-allowed"
+        ],
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "fontFamily",
+        "label": "Font family",
+        "category": "Typography",
+        "editor": "select",
+        "min": null,
+        "max": null,
+        "options": [
+          "Segoe UI",
+          "Arial",
+          "Consolas",
+          "Georgia"
+        ],
+        "kind": null,
+        "readOnly": false,
+        "childOnly": false
+      },
+      {
+        "id": "fontSize",
+        "label": "Font size",
+        "category": "Typography",
+        "editor": "number",
+        "min": 8,
+        "max": 48,
+        "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": false
+      },
+      {
+        "id": "fontWeight",
+        "label": "Weight",
+        "category": "Typography",
+        "editor": "select",
+        "min": null,
+        "max": null,
+        "options": [
+          "normal",
+          "bold",
+          "100",
+          "200",
+          "300",
+          "400",
+          "500",
+          "600",
+          "700",
+          "800",
+          "900"
+        ],
+        "kind": null,
+        "readOnly": false,
+        "childOnly": false
+      },
+      {
+        "id": "fontStyle",
+        "label": "Font style",
+        "category": "Typography",
+        "editor": "select",
+        "min": null,
+        "max": null,
+        "options": [
+          "normal",
+          "italic"
+        ],
+        "kind": null,
+        "readOnly": false,
+        "childOnly": false
+      },
+      {
+        "id": "textAlign",
+        "label": "Alignment",
+        "category": "Typography",
+        "editor": "select",
+        "min": null,
+        "max": null,
+        "options": [
+          "left",
+          "center",
+          "right"
+        ],
+        "kind": null,
+        "readOnly": false,
+        "childOnly": false
+      },
+      {
+        "id": "lineHeight",
+        "label": "Line height",
+        "category": "Typography",
+        "editor": "number",
+        "min": 0.5,
+        "max": 4,
+        "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": false
+      },
+      {
+        "id": "letterSpacing",
+        "label": "Letter spacing",
+        "category": "Typography",
+        "editor": "number",
+        "min": -5,
+        "max": 20,
+        "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": false
+      },
+      {
+        "id": "x",
+        "label": "X",
+        "category": "Layout",
+        "editor": "number",
+        "min": 0,
+        "max": 1600,
+        "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "y",
+        "label": "Y",
+        "category": "Layout",
+        "editor": "number",
+        "min": 0,
+        "max": 1200,
+        "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "width",
+        "label": "Width",
+        "category": "Layout",
+        "editor": "number",
+        "min": 24,
+        "max": 1600,
+        "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": false
+      },
+      {
+        "id": "height",
+        "label": "Height",
+        "category": "Layout",
+        "editor": "number",
+        "min": 20,
+        "max": 1200,
+        "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": false
+      },
+      {
+        "id": "minimumWidth",
+        "label": "Min width",
+        "category": "Layout",
+        "editor": "number",
+        "min": 0,
+        "max": 1600,
+        "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": false
+      },
+      {
+        "id": "minimumHeight",
+        "label": "Min height",
+        "category": "Layout",
+        "editor": "number",
+        "min": 0,
+        "max": 1200,
+        "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": false
+      },
+      {
+        "id": "maximumWidth",
+        "label": "Max width (0=auto)",
+        "category": "Layout",
+        "editor": "number",
+        "min": 0,
+        "max": 1600,
+        "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": false
+      },
+      {
+        "id": "maximumHeight",
+        "label": "Max height (0=auto)",
+        "category": "Layout",
+        "editor": "number",
+        "min": 0,
+        "max": 1200,
+        "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": false
+      },
+      {
+        "id": "marginTop",
+        "label": "Margin top",
+        "category": "Layout",
+        "editor": "number",
+        "min": 0,
+        "max": 64,
+        "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "marginRight",
+        "label": "Margin right",
+        "category": "Layout",
+        "editor": "number",
+        "min": 0,
+        "max": 64,
+        "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "marginBottom",
+        "label": "Margin bottom",
+        "category": "Layout",
+        "editor": "number",
+        "min": 0,
+        "max": 64,
+        "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "marginLeft",
+        "label": "Margin left",
+        "category": "Layout",
+        "editor": "number",
+        "min": 0,
+        "max": 64,
+        "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "paddingTop",
+        "label": "Padding top",
+        "category": "Layout",
+        "editor": "number",
+        "min": 0,
+        "max": 64,
+        "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "paddingRight",
+        "label": "Padding right",
+        "category": "Layout",
+        "editor": "number",
+        "min": 0,
+        "max": 64,
+        "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "paddingBottom",
+        "label": "Padding bottom",
+        "category": "Layout",
+        "editor": "number",
+        "min": 0,
+        "max": 64,
+        "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "paddingLeft",
+        "label": "Padding left",
+        "category": "Layout",
+        "editor": "number",
+        "min": 0,
+        "max": 64,
+        "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "enabled",
+        "label": "Enabled",
+        "category": "Behavior",
+        "editor": "checkbox",
+        "min": null,
+        "max": null,
+        "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "visible",
+        "label": "Visible",
+        "category": "Behavior",
+        "editor": "checkbox",
+        "min": null,
+        "max": null,
+        "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "focusable",
+        "label": "Focusable",
+        "category": "Behavior",
+        "editor": "checkbox",
+        "min": null,
+        "max": null,
+        "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "tabIndex",
+        "label": "Tab index",
+        "category": "Behavior",
+        "editor": "number",
+        "min": 0,
+        "max": 32767,
+        "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "toolTip",
+        "label": "Tooltip",
+        "category": "Behavior",
+        "editor": "text",
+        "min": null,
+        "max": null,
+        "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "cssClass",
+        "label": "CSS class",
+        "category": "Advanced",
+        "editor": "text",
+        "min": null,
+        "max": null,
+        "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": false
+      },
+      {
+        "id": "id",
+        "label": "CSS ID",
+        "category": "Advanced",
+        "editor": "text",
+        "min": null,
+        "max": null,
+        "options": null,
+        "kind": null,
+        "readOnly": true,
+        "childOnly": false
+      },
+      {
+        "id": "orientation",
+        "label": "Orientation",
+        "category": "Layout",
+        "editor": "select",
+        "min": null,
+        "max": null,
+        "options": [
+          "horizontal",
+          "vertical"
+        ],
+        "kind": "splitcontainer,flowlayoutpanel,tabcontrol,toolbar,toolstrip,divider,radiogroup,checkboxgroup,segmentedcontrol,chipgroup,buttongroup,sidebar,appshell,responsivepanel,responsivestack,stackpanel,hstack,vstack,wrappanel,centerpanel,sidenavigation",
+        "readOnly": false,
+        "childOnly": false
+      },
+      {
+        "id": "gap",
+        "label": "Gap",
+        "category": "Layout",
+        "editor": "number",
+        "min": 0,
+        "max": 64,
+        "options": null,
+        "kind": "splitcontainer,flowlayoutpanel,tablelayoutpanel,sidebar,appshell,responsivepanel,responsivegrid,responsivestack,accordion,stackpanel,hstack,vstack,wrappanel,centerpanel",
+        "readOnly": false,
+        "childOnly": false
+      },
+      {
+        "id": "breakpoint",
+        "label": "Breakpoint (px)",
+        "category": "Layout",
+        "editor": "number",
+        "min": 100,
+        "max": 2400,
+        "options": null,
+        "kind": "appshell,responsivepanel,responsivegrid,responsivestack,breakpointcontainer",
+        "readOnly": false,
+        "childOnly": false
+      },
+      {
+        "id": "narrowOrientation",
+        "label": "Narrow direction",
+        "category": "Layout",
+        "editor": "select",
+        "min": null,
+        "max": null,
+        "options": [
+          "horizontal",
+          "vertical"
+        ],
+        "kind": "responsivestack",
+        "readOnly": false,
+        "childOnly": false
+      },
+      {
+        "id": "layoutSlot",
+        "label": "Pane / tab / cell",
+        "category": "Layout",
+        "editor": "number",
+        "min": 1,
+        "max": 100,
+        "options": null,
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "dock",
+        "label": "Dock",
+        "category": "Layout",
+        "editor": "select",
+        "min": null,
+        "max": null,
+        "options": [
+          "none",
+          "top",
+          "bottom",
+          "left",
+          "right",
+          "fill"
+        ],
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      },
+      {
+        "id": "anchor",
+        "label": "Anchor",
+        "category": "Layout",
+        "editor": "select",
+        "min": null,
+        "max": null,
+        "options": [
+          "none",
+          "top,left",
+          "top,right",
+          "bottom,left",
+          "bottom,right",
+          "top,left,right",
+          "bottom,left,right",
+          "top,bottom,left",
+          "top,bottom,right",
+          "top,bottom,left,right",
+          "top",
+          "bottom",
+          "left",
+          "right",
+          "top,bottom",
+          "left,right"
+        ],
+        "kind": null,
+        "readOnly": false,
+        "childOnly": true
+      }
+    ],
+    "model": [
+      {
+        "name": "NarrowOrientation",
+        "type": "String",
+        "writable": true,
+        "value": "vertical"
+      },
+      {
+        "name": "Breakpoint",
+        "type": "Int32",
+        "writable": true,
+        "value": 600
+      },
+      {
+        "name": "Orientation",
+        "type": "String",
+        "writable": true,
+        "value": "horizontal"
+      },
+      {
+        "name": "Gap",
+        "type": "Int32",
+        "writable": true,
+        "value": 8
+      },
+      {
+        "name": "Columns",
+        "type": "Int32",
+        "writable": true,
+        "value": 2
+      },
+      {
+        "name": "Tabs",
+        "type": "String[]",
+        "writable": true,
+        "value": [
+          "Tab 1",
+          "Tab 2"
+        ]
+      },
+      {
+        "name": "RowCount",
+        "type": "Int32",
+        "writable": true,
+        "value": 2
+      },
+      {
+        "name": "SelectedTab",
+        "type": "Int32",
+        "writable": true,
+        "value": 0
+      },
+      {
+        "name": "Name",
+        "type": "String",
+        "writable": true,
+        "value": null
+      },
+      {
+        "name": "LayoutSlot",
+        "type": "Int32",
+        "writable": true,
+        "value": 1
+      },
+      {
+        "name": "X",
+        "type": "Nullable\u00601",
+        "writable": true,
+        "value": null
+      },
+      {
+        "name": "Y",
+        "type": "Nullable\u00601",
+        "writable": true,
+        "value": null
+      },
+      {
+        "name": "Text",
+        "type": "String",
+        "writable": true,
+        "value": null
+      },
+      {
+        "name": "Value",
+        "type": "String",
+        "writable": true,
+        "value": null
+      },
+      {
+        "name": "Placeholder",
+        "type": "String",
+        "writable": true,
+        "value": null
+      },
+      {
+        "name": "Label",
+        "type": "String",
+        "writable": true,
+        "value": null
+      },
+      {
+        "name": "ControlType",
+        "type": "String",
+        "writable": false,
+        "value": "responsivestack"
       }
     ],
     "events": [
@@ -44206,7 +47424,7 @@
           "horizontal",
           "vertical"
         ],
-        "kind": "splitcontainer,flowlayoutpanel,tabcontrol,toolbar,toolstrip,divider,radiogroup,checkboxgroup,segmentedcontrol,chipgroup,buttongroup,sidebar,appshell,responsivepanel,stackpanel,hstack,vstack,wrappanel,centerpanel,sidenavigation",
+        "kind": "splitcontainer,flowlayoutpanel,tabcontrol,toolbar,toolstrip,divider,radiogroup,checkboxgroup,segmentedcontrol,chipgroup,buttongroup,sidebar,appshell,responsivepanel,responsivestack,stackpanel,hstack,vstack,wrappanel,centerpanel,sidenavigation",
         "readOnly": false,
         "childOnly": false
       },
@@ -44969,7 +48187,7 @@
           "horizontal",
           "vertical"
         ],
-        "kind": "splitcontainer,flowlayoutpanel,tabcontrol,toolbar,toolstrip,divider,radiogroup,checkboxgroup,segmentedcontrol,chipgroup,buttongroup,sidebar,appshell,responsivepanel,stackpanel,hstack,vstack,wrappanel,centerpanel,sidenavigation",
+        "kind": "splitcontainer,flowlayoutpanel,tabcontrol,toolbar,toolstrip,divider,radiogroup,checkboxgroup,segmentedcontrol,chipgroup,buttongroup,sidebar,appshell,responsivepanel,responsivestack,stackpanel,hstack,vstack,wrappanel,centerpanel,sidenavigation",
         "readOnly": false,
         "childOnly": false
       },
@@ -44981,7 +48199,7 @@
         "min": 0,
         "max": 64,
         "options": null,
-        "kind": "splitcontainer,flowlayoutpanel,tablelayoutpanel,sidebar,appshell,responsivepanel,accordion,stackpanel,hstack,vstack,wrappanel,centerpanel",
+        "kind": "splitcontainer,flowlayoutpanel,tablelayoutpanel,sidebar,appshell,responsivepanel,responsivegrid,responsivestack,accordion,stackpanel,hstack,vstack,wrappanel,centerpanel",
         "readOnly": false,
         "childOnly": false
       },
@@ -45784,7 +49002,7 @@
           "horizontal",
           "vertical"
         ],
-        "kind": "splitcontainer,flowlayoutpanel,tabcontrol,toolbar,toolstrip,divider,radiogroup,checkboxgroup,segmentedcontrol,chipgroup,buttongroup,sidebar,appshell,responsivepanel,stackpanel,hstack,vstack,wrappanel,centerpanel,sidenavigation",
+        "kind": "splitcontainer,flowlayoutpanel,tabcontrol,toolbar,toolstrip,divider,radiogroup,checkboxgroup,segmentedcontrol,chipgroup,buttongroup,sidebar,appshell,responsivepanel,responsivestack,stackpanel,hstack,vstack,wrappanel,centerpanel,sidenavigation",
         "readOnly": false,
         "childOnly": false
       },
@@ -49666,7 +52884,7 @@
           "horizontal",
           "vertical"
         ],
-        "kind": "splitcontainer,flowlayoutpanel,tabcontrol,toolbar,toolstrip,divider,radiogroup,checkboxgroup,segmentedcontrol,chipgroup,buttongroup,sidebar,appshell,responsivepanel,stackpanel,hstack,vstack,wrappanel,centerpanel,sidenavigation",
+        "kind": "splitcontainer,flowlayoutpanel,tabcontrol,toolbar,toolstrip,divider,radiogroup,checkboxgroup,segmentedcontrol,chipgroup,buttongroup,sidebar,appshell,responsivepanel,responsivestack,stackpanel,hstack,vstack,wrappanel,centerpanel,sidenavigation",
         "readOnly": false,
         "childOnly": false
       },
@@ -49678,7 +52896,7 @@
         "min": 0,
         "max": 64,
         "options": null,
-        "kind": "splitcontainer,flowlayoutpanel,tablelayoutpanel,sidebar,appshell,responsivepanel,accordion,stackpanel,hstack,vstack,wrappanel,centerpanel",
+        "kind": "splitcontainer,flowlayoutpanel,tablelayoutpanel,sidebar,appshell,responsivepanel,responsivegrid,responsivestack,accordion,stackpanel,hstack,vstack,wrappanel,centerpanel",
         "readOnly": false,
         "childOnly": false
       },
@@ -50457,7 +53675,7 @@
           "horizontal",
           "vertical"
         ],
-        "kind": "splitcontainer,flowlayoutpanel,tabcontrol,toolbar,toolstrip,divider,radiogroup,checkboxgroup,segmentedcontrol,chipgroup,buttongroup,sidebar,appshell,responsivepanel,stackpanel,hstack,vstack,wrappanel,centerpanel,sidenavigation",
+        "kind": "splitcontainer,flowlayoutpanel,tabcontrol,toolbar,toolstrip,divider,radiogroup,checkboxgroup,segmentedcontrol,chipgroup,buttongroup,sidebar,appshell,responsivepanel,responsivestack,stackpanel,hstack,vstack,wrappanel,centerpanel,sidenavigation",
         "readOnly": false,
         "childOnly": false
       },
@@ -50469,7 +53687,7 @@
         "min": 0,
         "max": 64,
         "options": null,
-        "kind": "splitcontainer,flowlayoutpanel,tablelayoutpanel,sidebar,appshell,responsivepanel,accordion,stackpanel,hstack,vstack,wrappanel,centerpanel",
+        "kind": "splitcontainer,flowlayoutpanel,tablelayoutpanel,sidebar,appshell,responsivepanel,responsivegrid,responsivestack,accordion,stackpanel,hstack,vstack,wrappanel,centerpanel",
         "readOnly": false,
         "childOnly": false
       },
@@ -51991,7 +55209,7 @@
           "horizontal",
           "vertical"
         ],
-        "kind": "splitcontainer,flowlayoutpanel,tabcontrol,toolbar,toolstrip,divider,radiogroup,checkboxgroup,segmentedcontrol,chipgroup,buttongroup,sidebar,appshell,responsivepanel,stackpanel,hstack,vstack,wrappanel,centerpanel,sidenavigation",
+        "kind": "splitcontainer,flowlayoutpanel,tabcontrol,toolbar,toolstrip,divider,radiogroup,checkboxgroup,segmentedcontrol,chipgroup,buttongroup,sidebar,appshell,responsivepanel,responsivestack,stackpanel,hstack,vstack,wrappanel,centerpanel,sidenavigation",
         "readOnly": false,
         "childOnly": false
       },
@@ -52791,7 +56009,7 @@
         "min": 0,
         "max": 64,
         "options": null,
-        "kind": "splitcontainer,flowlayoutpanel,tablelayoutpanel,sidebar,appshell,responsivepanel,accordion,stackpanel,hstack,vstack,wrappanel,centerpanel",
+        "kind": "splitcontainer,flowlayoutpanel,tablelayoutpanel,sidebar,appshell,responsivepanel,responsivegrid,responsivestack,accordion,stackpanel,hstack,vstack,wrappanel,centerpanel",
         "readOnly": false,
         "childOnly": false
       },
@@ -58091,7 +61309,7 @@
           "horizontal",
           "vertical"
         ],
-        "kind": "splitcontainer,flowlayoutpanel,tabcontrol,toolbar,toolstrip,divider,radiogroup,checkboxgroup,segmentedcontrol,chipgroup,buttongroup,sidebar,appshell,responsivepanel,stackpanel,hstack,vstack,wrappanel,centerpanel,sidenavigation",
+        "kind": "splitcontainer,flowlayoutpanel,tabcontrol,toolbar,toolstrip,divider,radiogroup,checkboxgroup,segmentedcontrol,chipgroup,buttongroup,sidebar,appshell,responsivepanel,responsivestack,stackpanel,hstack,vstack,wrappanel,centerpanel,sidenavigation",
         "readOnly": false,
         "childOnly": false
       },
@@ -58890,7 +62108,7 @@
           "horizontal",
           "vertical"
         ],
-        "kind": "splitcontainer,flowlayoutpanel,tabcontrol,toolbar,toolstrip,divider,radiogroup,checkboxgroup,segmentedcontrol,chipgroup,buttongroup,sidebar,appshell,responsivepanel,stackpanel,hstack,vstack,wrappanel,centerpanel,sidenavigation",
+        "kind": "splitcontainer,flowlayoutpanel,tabcontrol,toolbar,toolstrip,divider,radiogroup,checkboxgroup,segmentedcontrol,chipgroup,buttongroup,sidebar,appshell,responsivepanel,responsivestack,stackpanel,hstack,vstack,wrappanel,centerpanel,sidenavigation",
         "readOnly": false,
         "childOnly": false
       },
@@ -60723,7 +63941,7 @@
           "horizontal",
           "vertical"
         ],
-        "kind": "splitcontainer,flowlayoutpanel,tabcontrol,toolbar,toolstrip,divider,radiogroup,checkboxgroup,segmentedcontrol,chipgroup,buttongroup,sidebar,appshell,responsivepanel,stackpanel,hstack,vstack,wrappanel,centerpanel,sidenavigation",
+        "kind": "splitcontainer,flowlayoutpanel,tabcontrol,toolbar,toolstrip,divider,radiogroup,checkboxgroup,segmentedcontrol,chipgroup,buttongroup,sidebar,appshell,responsivepanel,responsivestack,stackpanel,hstack,vstack,wrappanel,centerpanel,sidenavigation",
         "readOnly": false,
         "childOnly": false
       },
@@ -60735,7 +63953,7 @@
         "min": 0,
         "max": 64,
         "options": null,
-        "kind": "splitcontainer,flowlayoutpanel,tablelayoutpanel,sidebar,appshell,responsivepanel,accordion,stackpanel,hstack,vstack,wrappanel,centerpanel",
+        "kind": "splitcontainer,flowlayoutpanel,tablelayoutpanel,sidebar,appshell,responsivepanel,responsivegrid,responsivestack,accordion,stackpanel,hstack,vstack,wrappanel,centerpanel",
         "readOnly": false,
         "childOnly": false
       },
@@ -61514,7 +64732,7 @@
           "horizontal",
           "vertical"
         ],
-        "kind": "splitcontainer,flowlayoutpanel,tabcontrol,toolbar,toolstrip,divider,radiogroup,checkboxgroup,segmentedcontrol,chipgroup,buttongroup,sidebar,appshell,responsivepanel,stackpanel,hstack,vstack,wrappanel,centerpanel,sidenavigation",
+        "kind": "splitcontainer,flowlayoutpanel,tabcontrol,toolbar,toolstrip,divider,radiogroup,checkboxgroup,segmentedcontrol,chipgroup,buttongroup,sidebar,appshell,responsivepanel,responsivestack,stackpanel,hstack,vstack,wrappanel,centerpanel,sidenavigation",
         "readOnly": false,
         "childOnly": false
       },
@@ -61526,7 +64744,7 @@
         "min": 0,
         "max": 64,
         "options": null,
-        "kind": "splitcontainer,flowlayoutpanel,tablelayoutpanel,sidebar,appshell,responsivepanel,accordion,stackpanel,hstack,vstack,wrappanel,centerpanel",
+        "kind": "splitcontainer,flowlayoutpanel,tablelayoutpanel,sidebar,appshell,responsivepanel,responsivegrid,responsivestack,accordion,stackpanel,hstack,vstack,wrappanel,centerpanel",
         "readOnly": false,
         "childOnly": false
       },

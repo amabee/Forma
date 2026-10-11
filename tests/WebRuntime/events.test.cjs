@@ -5,6 +5,55 @@ const path = require('node:path');
 const { pathToFileURL } = require('node:url');
 const { JSDOM } = require('../../src/Forma.Builder/Frontend/node_modules/jsdom');
 const base = path.join(__dirname, '../..');
+
+test('root facade targets the form, emits startup without a form script, and cleans up subscriptions', t => {
+  const { window } = new JSDOM('<div id="form"><button id="child"></button></div>', { runScripts: 'outside-only' });
+  t.after(() => window.close());
+  window.log = []; window.forma = { send() {} };
+  for (const file of ['reactivity.js', 'component-customization.js']) window.eval(fs.readFileSync(path.join(base, 'src/Forma.Builder/DesignerWeb', file), 'utf8'));
+  const root = { id: 'form', name: 'Form1', kind: 'form', enabled: true, visible: true };
+  const child = { id: 'child', name: 'button1', kind: 'button', enabled: true, visible: true, customization: { behavior: `
+    window.root = forma.root;
+    forma.root.on('Load', () => window.log.push('load'));
+    forma.root.on('Destroyed', () => window.log.push('destroyed'));
+    window.stop = forma.root.on('DoubleClick', event => window.log.push(event.target.id));
+  ` } };
+  const state = { id: 'form', controls: [child, root] };
+  const apply = () => window.formaCustomization.apply(state, true);
+  apply();
+  assert.deepEqual([...window.log], ['load']);
+  assert.equal(window.root.id, 'form'); assert.equal(window.root.name, 'Form1');
+  assert.equal(window.root.element, window.document.getElementById('form'));
+  window.document.getElementById('child').dispatchEvent(new window.MouseEvent('dblclick', { bubbles: true }));
+  assert.deepEqual([...window.log], ['load', 'child']);
+  root.name = 'RenamedForm'; apply(); assert.equal(window.root.name, 'RenamedForm');
+  assert.equal(window.log.filter(value => value === 'load').length, 1);
+  window.stop(); window.stop();
+  window.document.getElementById('form').dispatchEvent(new window.MouseEvent('dblclick'));
+  assert.equal(window.log.length, 2);
+  // A component rebuild removes root listeners belonging to its old script.
+  child.customization.behavior = 'forma.root.on("Click", () => window.log.push("click"));'; apply();
+  window.document.getElementById('child').click(); assert.equal(window.log.at(-1), 'click');
+  window.formaCustomization.clear();
+  const count = window.log.length; window.document.getElementById('child').click();
+  assert.equal(window.log.length, count);
+});
+
+test('root subscriptions use root visibility and report handler errors to the subscribing component', t => {
+  const { window } = new JSDOM('<div id="form"><button id="child"></button></div>', { runScripts: 'outside-only' });
+  t.after(() => window.close());
+  const messages = []; window.forma = { send: message => messages.push(message) }; window.hits = 0;
+  for (const file of ['reactivity.js', 'component-customization.js']) window.eval(fs.readFileSync(path.join(base, 'src/Forma.Builder/DesignerWeb', file), 'utf8'));
+  const root = { id: 'form', name: 'Form1', kind: 'form', enabled: true, visible: true };
+  const child = { id: 'child', kind: 'button', enabled: false, visible: false, customization: { behavior: 'forma.root.on("Click", () => { window.hits++; throw new Error("root handler failed"); });' } };
+  const state = { id: 'form', controls: [root, child] };
+  window.formaCustomization.apply(state, true);
+  window.document.getElementById('form').click(); assert.equal(window.hits, 1);
+  assert.equal(messages.at(-1).id, 'child'); assert.ok(messages.at(-1).payload.message.includes('root handler failed'));
+  root.enabled = false; window.formaCustomization.apply(state, true);
+  window.document.getElementById('form').click(); assert.equal(window.hits, 1);
+});
+
 function fixture(source, observe = false) {
   const { window } = new JSDOM('<div id="control"><input required></div><button id="other"></button>', { runScripts: 'outside-only' });
   window.log = []; window.messages = [];
@@ -22,7 +71,7 @@ function fixture(source, observe = false) {
 }
 test('all named events are suggested and native aliases retain original event payloads', async () => {
   const { eventNames, formaCompletions } = await import(pathToFileURL(path.join(base, 'src/Forma.Builder/Frontend/code-assistance.mjs')).href);
-  const lifecycle = ['Load', 'Ready', 'Created', 'Mounted', 'Updated', 'Destroyed', 'Resize', 'Move', 'Layout', 'Validating', 'Validated'];
+  const lifecycle = ['Load', 'Ready', 'Created', 'Mounted', 'Updated', 'Destroyed', 'Resize', 'Move', 'Layout', 'Validating', 'Validated', 'PropertyChanged'];
   const native = eventNames.filter(name => !lifecycle.includes(name));
   const { window, apply, element } = fixture(native.map(name => `api.on(${JSON.stringify(name)}, e => window.log.push([${JSON.stringify(name)}, e.type]));`).join('\n'));
   apply();

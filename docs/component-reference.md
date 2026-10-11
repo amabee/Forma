@@ -1,6 +1,6 @@
 # Component and property reference
 
-This reference covers the 84 implemented toolbox entries plus Form. It was checked against the compiled Core models and InspectorCatalog. The larger roadmap is separate. Start with [the usage guide](components-and-scripting.md) for setup, JavaScript recipes, and C# integration.
+This reference covers the 88 implemented toolbox entries plus Form. It was checked against the compiled Core models and InspectorCatalog. The larger roadmap is separate. Start with [the usage guide](components-and-scripting.md) for setup, JavaScript recipes, and C# integration.
 
 ## Reading the tables
 
@@ -1494,6 +1494,54 @@ Orientation=vertical. Inspector: Items, Selected index, plus Orientation for
 SideNavigation. JS get/set/bind: items, selectedIndex, and SideNavigation
 orientation. SelectedIndexChanged is the Core event. JS navigate supplies
 event.detail.index/text; application code decides what page/content to display.
+
+## Responsive layout primitives
+
+### ResponsiveGrid
+
+An ordered CSS grid with a separate column count below its own width breakpoint.
+Inherits ResponsiveLayout/LinearLayout. Columns defaults to 2 (1–12),
+NarrowColumns to 1 (1–12), Breakpoint to 600 (100–2400), and Gap to 8 (0–64).
+Inspector and JS get/set/bind use columns, narrowColumns, breakpoint, and gap.
+At the exact breakpoint the wide column count applies. Design mode shows column
+guides; Preview shows only the application content. Child order determines cells,
+dragging reorders, and grid tracks own child width. Height remains adjustable.
+Margins and explicit size constraints remain applicable; oversized minimum
+widths can cause overflow. Grid cells are not TableLayoutPanel layoutSlot cells.
+
+### ResponsiveStack
+
+Inherits ResponsiveLayout/LinearLayout. Orientation defaults horizontal;
+NarrowOrientation defaults vertical. Breakpoint and Gap use the same defaults
+and ranges as ResponsiveGrid. Inspector and JS use orientation,
+narrowOrientation, breakpoint, and gap. It never wraps. Vertical mode stretches
+child widths after margins; horizontal mode uses configured widths. Resize or
+change the container breakpoint to switch direction. Children retain identity,
+input state, and order. X/Y and Dock are managed by the stack.
+
+### BreakpointContainer
+
+Inherits LayoutContainer with Breakpoint=600 (100–2400). Children in LayoutSlot 1
+are the wide layout; children in LayoutSlot 2 are the narrow layout. At or above
+Breakpoint the wide layout is shown; below it the narrow layout is shown. Resize
+the container while designing to edit both layouts, or change a child's Layout
+slot in Properties. New drops use the displayed slot. Both groups stay in the
+project and retain runtime values; switching does not change configured Visible.
+Child positions are free, and Dock/Anchor operates independently in each group.
+The layout indicator is designer-only and reserves no application space. The
+runtime API uses breakpoint and each child's layoutSlot; there is no navigation
+router or automatic synchronization between duplicate inputs in the two groups.
+
+### AspectRatioContainer
+
+Inherits LayoutContainer. AspectRatio defaults to 16/9, is finite, and clamps to
+0.1–10. Inspector and JS get/set/bind use aspectRatio. The ratio is width divided
+by height. Resizing width derives the saved height; the independent Height editor
+is disabled, and JS height is read-only. Minimum/maximum height constraints may
+override the preferred ratio. Child X/Y, Dock, and Anchor remain available.
+Browser resize observation recalculates rendered height when a containing grid
+or responsive layout stretches the frame's width. Geometry getters still report
+configured model bounds; use Resize for actual rendered changes.
 
 ## Inspector/model property aliases
 

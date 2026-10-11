@@ -106,6 +106,7 @@ public sealed class DesignerEditingService(BuilderViewModel viewModel)
                     // Reparent the same model instance; descendants and identities stay intact.
                     control.Parent?.Remove(control);
                     control.LayoutSlot = target is Forma.Core.Controls.TabControl tabs ? tabs.SelectedTab + 1
+                        : target is Forma.Core.Controls.BreakpointContainer responsiveTarget ? (_viewModel.Appearance[target.Id].Width < responsiveTarget.Breakpoint ? 2 : 1)
                         : target is Forma.Core.Controls.SplitContainer ? Math.Min(2, target.Children.Count + 1)
                         : target is Forma.Core.Controls.TableLayoutPanel ? target.Children.Count + 1 : 1;
                     control.X = left;
@@ -114,9 +115,9 @@ public sealed class DesignerEditingService(BuilderViewModel viewModel)
                     ResizeControl(control, bounds.Width, bounds.Height);
                 }
                 Position(control, left, top);
-                if (Number(payload, "layoutSlot") is int slot && control.Parent is Forma.Core.Controls.SplitContainer or Forma.Core.Controls.TableLayoutPanel)
+                if (Number(payload, "layoutSlot") is int slot && control.Parent is Forma.Core.Controls.SplitContainer or Forma.Core.Controls.BreakpointContainer or Forma.Core.Controls.TableLayoutPanel)
                 {
-                    control.LayoutSlot = control.Parent is Forma.Core.Controls.SplitContainer ? Math.Clamp(slot, 1, 2) : Math.Clamp(slot, 1, 1200);
+                    control.LayoutSlot = control.Parent is Forma.Core.Controls.SplitContainer or Forma.Core.Controls.BreakpointContainer ? Math.Clamp(slot, 1, 2) : Math.Clamp(slot, 1, 1200);
                     ResizeControl(control, bounds.Width, bounds.Height);
                 }
                 if (Number(payload, "index") is int insertionIndex && control.Parent is Forma.Core.Controls.LinearLayout flow)
@@ -224,6 +225,10 @@ public sealed class DesignerEditingService(BuilderViewModel viewModel)
             "sidebar" => new Forma.Core.Controls.Sidebar(),
             "appshell" => new Forma.Core.Controls.AppShell(),
             "responsivepanel" => new Forma.Core.Controls.ResponsivePanel(),
+            "responsivegrid" => new Forma.Core.Controls.ResponsiveGrid(),
+            "responsivestack" => new Forma.Core.Controls.ResponsiveStack(),
+            "breakpointcontainer" => new Forma.Core.Controls.BreakpointContainer(),
+            "aspectratiocontainer" => new Forma.Core.Controls.AspectRatioContainer(),
             "stackpanel" => new Forma.Core.Controls.StackPanel(),
             "hstack" => new Forma.Core.Controls.HStack(),
             "vstack" => new Forma.Core.Controls.VStack(),
@@ -281,7 +286,7 @@ public sealed class DesignerEditingService(BuilderViewModel viewModel)
             or "splitcontainer"
             or "tabcontrol"
             or "flowlayoutpanel"
-            or "accordion" or "sidebar" or "appshell" or "responsivepanel" or "tablelayoutpanel" or "stackpanel" or "hstack" or "vstack" or "wrappanel" or "centerpanel" or "scrollablepanel" => new Appearance
+            or "accordion" or "sidebar" or "appshell" or "responsivepanel" or "responsivegrid" or "responsivestack" or "breakpointcontainer" or "aspectratiocontainer" or "tablelayoutpanel" or "stackpanel" or "hstack" or "vstack" or "wrappanel" or "centerpanel" or "scrollablepanel" => new Appearance
             {
                 Width = 300,
                 Height = 200,
@@ -386,12 +391,14 @@ public sealed class DesignerEditingService(BuilderViewModel viewModel)
         control.Y = y;
         if (parent is Forma.Core.Controls.TabControl tabParent)
             control.LayoutSlot = tabParent.SelectedTab + 1;
+        else if (parent is Forma.Core.Controls.BreakpointContainer breakpointParent)
+            control.LayoutSlot = _viewModel.Appearance[parent.Id].Width < breakpointParent.Breakpoint ? 2 : 1;
         else if (parent is Forma.Core.Controls.SplitContainer)
             control.LayoutSlot = Math.Min(2, parent.Children.Count + 1);
         else if (parent is Forma.Core.Controls.TableLayoutPanel)
             control.LayoutSlot = parent.Children.Count + 1;
-        if (layoutSlot is int slot && parent is Forma.Core.Controls.SplitContainer or Forma.Core.Controls.TableLayoutPanel)
-            control.LayoutSlot = parent is Forma.Core.Controls.SplitContainer ? Math.Clamp(slot, 1, 2) : Math.Clamp(slot, 1, 1200);
+        if (layoutSlot is int slot && parent is Forma.Core.Controls.SplitContainer or Forma.Core.Controls.BreakpointContainer or Forma.Core.Controls.TableLayoutPanel)
+            control.LayoutSlot = parent is Forma.Core.Controls.SplitContainer or Forma.Core.Controls.BreakpointContainer ? Math.Clamp(slot, 1, 2) : Math.Clamp(slot, 1, 1200);
         if (parent is Forma.Core.Controls.LinearLayout && index is int insertionIndex)
             parent.Insert(Math.Clamp(insertionIndex, 0, parent.Children.Count), control);
         else parent.Add(control);
@@ -458,6 +465,7 @@ public sealed class DesignerEditingService(BuilderViewModel viewModel)
         var descriptor = InspectorCatalog
             .ForKind(control.ControlType)
             .FirstOrDefault(p => p.Id == property);
+        if (control is Forma.Core.Controls.AspectRatioContainer && property == "height") return;
         if (descriptor is null || descriptor.ReadOnly || (a.Locked && property != "locked"))
             return;
         if (descriptor.Options is not null && (text is null || !descriptor.Options.Contains(text)))
@@ -596,6 +604,11 @@ public sealed class DesignerEditingService(BuilderViewModel viewModel)
             if (property == "readOnly") rating.ReadOnly = Boolean(payload, "value", rating.ReadOnly);
         }
         if (control is Forma.Core.Controls.Accordion accordion && property == "expanded" && payload.TryGetProperty("value", out var expanded) && expanded.ValueKind is JsonValueKind.True or JsonValueKind.False) accordion.Expanded = expanded.GetBoolean();
+        if (control is Forma.Core.Controls.BreakpointContainer breakpointControl && property == "breakpoint" && number is int switchWidth) breakpointControl.Breakpoint = switchWidth;
+        if (control is Forma.Core.Controls.ResponsiveGrid responsiveGrid && property == "columns" && number is int gridColumns) responsiveGrid.Columns = gridColumns;
+        if (control is Forma.Core.Controls.ResponsiveGrid narrowGrid && property == "narrowColumns" && number is int narrowColumns) narrowGrid.NarrowColumns = narrowColumns;
+        if (control is Forma.Core.Controls.ResponsiveStack narrowStack && property == "narrowOrientation" && text is not null) narrowStack.NarrowOrientation = text;
+        if (control is Forma.Core.Controls.AspectRatioContainer aspect && property == "aspectRatio" && payload.TryGetProperty("value", out var ratioValue) && ratioValue.ValueKind == JsonValueKind.Number && ratioValue.TryGetDouble(out var ratio) && double.IsFinite(ratio)) { aspect.AspectRatio = ratio; ResizeControl(control, a.Width, a.Height); }
         if (control is Forma.Core.Controls.ResponsiveLayout responsive && property == "breakpoint" && number is int breakpoint) responsive.Breakpoint = breakpoint;
         if (control is Forma.Core.Controls.ScrollablePanel scroll && property == "scrollDirection" && text is not null) scroll.ScrollDirection = text;
         if (control is Forma.Core.Controls.RichTextBox rich) {
@@ -754,7 +767,7 @@ public sealed class DesignerEditingService(BuilderViewModel viewModel)
                 tabs.SelectedTab = tab;
                 break;
             case "layoutSlot" when number is int slot:
-                control.LayoutSlot = slot;
+                control.LayoutSlot = control.Parent is Forma.Core.Controls.BreakpointContainer ? Math.Clamp(slot, 1, 2) : slot;
                 break;
             case "gridColumns"
                 when control is Forma.Core.Controls.DataGridView grid && text is not null:
@@ -923,6 +936,7 @@ public sealed class DesignerEditingService(BuilderViewModel viewModel)
             if (control.Parent is not Forma.Core.Controls.LinearLayout and not Forma.Core.Controls.TableLayoutPanel)
                 Position(control, control.X ?? 0, control.Y ?? 0);
         }
+        if (control is Forma.Core.Controls.AspectRatioContainer ratioContainer) a.Height = LayoutGeometry.AspectHeight(a, ratioContainer.AspectRatio);
         ArrangeChildren(control, oldBounds);
     }
 
@@ -941,7 +955,7 @@ public sealed class DesignerEditingService(BuilderViewModel viewModel)
         var size = AvailableBounds(parent);
         var managed = parent is Forma.Core.Controls.LinearLayout or Forma.Core.Controls.TableLayoutPanel;
         var children = parent.Children.Where(c => c is not Forma.Core.Controls.INonvisualControl);
-        foreach (var group in children.GroupBy(c => parent is Forma.Core.Controls.TabControl or Forma.Core.Controls.SplitContainer ? c.LayoutSlot : 0))
+        foreach (var group in children.GroupBy(c => parent is Forma.Core.Controls.TabControl or Forma.Core.Controls.SplitContainer or Forma.Core.Controls.BreakpointContainer ? c.LayoutSlot : 0))
         {
             var remaining = new LayoutGeometry.Bounds(0, 0, size.Width, size.Height);
             foreach (var child in group.OrderBy(c => _viewModel.Appearance[c.Id].Dock == "fill" ? 1 : 0))
@@ -949,7 +963,7 @@ public sealed class DesignerEditingService(BuilderViewModel viewModel)
                 var appearance = _viewModel.Appearance[child.Id];
                 var current = new LayoutGeometry.Bounds(child.X ?? 0, child.Y ?? 0, appearance.Width, appearance.Height);
                 var target = !managed && appearance.Dock != "none" && appearance.Visible
-                    ? LayoutGeometry.Dock(appearance.Dock, appearance, ref remaining)
+                    ? LayoutGeometry.Dock(appearance.Dock, appearance, ref remaining, (child as Forma.Core.Controls.AspectRatioContainer)?.AspectRatio)
                     : !managed && appearance.Dock == "none"
                         ? LayoutGeometry.Anchor(current, appearance.Anchor, size.Width - oldBounds.Width, size.Height - oldBounds.Height)
                         : current;
