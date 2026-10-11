@@ -1,3 +1,5 @@
+using Forma.Core.Rendering;
+
 namespace Forma.Core.Controls;
 
 public abstract class NumericControl : Control
@@ -54,4 +56,19 @@ public abstract class NumericControl : Control
         }
     }
     public event EventHandler? ValueChanged;
+
+    protected override void WriteRenderState(IDictionary<string, object?> state)
+    {
+        base.WriteRenderState(state);
+        state["minimum"] = Minimum; state["maximum"] = Maximum; state["increment"] = Increment; state["number"] = Value;
+    }
+
+    /// <summary>Whether users can change <see cref="Value"/> from the rendered control.</summary>
+    protected virtual bool AcceptsUserValue => false;
+
+    protected override void OnRuntimeEvent(RuntimeEvent e)
+    {
+        base.OnRuntimeEvent(e);
+        if (e.Name == "value" && AcceptsUserValue && e.TryGetDouble("value", out var value)) Value = value;
+    }
 }

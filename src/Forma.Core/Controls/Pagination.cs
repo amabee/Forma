@@ -1,3 +1,5 @@
+using Forma.Core.Rendering;
+
 namespace Forma.Core.Controls;
 
 public sealed class Pagination : Control
@@ -8,4 +10,16 @@ public sealed class Pagination : Control
     public int PageCount => Math.Max(1, (int)Math.Ceiling((double)_totalItems / _pageSize));
     public int Page { get => _page; set { var next = Math.Clamp(value, 1, PageCount); if (next == _page) return; SetProperty(ref _page, next); PageChanged?.Invoke(this, EventArgs.Empty); } }
     public event EventHandler? PageChanged;
+
+    protected override void WriteRenderState(IDictionary<string, object?> state)
+    {
+        base.WriteRenderState(state);
+        state["page"] = Page; state["pageCount"] = PageCount;
+    }
+
+    protected override void OnRuntimeEvent(RuntimeEvent e)
+    {
+        base.OnRuntimeEvent(e);
+        if (e.Name == "page" && e.TryGetInt("page", out var page)) Page = page;
+    }
 }

@@ -9,4 +9,10 @@ public sealed class ResponsiveStack : ResponsiveLayout
         get => _narrowOrientation;
         set => SetProperty(ref _narrowOrientation, value == "horizontal" ? value : "vertical");
     }
+
+    protected override void WriteRenderState(IDictionary<string, object?> state)
+    {
+        base.WriteRenderState(state);
+        state["narrowOrientation"] = NarrowOrientation;
+    }
 }

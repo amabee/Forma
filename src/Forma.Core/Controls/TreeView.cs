@@ -1,3 +1,5 @@
+using Forma.Core.Rendering;
+
 namespace Forma.Core.Controls;
 
 public sealed class TreeView : Control
@@ -16,4 +18,17 @@ public sealed class TreeView : Control
     public string[] ExpandedNodes { get => (string[])_expandedNodes.Clone(); set { ArgumentNullException.ThrowIfNull(value); var ids = Walk(_nodes).Select(n => n.Id).ToHashSet(); var next = value.Where(ids.Contains).Distinct().ToArray(); if (!_expandedNodes.SequenceEqual(next)) SetProperty(ref _expandedNodes, next); } }
     public event EventHandler? SelectedNodeChanged;
     public void SetExpanded(string id, bool expanded) => ExpandedNodes = expanded ? [.._expandedNodes, id] : _expandedNodes.Where(n => n != id).ToArray();
+
+    protected override void WriteRenderState(IDictionary<string, object?> state)
+    {
+        base.WriteRenderState(state);
+        state["nodes"] = Nodes; state["selectedNode"] = SelectedNode; state["expandedNodes"] = ExpandedNodes;
+    }
+
+    protected override void OnRuntimeEvent(RuntimeEvent e)
+    {
+        base.OnRuntimeEvent(e);
+        if (e.Name == "tree-select" && e.TryGetString("node", out var node)) SelectedNode = node;
+        if (e.Name == "tree-expand" && e.TryGetString("node", out var branch) && e.TryGetBool("expanded", out var expanded)) SetExpanded(branch, expanded);
+    }
 }

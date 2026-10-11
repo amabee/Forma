@@ -1,3 +1,5 @@
+using Forma.Core.Rendering;
+
 namespace Forma.Core.Controls;
 
 public abstract class ChoiceControl : Control
@@ -29,4 +31,16 @@ public abstract class ChoiceControl : Control
         }
     }
     public event EventHandler? SelectedIndexChanged;
+
+    protected override void WriteRenderState(IDictionary<string, object?> state)
+    {
+        base.WriteRenderState(state);
+        state["items"] = Items; state["selectedIndex"] = SelectedIndex;
+    }
+
+    protected override void OnRuntimeEvent(RuntimeEvent e)
+    {
+        base.OnRuntimeEvent(e);
+        if (e.Name == "selection" && e.TryGetInt("selectedIndex", out var index)) SelectedIndex = index;
+    }
 }

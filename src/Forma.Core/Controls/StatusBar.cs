@@ -9,4 +9,10 @@ public sealed class StatusBar : Control
         get => _rightText;
         set { ArgumentNullException.ThrowIfNull(value); SetProperty(ref _rightText, value); }
     }
+
+    protected override void WriteRenderState(IDictionary<string, object?> state)
+    {
+        base.WriteRenderState(state);
+        state["rightText"] = RightText;
+    }
 }

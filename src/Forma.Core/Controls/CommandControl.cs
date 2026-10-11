@@ -1,3 +1,5 @@
+using Forma.Core.Rendering;
+
 namespace Forma.Core.Controls;
 
 /// <summary>Validated command trees shared by menus and toolbars.</summary>
@@ -57,4 +59,16 @@ public abstract class CommandControl : Control
 
     private static CommandItem[] Copy(CommandItem[] items) => items.Select(item =>
         item with { Items = item.Items is null ? null : Copy(item.Items) }).ToArray();
+
+    protected override void WriteRenderState(IDictionary<string, object?> state)
+    {
+        base.WriteRenderState(state);
+        state["commandItems"] = Items;
+    }
+
+    protected override void OnRuntimeEvent(RuntimeEvent e)
+    {
+        base.OnRuntimeEvent(e);
+        if (e.Name == "command-item" && e.TryGetString("itemId", out var itemId)) InvokeItem(itemId);
+    }
 }

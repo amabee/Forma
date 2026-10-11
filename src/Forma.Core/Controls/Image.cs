@@ -15,4 +15,10 @@ public class Image : Control
         set =>
             SetProperty(ref _sizeMode, value is "contain" or "cover" or "fill" ? value : "contain");
     }
+
+    protected override void WriteRenderState(IDictionary<string, object?> state)
+    {
+        base.WriteRenderState(state);
+        state["source"] = Source; state["sizeMode"] = SizeMode;
+    }
 }

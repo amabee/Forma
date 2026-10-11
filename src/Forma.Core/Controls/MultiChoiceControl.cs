@@ -1,3 +1,5 @@
+using Forma.Core.Rendering;
+
 namespace Forma.Core.Controls;
 
 public abstract class MultiChoiceControl : Control
@@ -11,5 +13,18 @@ public abstract class MultiChoiceControl : Control
         if (index < 0 || index >= _items.Length || _checkedIndices.Contains(index) == value) return;
         CheckedIndices = value ? [.._checkedIndices, index] : _checkedIndices.Where(i => i != index).ToArray();
         ItemCheck?.Invoke(this, new(index, value));
+    }
+
+    protected override void WriteRenderState(IDictionary<string, object?> state)
+    {
+        base.WriteRenderState(state);
+        state["items"] = Items; state["checkedIndices"] = CheckedIndices;
+    }
+
+    protected override void OnRuntimeEvent(RuntimeEvent e)
+    {
+        base.OnRuntimeEvent(e);
+        if (e.Name == "item-check" && e.TryGetInt("index", out var index) && e.TryGetBool("checked", out var isChecked))
+            SetItemChecked(index, isChecked);
     }
 }

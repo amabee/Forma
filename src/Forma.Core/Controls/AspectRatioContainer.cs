@@ -12,4 +12,10 @@ public sealed class AspectRatioContainer : LayoutContainer
             SetProperty(ref _aspectRatio, Math.Clamp(value, .1, 10));
         }
     }
+
+    protected override void WriteRenderState(IDictionary<string, object?> state)
+    {
+        base.WriteRenderState(state);
+        state["aspectRatio"] = AspectRatio;
+    }
 }

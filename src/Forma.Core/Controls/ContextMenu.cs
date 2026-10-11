@@ -10,4 +10,10 @@ public class ContextMenu : CommandControl, INonvisualControl
         get => _targetId;
         set { ArgumentNullException.ThrowIfNull(value); SetProperty(ref _targetId, value); }
     }
+
+    protected override void WriteRenderState(IDictionary<string, object?> state)
+    {
+        base.WriteRenderState(state);
+        state["targetId"] = TargetId == "" ? Parent?.Id : TargetId;
+    }
 }

@@ -8,4 +8,12 @@ public sealed class Rating : NumericControl
     public override double Value { get => base.Value; set => base.Value = Math.Round(value, MidpointRounding.AwayFromZero); }
     public int Stars { get => _stars; set { SetProperty(ref _stars, Math.Clamp(value, 1, 10)); Maximum = _stars; } }
     public bool ReadOnly { get => _readOnly; set => SetProperty(ref _readOnly, value); }
+
+    protected override bool AcceptsUserValue => !ReadOnly;
+
+    protected override void WriteRenderState(IDictionary<string, object?> state)
+    {
+        base.WriteRenderState(state);
+        state["stars"] = Stars; state["readOnly"] = ReadOnly;
+    }
 }

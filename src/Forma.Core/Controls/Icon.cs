@@ -8,4 +8,10 @@ public sealed class Icon : Control
     public Icon() => Text = "Icon";
     public string IconName { get => _iconName; set { if (Names.Contains(value)) SetProperty(ref _iconName, value); } }
     public int StrokeWidth { get => _strokeWidth; set => SetProperty(ref _strokeWidth, Math.Clamp(value, 1, 4)); }
+
+    protected override void WriteRenderState(IDictionary<string, object?> state)
+    {
+        base.WriteRenderState(state);
+        state["iconName"] = IconName; state["strokeWidth"] = StrokeWidth;
+    }
 }

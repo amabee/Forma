@@ -9,4 +9,10 @@ public sealed class ResponsiveGrid : ResponsiveLayout
         get => _narrowColumns;
         set => SetProperty(ref _narrowColumns, Math.Clamp(value, 1, 12));
     }
+
+    protected override void WriteRenderState(IDictionary<string, object?> state)
+    {
+        base.WriteRenderState(state);
+        state["narrowColumns"] = NarrowColumns;
+    }
 }

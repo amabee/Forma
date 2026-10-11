@@ -1,3 +1,4 @@
+using Forma.Core.Rendering;
 using System.Globalization;
 
 namespace Forma.Core.Controls;
@@ -29,4 +30,16 @@ public abstract class DateTimeInput : Control
         }
     }
     public event EventHandler? ValueChanged;
+
+    protected override void WriteRenderState(IDictionary<string, object?> state)
+    {
+        base.WriteRenderState(state);
+        state["dateValue"] = DateValue;
+    }
+
+    protected override void OnRuntimeEvent(RuntimeEvent e)
+    {
+        base.OnRuntimeEvent(e);
+        if (e.Name == "value" && e.TryGetString("value", out var value)) DateValue = value;
+    }
 }

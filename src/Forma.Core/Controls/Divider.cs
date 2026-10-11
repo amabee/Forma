@@ -7,4 +7,10 @@ public sealed class Divider : Control
     public string Orientation { get => _orientation; set { if (value is "horizontal" or "vertical") SetProperty(ref _orientation, value); } }
     public int Thickness { get => _thickness; set => SetProperty(ref _thickness, Math.Clamp(value, 1, 12)); }
     public string LineStyle { get => _lineStyle; set { if (value is "solid" or "dashed" or "dotted") SetProperty(ref _lineStyle, value); } }
+
+    protected override void WriteRenderState(IDictionary<string, object?> state)
+    {
+        base.WriteRenderState(state);
+        state["orientation"] = Orientation; state["thickness"] = Thickness; state["lineStyle"] = LineStyle;
+    }
 }

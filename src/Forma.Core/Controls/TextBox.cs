@@ -1,3 +1,4 @@
+using Forma.Core.Rendering;
 using Forma.Core.Events;
 
 namespace Forma.Core.Controls;
@@ -82,4 +83,18 @@ public class TextBox : Control {
         KeyUp?.Invoke(this, e);
     }
 
- }
+    protected override void WriteRenderState(IDictionary<string, object?> state)
+    {
+        base.WriteRenderState(state);
+        state["password"] = Password; state["placeholder"] = Placeholder;
+    }
+
+    /// <summary>Applies text typed in the rendered control.</summary>
+    protected virtual void OnUserInput(string text) => SetText(text);
+
+    protected override void OnRuntimeEvent(RuntimeEvent e)
+    {
+        base.OnRuntimeEvent(e);
+        if (e.Name == "input" && e.TryGetString("text", out var text)) OnUserInput(text);
+    }
+}

@@ -10,4 +10,11 @@ public sealed class Tooltip : Component
     public int InitialDelay { get => _initialDelay; set => SetProperty(ref _initialDelay, Math.Clamp(value, 0, 10000)); }
     public int ShowDuration { get => _showDuration; set => SetProperty(ref _showDuration, Math.Clamp(value, 500, 60000)); }
     public string Placement { get => _placement; set { if (value is "top" or "bottom" or "left" or "right") SetProperty(ref _placement, value); } }
+
+    protected override void WriteRenderState(IDictionary<string, object?> state)
+    {
+        base.WriteRenderState(state);
+        state["targetId"] = TargetId == "" ? Parent?.Id : TargetId;
+        state["initialDelay"] = InitialDelay; state["showDuration"] = ShowDuration; state["placement"] = Placement;
+    }
 }

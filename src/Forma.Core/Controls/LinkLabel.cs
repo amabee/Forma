@@ -1,3 +1,5 @@
+using Forma.Core.Rendering;
+
 namespace Forma.Core.Controls;
 
 public sealed class LinkLabel : Control
@@ -8,4 +10,16 @@ public sealed class LinkLabel : Control
     public bool Visited { get => _visited; set => SetProperty(ref _visited, value); }
     public event EventHandler? LinkClicked;
     public void OnLinkClicked() { Visited = true; LinkClicked?.Invoke(this, EventArgs.Empty); }
+
+    protected override void WriteRenderState(IDictionary<string, object?> state)
+    {
+        base.WriteRenderState(state);
+        state["url"] = Url; state["visited"] = Visited;
+    }
+
+    protected override void OnRuntimeEvent(RuntimeEvent e)
+    {
+        base.OnRuntimeEvent(e);
+        if (e.Name == "link") OnLinkClicked();
+    }
 }

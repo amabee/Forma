@@ -1,3 +1,4 @@
+using Forma.Core.Rendering;
 using Forma.Core.Events;
 
 namespace Forma.Core.Controls;
@@ -24,5 +25,17 @@ public class Button : Control
         }
 
         Click?.Invoke(this, EventArgs.Empty);
+    }
+
+    protected override void WriteRenderState(IDictionary<string, object?> state)
+    {
+        base.WriteRenderState(state);
+        state["enabled"] = Enabled;
+    }
+
+    protected override void OnRuntimeEvent(RuntimeEvent e)
+    {
+        base.OnRuntimeEvent(e);
+        if (e.Name == "click") OnClick();
     }
 }

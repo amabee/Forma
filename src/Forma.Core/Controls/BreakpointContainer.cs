@@ -9,4 +9,10 @@ public sealed class BreakpointContainer : LayoutContainer
         get => _breakpoint;
         set => SetProperty(ref _breakpoint, Math.Clamp(value, 100, 2400));
     }
+
+    protected override void WriteRenderState(IDictionary<string, object?> state)
+    {
+        base.WriteRenderState(state);
+        state["breakpoint"] = Breakpoint;
+    }
 }

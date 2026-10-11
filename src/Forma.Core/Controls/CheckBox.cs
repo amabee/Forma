@@ -1,3 +1,5 @@
+using Forma.Core.Rendering;
+
 namespace Forma.Core.Controls;
 
 public class CheckBox : Control
@@ -20,5 +22,17 @@ public class CheckBox : Control
     {
         OnPropertyChanged(nameof(Checked));
         CheckedChanged?.Invoke(this, EventArgs.Empty);
+    }
+
+    protected override void WriteRenderState(IDictionary<string, object?> state)
+    {
+        base.WriteRenderState(state);
+        state["checked"] = Checked;
+    }
+
+    protected override void OnRuntimeEvent(RuntimeEvent e)
+    {
+        base.OnRuntimeEvent(e);
+        if (e.Name == "checked" && e.TryGetBool("checked", out var value)) Checked = value;
     }
 }

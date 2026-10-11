@@ -9,4 +9,10 @@ public class Toolbar : CommandControl
         get => _orientation;
         set => SetProperty(ref _orientation, value == "vertical" ? "vertical" : "horizontal");
     }
+
+    protected override void WriteRenderState(IDictionary<string, object?> state)
+    {
+        base.WriteRenderState(state);
+        state["orientation"] = Orientation;
+    }
 }

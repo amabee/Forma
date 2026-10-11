@@ -39,4 +39,11 @@ public abstract class LayoutContainer : Control
         get => _selectedTab;
         set => SetProperty(ref _selectedTab, Math.Clamp(value, 0, _tabs.Length - 1));
     }
+
+    protected override void WriteRenderState(IDictionary<string, object?> state)
+    {
+        base.WriteRenderState(state);
+        state["orientation"] = Orientation; state["gap"] = Gap;
+        state["columns"] = Columns; state["rowCount"] = RowCount; state["tabs"] = Tabs; state["selectedTab"] = SelectedTab;
+    }
 }
