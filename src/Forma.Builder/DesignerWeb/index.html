@@ -110,7 +110,7 @@
             </select>
           </label>
           <button class="primary" data-preview><img class="icon-svg" src="icons/play.svg" alt="" /><span id="preview-caption">Preview</span></button>
-          <button id="theme-toggle" type="button" aria-pressed="true" aria-label="Switch to light mode" title="Switch to light mode">
+          <button id="theme-toggle" type="button" aria-label="Switch to light mode" title="Switch to light mode">
             <img class="icon-svg theme-sun" src="icons/sun.svg" alt="" /><img class="icon-svg theme-moon" src="icons/moon.svg" alt="" />
           </button>
         </div>
@@ -119,10 +119,10 @@
     <main class="workspace">
       <div class="left-sidebar">
         <nav class="left-panel-tabs" role="tablist" aria-label="Project panels">
-          <button role="tab" aria-selected="false" aria-controls="solution-explorer" data-left-panel="solution-explorer">Explorer</button>
-          <button role="tab" aria-selected="true" aria-controls="toolbox" data-left-panel="toolbox">Toolbox</button>
+          <button id="left-tab-explorer" role="tab" aria-selected="false" aria-controls="solution-explorer" data-left-panel="solution-explorer">Explorer</button>
+          <button id="left-tab-toolbox" role="tab" aria-selected="true" aria-controls="toolbox" data-left-panel="toolbox">Toolbox</button>
         </nav>
-      <aside id="toolbox" class="toolbox sidebar" aria-label="Toolbox">
+      <aside id="toolbox" class="toolbox sidebar" role="tabpanel" aria-labelledby="left-tab-toolbox">
         <div class="toolbox-head">
           <div class="panel-heading">Toolbox</div>
           <div class="library-filter" role="group" aria-label="Show">
@@ -494,7 +494,7 @@
         <p class="tool-note">Drag onto the form, or double-click to add.</p>
         </div>
       </aside>
-        <aside id="solution-explorer" class="solution-explorer sidebar" aria-label="Solution Explorer" hidden>
+        <aside id="solution-explorer" class="solution-explorer sidebar" role="tabpanel" aria-labelledby="left-tab-explorer" hidden>
           <div class="explorer-heading panel-heading">Solution Explorer<button data-command="new" title="Add form (Ctrl+N)" aria-label="Add form"><img class="icon-svg" src="icons/file-plus.svg" alt="" /></button></div>
           <label class="search explorer-search"><img class="icon-svg" src="icons/search.svg" alt="" /><input id="explorer-search" placeholder="Search project" aria-label="Search project" /></label>
           <ul id="explorer-tree" role="tree" aria-label="Project files"></ul>
@@ -556,7 +556,7 @@
     </main>
     <footer class="statusbar">
       <span><i class="ready-dot"></i><span id="status" role="status" aria-live="polite">Loading designer…</span></span>
-      <span id="selection-status">Form selected</span>
+      <span id="selection-status" aria-live="polite">Form selected</span>
       <span class="status-spacer"></span>
       <span id="coordinates">X: 0 &nbsp; Y: 0</span>
       <span>Forma 0.1.0</span>
@@ -596,6 +596,7 @@
     <script src="start-page.js"></script>
     <script src="palette.js"></script>
     <script src="view-options.js"></script>
+    <script src="accessibility.js"></script>
     <script src="solution-explorer.js"></script>
     <script src="event-inspector.bundle.js"></script>
   </body>

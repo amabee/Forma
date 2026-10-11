@@ -89,8 +89,8 @@
   function applyTheme(value, persist = false) {
     theme = value === "light" ? "light" : "dark";
     document.documentElement.dataset.theme = theme;
+    // The label names the action, so the button is not also a pressed/unpressed toggle.
     const label = theme === "dark" ? "Switch to light mode" : "Switch to dark mode";
-    themeToggle.setAttribute("aria-pressed", String(theme === "dark"));
     themeToggle.setAttribute("aria-label", label); themeToggle.title = label;
     if (persist) try { localStorage.setItem("forma.workspace.theme", theme); } catch {}
     window.forma.send({ type: "designer", event: "theme", payload: { theme } });

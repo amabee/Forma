@@ -709,12 +709,32 @@ window.forma = {
         if (kind === "tabcontrol") bar.setAttribute("aria-orientation", element.dataset.orientation);
         host.id = `${element.id}-content`;
         if (kind === "accordion") { host.setAttribute("role", "region"); host.setAttribute("aria-label", (properties.tabs ?? ["Section 1"])[properties.selectedTab ?? 0] ?? "Section"); }
+        if (kind === "tabcontrol" && !bar.dataset.arrowKeys) {
+          bar.dataset.arrowKeys = "true";
+          bar.addEventListener("keydown", event => {
+            const vertical = element.dataset.orientation === "vertical";
+            const keys = vertical ? ["ArrowUp", "ArrowDown"] : ["ArrowLeft", "ArrowRight"];
+            if (![...keys, "Home", "End"].includes(event.key)) return;
+            const tabs = [...bar.querySelectorAll('[role="tab"]')], index = tabs.indexOf(document.activeElement);
+            if (index < 0) return;
+            event.preventDefault();
+            const next = event.key === "Home" ? 0 : event.key === "End" ? tabs.length - 1 : (index + (event.key === keys[1] ? 1 : -1) + tabs.length) % tabs.length;
+            tabs[next].focus(); tabs[next].click();
+          });
+        }
+        const tabHadFocus = bar.contains(document.activeElement);
         bar.replaceChildren(...(properties.tabs ?? ["Tab 1"]).map((text, index) => {
           const button = document.createElement("button"); button.textContent = text; button.dataset.tabIndex = index;
           button.type = "button";
           if (kind === "accordion") { button.setAttribute("aria-expanded", String(properties.expanded !== false && index === (properties.selectedTab ?? 0))); button.setAttribute("aria-controls", host.id); }
           else button.setAttribute("role", "tab");
-          if (kind === "tabcontrol") button.setAttribute("aria-selected", String(index === (properties.selectedTab ?? 0)));
+          if (kind === "tabcontrol") {
+            const selected = index === (properties.selectedTab ?? 0);
+            button.setAttribute("aria-selected", String(selected));
+            button.setAttribute("aria-controls", host.id);
+            // Roving focus: only the active tab is in the Tab order; arrows move between tabs.
+            button.tabIndex = selected ? 0 : -1;
+          }
           button.className = index === (properties.selectedTab ?? 0) ? "tab-active" : "";
           button.addEventListener("click", () => {
             if (element.dataset.disabled === "true") return;
@@ -732,6 +752,8 @@ window.forma = {
           addTab.addEventListener("click", () => { if (window.formaDesigner?.preview === false) window.forma.send({ type: "designer", id: element.id, event: "command", payload: { command: "add-tab" } }); });
           bar.appendChild(addTab);
         }
+        // Rebuilt tab buttons would drop keyboard focus; keep it on the active tab.
+        if (tabHadFocus) bar.querySelector('[aria-selected="true"], .tab-active')?.focus();
         if (kind === "accordion") {
           const active = bar.querySelector(`[data-tab-index="${properties.selectedTab ?? 0}"]`);
           if (active) active.after(host); else bar.append(host);
