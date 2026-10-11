@@ -52,3 +52,28 @@ test('color fields offer swatches and remember recently used colors', () => {
   assert.equal(swatches()[0].title, '#dc2626', 'the color just used comes first');
   assert.deepEqual(JSON.parse(window.localStorage.getItem('forma.inspector.colors')), ['#dc2626']);
 });
+
+test('properties overridden by component.css say so and can hand control back to the panel', () => {
+  const css = '/* example:\n  background-color: #000;\n*/\n:host {\n  color: #1f2937;\n  background-color: #1a1a22;\n  padding: 8px;\n}\n\n:host:hover {\n  background-color: red;\n}';
+  const { document, messages } = fixture({ name: 'button1', text: 'Continue', width: 120, backColor: '#2878ff', customization: { Css: css, Behavior: 'b', Events: '', Characteristics: '{}' } });
+  const note = document.getElementById('prop-backColor').closest('label').querySelector('.property-override');
+  assert.equal(note.hidden, false);
+  assert.match(note.textContent, /Overridden by component\.css \(background-color\)/);
+  assert.equal(document.getElementById('prop-width').closest('label').querySelector('.property-override'), null);
+  note.querySelector('button').click();
+  const payload = plain(messages.at(-1).payload);
+  assert.equal(messages.at(-1).event, 'customize');
+  assert.equal(payload.behavior, 'b');
+  // Only the :host rule loses its background; the comment and :hover rule stay.
+  assert.equal(payload.css, '/* example:\n  background-color: #000;\n*/\n:host {\n  color: #1f2937;\n  padding: 8px;\n}\n\n:host:hover {\n  background-color: red;\n}');
+});
+
+test('layout-shifting component.css without its own field gets a notice that removes it', () => {
+  const css = ':host {\n  color: #fff;\n  border: 1px solid #d3deee;\n  padding: 8px 8px 8px 8px;\n}';
+  const { document, messages } = fixture({ name: 'button1', text: 'Continue', width: 120, backColor: '#2878ff', customization: { Css: css, Behavior: '', Events: '', Characteristics: '{}' } });
+  const notice = document.getElementById('css-override-summary');
+  assert.equal(notice.hidden, false);
+  assert.match(notice.textContent, /sets border, padding on this button/);
+  notice.querySelector('button').click();
+  assert.equal(plain(messages.at(-1).payload).css, ':host {\n  color: #fff;\n}');
+});

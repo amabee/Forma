@@ -87,6 +87,30 @@ const send = (event, id, payload = {}) =>
 const gridDrafts = new Map();
 // Identity and position fields never offer "reset to default".
 const noReset = new Set(["name", "id", "x", "y", "layoutSlot", "locked"]);
+// CSS declarations in component.css that take over an inspector property.
+const CSS_FOR_PROPERTY = {
+  backColor: ["background", "background-color"], foreColor: ["color"],
+  fontSize: ["font", "font-size"], fontFamily: ["font", "font-family"], fontWeight: ["font", "font-weight"], fontStyle: ["font", "font-style"],
+  textAlign: ["text-align"], lineHeight: ["line-height"], letterSpacing: ["letter-spacing"],
+  borderColor: ["border", "border-color"], borderWidth: ["border", "border-width"], borderStyle: ["border", "border-style"], borderRadius: ["border-radius"],
+  paddingTop: ["padding", "padding-top"], paddingRight: ["padding", "padding-right"], paddingBottom: ["padding", "padding-bottom"], paddingLeft: ["padding", "padding-left"],
+  opacity: ["opacity"], cursor: ["cursor"], zIndex: ["z-index"],
+};
+/** Declarations in the plain `:host { ... }` rule, with their positions in the source text. */
+function hostDeclarations(css) {
+  // Blank out comments (keeping offsets) so commented examples are not treated as rules.
+  const text = css.replace(/\/\*[\s\S]*?\*\//g, (comment) => " ".repeat(comment.length));
+  const block = /(^|[};])\s*:host\s*\{([^}]*)\}/.exec(text);
+  if (!block) return [];
+  const bodyStart = block.index + block[0].indexOf("{") + 1, rules = [];
+  const pattern = /[ \t]*([a-z-]+)\s*:[^;]*(;|$)[ \t]*\r?\n?/g;
+  for (let match; (match = pattern.exec(block[2])); )
+    if (match[0].trim()) rules.push({ name: match[1], start: bodyStart + match.index, end: bodyStart + match.index + match[0].length });
+  return rules;
+}
+// Box-model declarations that move a control's contents relative to the designer's layout.
+const LAYOUT_CSS = new Set(["padding", "padding-top", "padding-right", "padding-bottom", "padding-left",
+  "border", "border-width", "border-top", "border-right", "border-bottom", "border-left"]);
 const COLOR_KEY = "forma.inspector.colors";
 const PRESET_COLORS = ["#ffffff", "#1f2937", "#2878ff", "#16a34a", "#dc2626", "#f59e0b", "#7c3aed", "#f3f6fb"];
 function recentColors() {
@@ -918,7 +942,9 @@ window.formaDesigner = {
           selected.id === this.rootId ? 1200 : this.root().clientHeight;
       this.showSharedValue(input, property, selected);
       this.showDefault(input, property, selected);
+      this.showCssOverride(input, property, selected);
     }
+    this.showUnmappedOverrides(selected, schema);
     // Hide categories whose every property is hidden for this multi-selection.
     byId("property-editors")?.querySelectorAll(".property-group").forEach((group) => {
       const rows = [...group.querySelectorAll("label")];
@@ -956,6 +982,79 @@ window.formaDesigner = {
     }
     if (mixed) input.dataset.mixed = "true";
     else delete input.dataset.mixed;
+  },
+  /**
+   * component.css rules beat the Properties panel. When one overrides this field, say so and
+   * offer to remove it, so editing the field visibly works again.
+   */
+  showCssOverride(input, property, selected) {
+    const row = input.closest("label");
+    if (!row) return;
+    const single = (window.formaSelection?.ids.length ?? 1) <= 1;
+    const css = selected.customization?.css ?? selected.customization?.Css ?? "";
+    const found = single && CSS_FOR_PROPERTY[property] ? hostDeclarations(css).filter((rule) => CSS_FOR_PROPERTY[property].includes(rule.name)) : [];
+    let note = row.querySelector(".property-override");
+    if (!found.length) { if (note) note.hidden = true; return; }
+    if (!note) {
+      note = document.createElement("span");
+      note.className = "property-override";
+      const text = document.createElement("span");
+      const fix = document.createElement("button");
+      fix.type = "button"; fix.textContent = "Use panel value";
+      fix.addEventListener("click", (event) => {
+        event.preventDefault();
+        const item = this.controlById(this.selectedId), source = item?.customization;
+        if (!source || item.locked) return;
+        const current = source.css ?? source.Css ?? "";
+        const names = CSS_FOR_PROPERTY[note.dataset.property] ?? [];
+        // Remove from the end so earlier positions stay valid.
+        let next = current;
+        for (const rule of hostDeclarations(current).filter((rule) => names.includes(rule.name)).reverse())
+          next = next.slice(0, rule.start) + next.slice(rule.end);
+        send("customize", item.id, {
+          css: next,
+          behavior: source.behavior ?? source.Behavior ?? "",
+          events: source.events ?? source.Events ?? "",
+          characteristics: source.characteristics ?? source.Characteristics ?? "{}",
+        });
+      });
+      note.append(text, fix);
+      row.appendChild(note);
+    }
+    note.hidden = false;
+    note.dataset.property = property;
+    note.firstChild.textContent = `Overridden by component.css (${found.map((rule) => rule.name).join(", ")})`;
+    note.lastChild.disabled = !!selected.locked || this.preview;
+  },
+  /**
+   * component.css rules for things that have no field here (for example a form's padding or
+   * border) still change layout, such as shifting docked children. List them with a fix.
+   */
+  showUnmappedOverrides(selected, schema) {
+    const notice = byId("css-override-summary");
+    if (!notice) return;
+    const single = (window.formaSelection?.ids.length ?? 1) <= 1;
+    const css = selected.customization?.css ?? selected.customization?.Css ?? "";
+    const covered = new Set(schema.flatMap((descriptor) => CSS_FOR_PROPERTY[descriptor.id] ?? []));
+    const found = single ? hostDeclarations(css).filter((rule) => LAYOUT_CSS.has(rule.name) && !covered.has(rule.name)) : [];
+    notice.hidden = !found.length;
+    if (!found.length) return;
+    const names = [...new Set(found.map((rule) => rule.name))];
+    notice.querySelector("span").textContent = `component.css sets ${names.join(", ")} on this ${selected.kind}, which shifts its contents (docked controls included).`;
+    const button = notice.querySelector("button");
+    button.disabled = !!selected.locked || this.preview;
+    button.onclick = () => {
+      const source = selected.customization;
+      let next = source.css ?? source.Css ?? "";
+      for (const rule of hostDeclarations(next).filter((rule) => names.includes(rule.name)).reverse())
+        next = next.slice(0, rule.start) + next.slice(rule.end);
+      send("customize", selected.id, {
+        css: next,
+        behavior: source.behavior ?? source.Behavior ?? "",
+        events: source.events ?? source.Events ?? "",
+        characteristics: source.characteristics ?? source.Characteristics ?? "{}",
+      });
+    };
   },
   /** Marks a field that differs from a new control's default and offers a one-click reset. */
   showDefault(input, property, selected) {

@@ -9,6 +9,9 @@
   const DRAG_THRESHOLD = 3;
   let ids = [];
   let gesture = null;
+  // The click that follows a handled pointer gesture would make designer.js reselect a
+  // single control, so it is swallowed.
+  let swallowClick = false;
 
   const item = id => d.controlById(id);
   const element = id => document.getElementById(id);
@@ -103,6 +106,7 @@
 
   window.addEventListener("pointerdown", event => {
     const root = d.root();
+    swallowClick = false;
     if (d.preview || event.button !== 0 || !root) return;
     const control = event.target.closest?.("[data-component]") ?? (root.contains(event.target) ? event.target.closest("[data-forma-type]") : null);
     if (!control || event.target.closest("[data-handle], [data-tab-index], [data-tab-add]")) return;
@@ -110,6 +114,7 @@
     const additive = event.ctrlKey || event.shiftKey || event.metaKey;
     if (additive && control !== root) {
       event.preventDefault(); event.stopImmediatePropagation();
+      swallowClick = true;
       const current = ids.filter(id => id !== d.rootId);
       select(current.includes(control.id) ? current.filter(id => id !== control.id) : [...current, control.id], current.includes(control.id) ? undefined : control.id);
       return;
@@ -117,6 +122,7 @@
     if (control !== root && ids.length > 1 && ids.includes(control.id)) {
       // Pressing on part of a multi-selection drags the whole group.
       event.preventDefault(); event.stopImmediatePropagation();
+      swallowClick = true;
       gesture = { type: "group", pointerId: event.pointerId, startX: event.clientX, startY: event.clientY, target: control.id,
         items: ids.map(item).filter(movable), moved: false };
       return;
@@ -162,6 +168,7 @@
       return;
     }
     if (cancelled || !current.moved || !current.rect) return;
+    swallowClick = true;
     // Drag-select picks the form's direct children that the rectangle touches.
     const hits = (d.state?.controls ?? []).filter(control => control.parentId === d.rootId && !control.component && control.visible !== false)
       .filter(control => {
@@ -171,6 +178,11 @@
     if (hits.length) select(current.additive ? [...ids.filter(id => id !== d.rootId), ...hits] : hits);
   }
   window.addEventListener("pointerup", event => finish(event, false), true);
+  window.addEventListener("click", event => {
+    if (!swallowClick) return;
+    swallowClick = false;
+    event.preventDefault(); event.stopImmediatePropagation();
+  }, true);
   window.addEventListener("pointercancel", event => finish(event, true), true);
 
   window.addEventListener("keydown", event => {

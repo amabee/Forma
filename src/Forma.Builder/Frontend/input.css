@@ -512,6 +512,24 @@
   .property-reset {
     @apply absolute top-1.5 left-[78px] size-5 rounded text-[12px] leading-none text-muted hover:bg-hover hover:text-ink;
   }
+  .css-override-summary {
+    @apply mb-2 flex flex-col items-start gap-1.5 rounded-md bg-amber-500/10 px-3 py-2 text-[12px] leading-snug text-amber-300;
+  }
+  [data-theme="light"] .css-override-summary {
+    @apply text-amber-700;
+  }
+  .css-override-summary button {
+    @apply rounded px-1.5 py-0.5 font-semibold underline hover:bg-hover disabled:opacity-50;
+  }
+  .property-override {
+    @apply col-span-full mt-1 flex items-center gap-2 rounded bg-amber-500/10 px-2 py-1 text-[11px] font-normal text-amber-300;
+  }
+  [data-theme="light"] .property-override {
+    @apply text-amber-700;
+  }
+  .property-override button {
+    @apply ml-auto shrink-0 rounded px-1.5 py-0.5 font-semibold underline hover:bg-hover disabled:opacity-50;
+  }
   .color-swatches {
     @apply col-start-2 mt-1 flex flex-wrap gap-1;
   }

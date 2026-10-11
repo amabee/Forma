@@ -94,6 +94,19 @@ public class RegressionTests
         Assert.Null(model.TakeFailedEdit());
     }
 
+    [Fact]
+    public void ComponentCssTemplateDoesNotOverrideThePropertiesPanel()
+    {
+        var model = new BuilderViewModel(); model.CreateNew();
+        model.Appearance[model.Form.Id].BackColor = "#123456";
+        var css = ComponentEditorService.Template(model.Form, model.Appearance[model.Form.Id]).Css;
+        // Current values are listed for reference inside the leading comment only.
+        Assert.Contains("#123456", css);
+        var active = css[(css.IndexOf("*/", StringComparison.Ordinal) + 2)..];
+        foreach (var declaration in new[] { "background-color", "color:", "padding", "border", "font-size" })
+            Assert.DoesNotContain(declaration, active.Replace("/* Add a hover style here. */", ""));
+    }
+
     private sealed class QueueContext : SynchronizationContext
     {
         private readonly ConcurrentQueue<(SendOrPostCallback Callback, object? State)> _queue = new();
