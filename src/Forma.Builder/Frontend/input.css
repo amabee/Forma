@@ -502,6 +502,22 @@
     outline: 2px solid rgb(59 130 246 / 0.85);
     outline-offset: 1px;
   }
+  /* Changed-from-default marker, reset button and color swatches in the inspector */
+  .property-group label {
+    @apply relative;
+  }
+  .property-group label.property-modified {
+    @apply font-semibold text-ink;
+  }
+  .property-reset {
+    @apply absolute top-1.5 left-[78px] size-5 rounded text-[12px] leading-none text-muted hover:bg-hover hover:text-ink;
+  }
+  .color-swatches {
+    @apply col-start-2 mt-1 flex flex-wrap gap-1;
+  }
+  .color-swatches button {
+    @apply size-4 rounded-sm border border-line hover:scale-110;
+  }
   /* Multi-selection inspector: properties not shared by every selected control are hidden. */
   .property-group label.multi-hidden,
   .property-group.multi-empty {

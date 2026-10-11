@@ -85,6 +85,38 @@ function setStatus(text) {
 const send = (event, id, payload = {}) =>
   window.forma.send({ type: "designer", id, event, payload });
 const gridDrafts = new Map();
+// Identity and position fields never offer "reset to default".
+const noReset = new Set(["name", "id", "x", "y", "layoutSlot", "locked"]);
+const COLOR_KEY = "forma.inspector.colors";
+const PRESET_COLORS = ["#ffffff", "#1f2937", "#2878ff", "#16a34a", "#dc2626", "#f59e0b", "#7c3aed", "#f3f6fb"];
+function recentColors() {
+  try { return JSON.parse(localStorage.getItem(COLOR_KEY)) ?? []; } catch { return []; }
+}
+function rememberColor(color) {
+  if (!/^#[0-9a-f]{6}$/i.test(color)) return;
+  const colors = [color.toLowerCase(), ...recentColors().filter((item) => item !== color.toLowerCase())].slice(0, 6);
+  try { localStorage.setItem(COLOR_KEY, JSON.stringify(colors)); } catch {}
+}
+/** Recent and preset colors under a color field; choosing one edits like the picker does. */
+function colorSwatches(input) {
+  const row = document.createElement("span");
+  row.className = "color-swatches";
+  const render = () => row.replaceChildren(...[...new Set([...recentColors(), ...PRESET_COLORS])].slice(0, 10).map((color) => {
+    const swatch = document.createElement("button");
+    swatch.type = "button"; swatch.style.background = color; swatch.title = color;
+    swatch.setAttribute("aria-label", `Use color ${color}`);
+    swatch.addEventListener("click", (event) => {
+      event.preventDefault();
+      if (input.disabled) return;
+      input.value = color;
+      input.dispatchEvent(new Event("change", { bubbles: true }));
+    });
+    return swatch;
+  }));
+  render();
+  input.addEventListener("change", () => { rememberColor(input.value); render(); });
+  return row;
+}
 const gridFields = new Set(["gridColumns", "gridRows"]);
 function gridValue(property, value) {
   if (property === "gridColumns")
@@ -885,6 +917,7 @@ window.formaDesigner = {
         input.max =
           selected.id === this.rootId ? 1200 : this.root().clientHeight;
       this.showSharedValue(input, property, selected);
+      this.showDefault(input, property, selected);
     }
     // Hide categories whose every property is hidden for this multi-selection.
     byId("property-editors")?.querySelectorAll(".property-group").forEach((group) => {
@@ -923,6 +956,32 @@ window.formaDesigner = {
     }
     if (mixed) input.dataset.mixed = "true";
     else delete input.dataset.mixed;
+  },
+  /** Marks a field that differs from a new control's default and offers a one-click reset. */
+  showDefault(input, property, selected) {
+    const row = input.closest("label");
+    if (!row) return;
+    const defaults = this.state?.defaults;
+    const single = (window.formaSelection?.ids.length ?? 1) <= 1;
+    const modified = !!defaults && single && !noReset.has(property) && property in defaults && !input.disabled
+      && JSON.stringify(selected[property]) !== JSON.stringify(defaults[property]);
+    row.classList.toggle("property-modified", modified);
+    let reset = row.querySelector(".property-reset");
+    if (!modified) { if (reset) reset.hidden = true; return; }
+    if (!reset) {
+      reset = document.createElement("button");
+      reset.type = "button"; reset.className = "property-reset"; reset.textContent = "↺";
+      reset.addEventListener("click", (event) => {
+        event.preventDefault();
+        const value = this.state?.defaults?.[reset.dataset.property];
+        if (value !== undefined) send("property", this.selectedId, { property: reset.dataset.property, value });
+      });
+      row.appendChild(reset);
+    }
+    reset.hidden = false;
+    reset.dataset.property = property;
+    reset.title = `Reset to default (${typeof defaults[property] === "string" && defaults[property].length > 30 ? "default" : JSON.stringify(defaults[property])})`;
+    reset.setAttribute("aria-label", `Reset ${property} to default`);
   },
   buildEditors(schema) {
     const container = byId("property-editors");
@@ -1016,6 +1075,7 @@ window.formaDesigner = {
         wrapper.appendChild(track);
         label.appendChild(wrapper);
       } else label.appendChild(input);
+      if (property.editor === "color") label.appendChild(colorSwatches(input));
       group.appendChild(label);
     }
     const selected = this.state?.controls.find((c) => c.id === this.selectedId);
