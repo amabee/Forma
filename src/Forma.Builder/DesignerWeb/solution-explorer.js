@@ -21,10 +21,20 @@
     window.formaWorkspace?.measure();
   }
   document.querySelectorAll("[data-left-panel]").forEach(button => button.addEventListener("click", () => showPanel(button.dataset.leftPanel)));
+  // View > Toggle toolbox/explorer: show that panel, or collapse the sidebar when it is already showing.
+  const sidebar = panel.closest(".left-sidebar");
+  function setCollapsed(collapsed) {
+    if (!sidebar) return;
+    sidebar.hidden = collapsed;
+    try { localStorage.setItem("forma.workspace.leftCollapsed", String(collapsed)); } catch {}
+    window.formaWorkspace?.measure();
+  }
   document.addEventListener("click", event => {
-    const toggle = event.target.closest("[data-toggle]");
-    if (toggle?.dataset.toggle === panel.id) showPanel(panel.hidden ? toolbox.id : panel.id);
-    if (toggle?.dataset.toggle === toolbox.id) showPanel(toolbox.hidden ? panel.id : toolbox.id);
+    const target = event.target.closest("[data-toggle]")?.dataset.toggle;
+    if (target !== panel.id && target !== toolbox.id) return;
+    const showing = sidebar && !sidebar.hidden && !document.getElementById(target).hidden;
+    if (showing) setCollapsed(true);
+    else { setCollapsed(false); showPanel(target); }
   });
   document.querySelector(".left-panel-tabs").addEventListener("keydown", event => {
     if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
@@ -229,6 +239,7 @@
   window.addEventListener("resize", () => closeMenu()); window.addEventListener("blur", () => closeMenu());
   let initialPanel = panel.id;
   try { if (localStorage.getItem("forma.workspace.leftPanel") === toolbox.id) initialPanel = toolbox.id; } catch {}
+  try { if (sidebar && localStorage.getItem("forma.workspace.leftCollapsed") === "true") sidebar.hidden = true; } catch {}
   showPanel(initialPanel, false);
   window.formaExplorer = { show: showPanel };
 })();

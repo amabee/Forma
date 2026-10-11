@@ -1305,6 +1305,16 @@
   .tool-group button[draggable="true"] {
     @apply cursor-grab active:cursor-grabbing;
   }
+  /* Groups with no search matches disappear instead of showing an empty heading. */
+  .tool-group.search-empty {
+    display: none;
+  }
+  .recent-tools summary {
+    @apply text-accent;
+  }
+  .toolbox-empty {
+    @apply mx-2 mt-3 text-center text-[12px] text-faint;
+  }
   .tool-note {
     @apply mx-2 mt-3 rounded-lg border border-dashed border-line px-3 py-2.5 text-[12px] leading-snug text-faint;
   }

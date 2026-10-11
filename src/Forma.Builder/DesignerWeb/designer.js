@@ -1529,9 +1529,11 @@ document.addEventListener(
         { command: command.dataset.command },
       );
     const toggle = event.target.closest("[data-toggle]");
-    if (toggle) {
+    // The left sidebar's panels (toolbox, explorer) are toggled by solution-explorer.js.
+    if (toggle && !toggle.dataset.toggle.match(/^(toolbox|solution-explorer)$/)) {
       const panel = byId(toggle.dataset.toggle);
       panel.hidden = !panel.hidden;
+      toggle.setAttribute("aria-expanded", String(!panel.hidden));
     }
     if (event.target.closest("[data-preview]")) {
       d.cancelDrag();
@@ -1593,23 +1595,18 @@ document.addEventListener("input", (event) => {
     if (!error) send("property", id, { property, value: input.value });
     return;
   }
-  if (event.target.id === "prop-text" && !d.preview) {
-    send("property", d.selectedId, {
-      property: "text",
-      value: event.target.value,
-    });
-    return;
-  }
-  if (event.target.id !== "search") return;
-  const query = event.target.value.trim().toLowerCase();
-  document.querySelectorAll(".tool-group button").forEach((tool) => {
-    tool.hidden = !tool.textContent.toLowerCase().includes(query);
-  });
+  // Toolbox search lives in toolbox.js.
 });
 document.addEventListener("keydown", (event) => {
   const d = window.formaDesigner;
   if (d.standalone) return;
   if (event.key === "Escape") {
+    const menu = document.querySelector(".menubar details[open]");
+    if (menu) {
+      menu.open = false;
+      menu.querySelector("summary").focus();
+      return;
+    }
     d.cancelDrag();
     if (d.preview) {
       d.preview = false;
