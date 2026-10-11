@@ -74,6 +74,7 @@ public sealed partial class BuilderWindow : System.Windows.Forms.Form
             await _renderer.InitializeAsync();
             await NewProjectAsync();
             _ready = true;
+            await StartRecoveryAsync();
         }
         catch (Exception error)
         {
@@ -178,6 +179,7 @@ public sealed partial class BuilderWindow : System.Windows.Forms.Form
     protected override void OnFormClosed(FormClosedEventArgs e)
     {
         _ready = false;
+        StopRecovery();
         _runtimePreview?.Close();
         CloseDockedEditor();
         DisposeComponents();

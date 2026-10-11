@@ -113,6 +113,7 @@ public sealed partial class BuilderWindow
             }
             foreach (var root in document.Version == 1 ? new[] { document.Root } : document.Forms.ToArray()) UseEmbeddedImages(root);
             _viewModel.ProjectPath = path; _viewModel.MarkSaved(); UpdateProjectTitle();
+            _recovery?.Clear();
             _ = StateAsync(skippedImages.Count == 0 ? $"Saved {Path.GetFileName(path)}"
                 : $"Saved {Path.GetFileName(path)}; {skippedImages.Count} image(s) are missing or over 10 MB and stay linked, not embedded");
             return true;
@@ -126,24 +127,35 @@ public sealed partial class BuilderWindow
         using var dialog = new OpenFileDialog { Title = "Open Forma design", Filter = "Forma designs (*.forma;*.frma)|*.forma;*.frma|All files|*.*", CheckFileExists = true };
         if (dialog.ShowDialog(this) != DialogResult.OK) return;
         try {
-            // Fully decode before replacing the active design; bad files leave it intact.
-            var restored = ProjectFile.RestoreProject(ProjectFile.Read(dialog.FileName));
-            var appearances = restored.Appearance.ToDictionary(p => p.Key, p => p.Value.Deserialize<Appearance>() ?? throw new InvalidDataException("Invalid appearance."));
-            if (!ConfirmDiscard()) return;
-            CloseDockedEditor();
-            _ready = false;
-            if (_viewModel.Form is not null) await _renderer!.RemoveAsync(_viewModel.Form);
-            DisposeComponents();
-            _viewModel.ApplyProject(restored.Forms, appearances, files: restored.Files);
-            _viewModel.ProjectPath = dialog.FileName;
-            _viewModel.ClearHistory();
-            await RenderActiveFormAsync();
-            _viewModel.MarkSaved(); _ready = true;
-            await StateAsync($"Opened {Path.GetFileName(_viewModel.ProjectPath)}");
+            if (await LoadProjectAsync(dialog.FileName, dialog.FileName, saved: true))
+                await StateAsync($"Opened {Path.GetFileName(_viewModel.ProjectPath)}");
         } catch (Exception error) {
             _ready = true;
             MessageBox.Show(this, error.Message, "Could not open design", MessageBoxButtons.OK, MessageBoxIcon.Error);
         }
+    }
+
+    /// <summary>
+    /// Replaces the open design with the one in <paramref name="file"/>. A recovered autosave
+    /// keeps its original <paramref name="projectPath"/> and stays unsaved.
+    /// </summary>
+    private async Task<bool> LoadProjectAsync(string file, string? projectPath, bool saved)
+    {
+        // Fully decode before replacing the active design; bad files leave it intact.
+        var restored = ProjectFile.RestoreProject(ProjectFile.Read(file));
+        var appearances = restored.Appearance.ToDictionary(p => p.Key, p => p.Value.Deserialize<Appearance>() ?? throw new InvalidDataException("Invalid appearance."));
+        if (!ConfirmDiscard()) return false;
+        CloseDockedEditor();
+        _ready = false;
+        if (_viewModel.Form is not null) await _renderer!.RemoveAsync(_viewModel.Form);
+        DisposeComponents();
+        _viewModel.ApplyProject(restored.Forms, appearances, files: restored.Files);
+        _viewModel.ProjectPath = projectPath;
+        _viewModel.ClearHistory();
+        await RenderActiveFormAsync();
+        if (saved) _viewModel.MarkSaved();
+        _ready = true;
+        return true;
     }
 
     private void DisposeComponents()

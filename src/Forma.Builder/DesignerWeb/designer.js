@@ -77,6 +77,11 @@ const managedKinds = new Set([...linearKinds, "tablelayoutpanel"]);
 for (const kind of [...linearKinds, "scrollablepanel", "accordion", "breakpointcontainer", "aspectratiocontainer"]) containerKinds.add(kind);
 document.querySelectorAll("[data-kind]").forEach(tool => supportedKinds.add(tool.dataset.kind));
 const byId = (id) => document.getElementById(id);
+// status.js (when loaded) styles problems and keeps their history.
+function setStatus(text) {
+  if (byId("status")) byId("status").textContent = text ?? "";
+  window.formaStatus?.report(text ?? "");
+}
 const send = (event, id, payload = {}) =>
   window.forma.send({ type: "designer", id, event, payload });
 const gridDrafts = new Map();
@@ -123,9 +128,7 @@ function canSaveGridDrafts() {
   send("select", invalid.id);
   d.inspector();
   byId(`prop-${invalid.property}`)?.focus();
-  if (byId("status"))
-    byId("status").textContent =
-      "Fix the grid Rows JSON before saving. Your draft has been kept.";
+  setStatus("Fix the grid Rows JSON before saving. Your draft has been kept.");
   return false;
 }
 
@@ -491,7 +494,8 @@ window.formaDesigner = {
       this.root()?.setAttribute("aria-label", message.title);
       for (const name of ["canvas-title", "form-name"])
         if (byId(name)) byId(name).textContent = message.title;
-      if (byId("status")) byId("status").textContent = message.status;
+      byId("form-name")?.setAttribute("data-unsaved", String(!!message.hasUnsavedChanges));
+      setStatus(message.status);
       for (const item of message.controls) this.applyAppearance(item);
       window.formaLayout?.refresh(message);
       window.formaCustomization?.apply(message);
@@ -856,17 +860,20 @@ window.formaDesigner = {
         input.value = "Embedded image";
         input.disabled = true;
       }
-      if (
-        ["x", "y"].includes(property) &&
-        controlledAxes(selected).position
-      )
-        input.disabled = true;
+      // Explain layout-controlled fields next to the field, not only in a hover tooltip.
+      let reason = "";
       const controlled = controlledAxes(selected);
-      if (property === "width" && controlled.width || property === "height" && controlled.height) {
-        input.disabled = true; input.title = "This dimension is controlled by the parent layout or Dock.";
-      }
-      if (["dock", "anchor"].includes(property) && managedKinds.has(this.controlById(selected.parentId)?.kind)) {
-        input.disabled = true; input.title = "This parent arranges its children. Use a Panel for free positioning, Dock and Anchor.";
+      if (["x", "y"].includes(property) && controlled.position)
+        reason = "Position is set by the parent layout or Dock.";
+      if (property === "width" && controlled.width || property === "height" && controlled.height)
+        reason = "This dimension is controlled by the parent layout or Dock.";
+      if (["dock", "anchor"].includes(property) && managedKinds.has(this.controlById(selected.parentId)?.kind))
+        reason = "This parent arranges its children. Use a Panel for free positioning, Dock and Anchor.";
+      if (reason) { input.disabled = true; input.title = reason; }
+      const row = input.closest("label");
+      if (row) {
+        if (reason && !this.preview) row.dataset.lockedReason = reason;
+        else delete row.dataset.lockedReason;
       }
       if (["x", "width"].includes(property))
         input.max =

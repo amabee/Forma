@@ -1589,6 +1589,55 @@
     box-shadow: 0 0 0 3px rgb(16 185 129 / 0.18);
   }
 
+  /* Problems: error tone, a count button and a short history popover */
+  .statusbar[data-tone="error"] #status {
+    @apply text-red-400;
+  }
+  [data-theme="light"] .statusbar[data-tone="error"] #status {
+    @apply text-red-600;
+  }
+  .statusbar[data-tone="error"] .ready-dot {
+    @apply bg-red-500;
+    box-shadow: 0 0 0 3px rgb(239 68 68 / 0.2);
+  }
+  .status-problems {
+    @apply rounded px-1.5 py-0.5 text-[12px] font-semibold text-red-400 hover:bg-hover;
+  }
+  [data-theme="light"] .status-problems {
+    @apply text-red-600;
+  }
+  .status-problem-list {
+    @apply fixed z-[1000] w-90 max-w-[calc(100vw-16px)] rounded-xl border border-line bg-raised p-2 text-[12px] text-ink;
+    box-shadow: 0 16px 40px -12px rgb(0 0 0 / 0.45);
+  }
+  .status-problem-heading {
+    @apply mb-1 flex items-center justify-between px-1 font-semibold;
+  }
+  .status-problem-heading button {
+    @apply rounded px-2 py-0.5 font-normal text-muted hover:bg-hover hover:text-ink;
+  }
+  .status-problem-list ol {
+    @apply max-h-64 overflow-y-auto;
+  }
+  .status-problem-list li {
+    @apply flex gap-3 rounded-md px-1 py-1.5 leading-snug;
+  }
+  .status-problem-list time {
+    @apply shrink-0 tabular-nums text-faint;
+  }
+
+  /* Why a property is locked, shown under the field */
+  .property-group label[data-locked-reason]::after {
+    content: attr(data-locked-reason);
+    @apply col-span-full mt-1 block text-[11px] leading-snug font-normal text-faint;
+  }
+
+  /* Unsaved changes marker next to the form name */
+  #form-name[data-unsaved="true"]::after {
+    content: " \25CF";
+    @apply text-accent;
+  }
+
   /* Right-click source menu */
   .component-source-menu {
     @apply fixed z-[1000] min-w-72 rounded-xl border border-line bg-raised p-1.5 text-ink;
