@@ -26,8 +26,11 @@
   function fitLevel() {
     const form = d.controlById(d.rootId);
     if (!stage || !form) return 1;
-    // The frame adds a 2px border and a 34px title bar around the form (see designer.js layoutFrame).
-    return Math.min((stage.clientWidth - 48) / (form.width + 2), (stage.clientHeight - 48) / (form.height + 36));
+    // The frame adds a 2px border and a 34px title bar around the form (see designer.js layoutFrame);
+    // the stage's own padding is not room for the form either.
+    const style = getComputedStyle(stage), pad = side => parseFloat(style[`padding${side}`]) || 0;
+    const width = stage.clientWidth - pad("Left") - pad("Right") - 48, height = stage.clientHeight - pad("Top") - pad("Bottom") - 48;
+    return Math.min(width / (form.width + 2), height / (form.height + 36));
   }
 
   function step(direction) {
