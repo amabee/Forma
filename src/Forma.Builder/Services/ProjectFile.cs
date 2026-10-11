@@ -230,11 +230,11 @@ public static class ProjectFile
             throw new InvalidDataException("This is not a supported Forma project version.");
         var ids = new HashSet<string>();
         var count = 0;
-        void Validate(ProjectNode node, int depth)
+        void Validate(ProjectNode? node, int depth)
         {
             if (node is null || depth > 32 || ++count > 5000)
                 throw new InvalidDataException("The project tree is too large or invalid.");
-            if (!ControlCatalog.TryGet(node?.Kind, out var entry) || (depth == 0) != (node!.Kind == "form"))
+            if (!ControlCatalog.TryGet(node.Kind, out var entry) || (depth == 0) != (node.Kind == "form"))
                 throw new InvalidDataException("Unknown control kind or invalid root form.");
             if (
                 string.IsNullOrEmpty(node.Id)
