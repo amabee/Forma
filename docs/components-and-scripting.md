@@ -10,6 +10,7 @@ This guide describes the current Builder and its 88 toolbox entries. The [compon
 - [JavaScript API](#javascript-api)
 - [Runtime property reference](runtime-properties.md)
 - [Global scripts and shared state](global-scripts.md)
+- [Events, component handles and property notifications](events.md)
 - [JavaScript recipes](#javascript-recipes)
 - [Component families](#component-families)
 - [FilePicker and FolderPicker](#filepicker-and-folderpicker)
@@ -85,17 +86,31 @@ Select a component → **Custom Properties**, directly below Search properties. 
 
 - **CSS:** scoped visual overrides using `:host`.
 - **Script:** JavaScript executed once per Preview start.
+- **Events:** exported handler methods in event.js, subscribed from script.js.
 - **Custom JSON:** an object available as `component.properties`.
 
-The built-in editor docks beneath the canvas. Drag its top divider to resize. Use Ctrl+Space for Forma API, component-name, supported-property and custom-value suggestions. Syntax diagnostics show underlines, gutter markers and a Problems list. Unknown literal component names and unsupported runtime properties show warnings; dynamic values and behavior still need Preview testing.
+The built-in editor opens in a component Code workspace tab. Switching back to
+Design preserves its draft, selected file, cursor and undo history. Use Ctrl+Space
+for Forma API, component names, supported properties, event payloads and custom
+values. Syntax diagnostics show underlines, gutter markers and a Problems list.
+Unknown literal component names and unsupported runtime properties show warnings;
+dynamic values and behavior still need Preview testing.
 
-The built-in editor has line numbers, syntax colors, bracket matching, folding, indentation and search (Ctrl+F). Format / Ctrl+Shift+F formats the current tab. Format on save (enabled by default) formats all three sources before saving; turn it off to skip formatting. Syntax errors stop formatting without replacing your text.
+The built-in editor has line numbers, syntax colors, bracket matching, folding, indentation and search (Ctrl+F). Format / Ctrl+Shift+F formats the current tab. Format on save (enabled by default) formats all four sources before saving; turn it off to skip formatting. Syntax errors stop formatting without replacing your text.
 
 Save / Ctrl+S automatically applies sources. External editor (under **···**) uses detected VS Code or an executable chosen through Choose editor. External saves auto-apply while the component editor remains open. Invalid JSON keeps the last valid version. Reopen Preview after behavior changes because an existing Preview owns an independent copy.
 
-Right-click a component and choose **View CSS**, **View Script**, or **View Custom Properties**. Code opens in its own workspace tab; switching to Design preserves the draft. Each source has a file tab and an unsaved-change indicator.
+Right-click a component and choose **View CSS**, **View Script**, **View Events**,
+or **View Custom Properties**. Code opens in its own workspace tab; switching to
+Design preserves the draft. Each source has a file tab and an unsaved-change indicator.
 
-Files are `component.css`, `script.js`, `custom-properties.json`. Saved designs use `<project-name>.components/<component-id>` beside the project. Unsaved designs use `%LOCALAPPDATA%/Forma/ComponentEditors`. Applied sources are also embedded in `.forma`.
+Files are `component.css`, `script.js`, `event.js`, `custom-properties.json`. Saved designs use `<project-name>.components/<component-id>` beside the project. Unsaved designs use `%LOCALAPPDATA%/Forma/ComponentEditors`. Applied sources are also embedded in `.forma`.
+
+Use the Events inspector to create handler methods in event.js and connect them
+from script.js. `forma.root` addresses the active form; event source/subscriber
+handles address individual components. Input/Change supply live property values,
+and PropertyChanged supplies observed runtime changes with previous values and
+origins. See [events and payloads](events.md) for the complete contract.
 
 Custom JSON must be an object:
 

@@ -37,7 +37,7 @@ the web workspace: menus, toolbox, canvas, inspector and docked code editor.
 The left sidebar switches between **Explorer** and **Toolbox**. Solution Explorer
 shows all forms, nested components, source files, the global script and image
 assets in use. Click a component to select it in Design, or expand it and click
-`script.js`, `component.css` or `custom-properties.json` to edit that source.
+`script.js`, `event.js`, `component.css` or `custom-properties.json` to edit that source.
 See [Solution Explorer](solution-explorer.md) for search and keyboard navigation.
 
 ## Add another form

@@ -5,8 +5,11 @@ in stages. That document is the full backlog; items below marked pending are not
 implemented yet. Each stage needs real behavior, contextual properties, persistence,
 Undo/Redo where appropriate, and tests before it is called complete.
 
-Current priority: finish remaining component batches, then build the Events
-inspector. Each component batch includes property and scripting support. Dock and Anchor are implemented for free-position containers, including
+The Events inspector, separate event.js handler modules, forma.root subscriptions,
+browser-compatible event metadata/component handles, and PropertyChanged are now
+implemented. C# handler execution, transaction tracing, and the remaining component
+batches are still pending. Each component batch includes property and scripting
+support. Dock and Anchor are implemented for free-position containers, including
 Preview layout and design history. Managed-child resize positions are fixed,
 and dimensions owned by Dock/AppShell are disabled in the inspector. AutoSize,
 more explicit AutoScroll settings, and further layout properties remain pending.
@@ -14,7 +17,8 @@ more explicit AutoScroll settings, and further layout properties remain pending.
 Component `script.js`, a project-wide `main.js`, shared reactive state,
 and the expanded typed `forma.get`/`forma.set`/`forma.bind` property API are
 implemented. See [global scripts](global-scripts.md) and
-[runtime properties](runtime-properties.md). These are Builder authoring/runtime
+[runtime properties](runtime-properties.md), plus [events and payloads](events.md).
+These are Builder authoring/runtime
 features; they do not complete the roadmap's code-editor component or all data
 binding and application components.
 

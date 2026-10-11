@@ -10,6 +10,16 @@ the native bridge; an immediate get after set can still return the old value.
 Use the value you just assigned locally, or observe a binding for confirmation.
 Array getters return defensive copies. Structured objects use camelCase keys.
 
+`forma.root.get(property)`, `forma.root.set(property, value)` and
+`forma.root.bind(property)` address the active form. Event `source` and `subscriber`
+handles expose the same methods for their own component.
+Use `forma.root.on("PropertyChanged", handler)` to observe confirmed changes with
+property, value, previousValue and origin. For text inputs, notifications normalize
+the model text property to value; ordinary get/set keys remain unchanged.
+Input events provide live values before the native acknowledgement. Native refreshes
+can coalesce multiple writes, so notifications need not include every intermediate
+assignment. See [events and payloads](events.md) for ordering and cleanup.
+
 ## Shared appearance and layout
 
 Visual controls support these fields where the inspector exposes them:

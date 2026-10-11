@@ -6,6 +6,13 @@ when script.js does not exist. Saving writes script.js; the old file is not
 deleted. The legacy internal Behavior source field remains for file-format
 compatibility. CSS and custom-properties.json continue to work as before.
 
+The Events inspector generates per-component handler methods in **event.js**.
+script.js imports that module with standard JS imports and subscribes the methods.
+Those event modules use their owning component's runtime context; providers in
+project modules remain shared. `forma.root` exposes the active form and can
+subscribe to bubbled input and PropertyChanged events from main.js. See the
+[event guide](events.md) for payloads, component handles and subscription cleanup.
+
 Open **Project → Main script** to edit **main.js** in the docked code
 editor. It uses the same formatting, diagnostics, Save/auto-apply and external
 editor actions. The same global source is used when previewing each form in a multi-form project.

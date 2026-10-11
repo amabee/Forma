@@ -3,12 +3,12 @@
 Select a control or component and click **Custom Properties…** below the
 property search field, or use Code in the activity rail. You can also right-click
 any visual control or nonvisual tray component and choose **View CSS**,
-**View Script**, or **View Custom Properties** to open that source directly.
+**View Script**, **View Events**, or **View Custom Properties** to open that source directly.
 Locked components cannot open an editable source from the context menu.
 
 The workspace has separate **Design** and **component · Code** tabs. The editor
 fills the center area; switching to Design preserves the open editor and its
-unsaved draft. Within Code, the component has three source file tabs:
+unsaved draft. Within Code, the component has four source file tabs:
 
 - **Styles (CSS):** starts with the component's current appearance and a hover
   rule. `:host` selects the component; `:host input` selects its inputs. All
@@ -16,8 +16,11 @@ unsaved draft. Within Code, the component has three source file tabs:
   Source styles override the inspector's appearance. Keep sizing and position
   in Layout to preserve designer drag/resize geometry.
 - **Script (JavaScript):** runs once when Preview starts. The boilerplate
-  includes the API and a click example. Script and callback errors appear in
+  includes API notes; imports and event subscriptions belong here. Script and callback errors appear in
   the Preview window title.
+- **Events (event.js):** contains exported handler classes created from the
+  Events inspector. script.js imports and subscribes their static methods.
+  Existing inline script.js handlers remain supported. See [events and payloads](events.md).
 - **Custom values (JSON):** an object containing your own values, such as a
   counter, caption, threshold or configuration. Access it with
   `component.properties`. Preview gets its own mutable copy.
@@ -31,7 +34,7 @@ Custom CSS and Z-index no longer have separate inspector fields. Set styling and
 
 The built-in editor uses locally bundled CodeMirror with line numbers, syntax
 colors, bracket matching, folding, indentation and search (Ctrl+F). Use **Format**
-or **Ctrl+Shift+F** for the current tab. **Format on save** formats all three files
+or **Ctrl+Shift+F** for the current tab. **Format on save** formats all four files
 with Prettier before saving; uncheck it to save without formatting. Syntax errors
 stop formatting and leave your text intact. The footer shows the cursor location
 and unsaved changes. Each modified file also shows a dot on its tab. Arrow keys
@@ -82,7 +85,7 @@ its draft. Forma's existing syntax and runtime-property diagnostics remain activ
 Use the built-in editor directly, or click **External editor**. Forma finds
 VS Code when installed; **Choose editor…** selects another editor executable.
 The chosen editor is remembered for the current Builder session. Sources are
-written as `component.css`, `script.js`, and `custom-properties.json`.
+written as `component.css`, `script.js`, `event.js`, and `custom-properties.json`.
 **Save** or **Ctrl+S** in Forma saves the files and applies the properties in one
 step. While the Custom Properties panel is open, saves from the external editor
 are detected and applied automatically after a short debounce. There are no
@@ -121,6 +124,8 @@ forma.on("click", () => {
 | API | Purpose |
 | --- | --- |
 | `forma.on(event, handler)` | Listen on this component; handles callback errors and cleanup |
+| `forma.root.on(event, handler)` | Listen on the active form; both on methods return unsubscribe |
+| `forma.root.get/set/bind(property, ...)` | Read, write or bind root form properties without its Name |
 | `forma.get(nameOrId, property)` | Read supported control values |
 | `forma.set(nameOrId, property, value)` | Send a typed change to the runtime model |
 | `forma.find(nameOrId)` | Get another control's DOM element |
@@ -298,7 +303,11 @@ file/folder pickers, tabs, and the existing control events continue to work.
 
 ## JavaScript events
 
-Register events in a component's JavaScript tab under **Custom Properties**.
+Select a component and use the **Events** inspector to generate or open a handler.
+New methods go in event.js; script.js holds their import and forma.on subscription.
+You can also register events directly in a component's JavaScript tab.
+See the [complete event and payload guide](events.md) for source/subscriber
+handles, root subscriptions, typed values, PropertyChanged, cancellation and logging.
 Names are case insensitive: `Click` and `click` register the same event.
 `DoubleClick` maps to browser `dblclick`, and `MouseWheel` maps to `wheel`;
 the browser names also work. Event suggestions are available inside `forma.on`.
@@ -313,7 +322,8 @@ the browser names also work. Event suggestions are available inside `forma.on`.
 | Drag and drop | DragStart, Drag, DragEnd, DragEnter, DragOver, DragLeave, Drop |
 | Clipboard | Copy, Cut, Paste |
 | Validation and forms | Validating, Validated, Submit, Reset |
-| Control specific | tick, row-selection |
+| State | PropertyChanged |
+| Control specific | tick, row-selection, chip-remove, command-item, primary-click, navigate |
 
 ### Initialize the form
 
@@ -344,11 +354,15 @@ resource disposal even when your component has no Destroyed handler.
 
 ### Input and native browser events
 
-Native handlers receive the original browser event: `event.key`, `event.target`,
+Native handlers receive a browser-compatible event with Forma metadata: `event.key`, `event.target`,
 `event.clientX`, `event.deltaY`, `event.clipboardData`, and `event.dataTransfer`
 are available for their relevant event types. Focus and Blur also catch focus
 changes on inner inputs of composite controls. Interactive events are ignored
 for a disabled or hidden component; lifecycle events still run.
+`event.originalEvent` exposes the underlying browser event. `event.source` and
+`event.subscriber` are component handles; target/currentTarget keep their DOM meaning.
+Input/Change can expose property, value and previousValue; Click normally has no
+property/value payload. PropertyChanged is noncancelable and can report model changes.
 
 ```javascript
 forma.on("KeyDown", event => {

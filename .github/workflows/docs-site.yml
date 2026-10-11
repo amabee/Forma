@@ -1,0 +1,78 @@
+name: Documentation site
+
+on:
+  push:
+    paths:
+      - '.github/workflows/docs-site.yml'
+      - 'docs-site/**'
+      - 'docs/**'
+      - 'src/Forma.Core/**'
+      - 'src/Forma.Builder/Models/Appearance.cs'
+      - 'src/Forma.Builder/Services/InspectorCatalog.cs'
+      - 'src/Forma.Builder/DesignerWeb/index.html'
+      - 'src/Forma.Builder/DesignerWeb/runtime-script-properties.json'
+      - 'src/Forma.Builder/Frontend/**'
+  pull_request:
+    paths:
+      - '.github/workflows/docs-site.yml'
+      - 'docs-site/**'
+      - 'docs/**'
+      - 'src/Forma.Core/**'
+      - 'src/Forma.Builder/Models/Appearance.cs'
+      - 'src/Forma.Builder/Services/InspectorCatalog.cs'
+      - 'src/Forma.Builder/DesignerWeb/index.html'
+      - 'src/Forma.Builder/DesignerWeb/runtime-script-properties.json'
+      - 'src/Forma.Builder/Frontend/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: docs-site-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: Docs build and browser checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: docs-site
+    env:
+      DOCS_SITE: https://forma-documentation.vercel.app
+      DOCS_BROWSER_CHANNEL: chromium
+      DOCS_PREVIEW_URL: http://127.0.0.1:4321
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: docs-site/package-lock.json
+      - run: npm ci
+      - name: Check Astro and generated references
+        run: npm run check
+      - name: Build and verify links, assets, and reference sections
+        run: npm run build
+      - name: Install browser
+        run: npx playwright install --with-deps chromium
+      - name: Verify desktop and mobile interactions
+        shell: bash
+        run: |
+          npm run preview -- --port 4321 > /tmp/forma-docs-preview.log 2>&1 &
+          preview_pid=$!
+          trap 'kill "$preview_pid" 2>/dev/null || true' EXIT
+          for attempt in {1..30}; do
+            if curl --fail --silent "$DOCS_PREVIEW_URL/" > /dev/null; then
+              npm run test:browser
+              exit $?
+            fi
+            sleep 1
+          done
+          cat /tmp/forma-docs-preview.log
+          echo 'Documentation preview did not start.' >&2
+          exit 1

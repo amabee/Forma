@@ -8,7 +8,7 @@ The tree includes:
 
 - **Project:** the saved project name, or Untitled project.
 - **Forms:** every form and its nested components, including nonvisual services.
-- **Source files:** `component.css`, `script.js` and `custom-properties.json`
+- **Source files:** `component.css`, `script.js`, `event.js` and `custom-properties.json`
   for each component and form. Containers group their own sources under Source
   files to separate them from nested components.
 - **Files:** custom JavaScript, CSS and JSON files organized in folders.

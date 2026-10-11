@@ -30,6 +30,13 @@ for (const file of htmlFiles) {
   if (!html.includes('<title>') || !html.includes('name="description"')) errors.push(`${relative}: missing page metadata`);
 }
 const componentPages = navigation.filter(page => page.kind);
+const eventGuide = path.join(dist, 'guides/events/index.html');
+if (!fs.existsSync(eventGuide)) errors.push('Missing event payload guide');
+else {
+  const html = fs.readFileSync(eventGuide, 'utf8');
+  for (const section of ['Event payload reference', 'Component handles and forma.root', 'PropertyChanged and change origins', 'Current JS and C# boundary'])
+    if (!html.includes(section)) errors.push(`Events: missing ${section}`);
+}
 for (const page of componentPages) {
   const file = path.join(dist, page.slug, 'index.html');
   if (!fs.existsSync(file)) errors.push(`Missing component page ${page.title}`);

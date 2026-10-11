@@ -226,6 +226,23 @@ ComponentCustomization model data; ComponentSaveSession and ComponentEditorServi
 still validate, save and watch external files. Editor diagnostics are authoring
 feedback, not an execution engine or a generated C# application.
 
+The Events inspector is View code in `Frontend/event-inspector.mjs`.
+`Frontend/event-handlers.mjs` parses saved/draft registrations without executing
+them and generates static handler methods in a component's event.js module.
+script.js imports and subscribes those methods. Both sources are Model data in
+ComponentCustomization and pass through the existing save/history pipeline.
+The Preview module loader gives event modules their owning component context
+while keeping project provider modules shared within a session.
+
+The runtime event wrapper in component-customization.js preserves browser events
+and adds identity, scoped component handles, input metadata and PropertyChanged.
+Handles use the same runtime property API and own their subscriptions through
+the calling script's cleanup scope. PreviewSession publishes accepted write
+origins with coalesced state; JS deduplicates observed property values against
+live input and confirmed snapshots. Portable event logging emits descriptors,
+not DOM handles. C# handler compilation and transaction tracing are separate future
+features. See [the event contract](events.md).
+
 ### Responsive and section containers
 
 `Controls/ResponsiveLayout.cs` is the shared Model for AppShell and

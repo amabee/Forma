@@ -19,6 +19,8 @@ try {
   await page.locator('[data-source-tab="script"]').click();
   assert.equal(await page.locator('#source-script').isVisible(), true);
   assert.equal(await page.locator('#source-css').isVisible(), false);
+  await page.locator('[data-source-tab="events"]').click();
+  assert.ok((await page.locator('#source-events').textContent()).includes('static greetingButton_Click'));
   await page.locator('[data-source-tab="json"]').click();
   assert.ok((await page.locator('#source-json').textContent()).includes('clicks'));
   await page.locator('[data-source-tab="css"]').click();
@@ -46,6 +48,11 @@ try {
   assert.ok(page.url().includes('/guides/') || page.url().includes('/components/'));
   await page.goto(origin + base + '/components/timer/');
   await page.screenshot({ path: 'dist/qa/timer-desktop.png', fullPage: true });
+  await page.goto(origin + base + '/guides/events/');
+  await page.getByRole('heading', { name: 'Event payload reference', exact: true }).waitFor();
+  assert.ok((await page.locator('main').textContent()).includes('previousValue'));
+  assert.ok((await page.locator('main').textContent()).includes('event.js'));
+  await page.screenshot({ path: 'dist/qa/events-desktop.png', fullPage: true });
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto(origin + base + '/');
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), true);
@@ -58,6 +65,9 @@ try {
   await page.goto(origin + base + '/components/datagridview/');
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), true);
   await page.screenshot({ path: 'dist/qa/grid-mobile.png', fullPage: true });
+  await page.goto(origin + base + '/guides/events/');
+  assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), true);
+  await page.screenshot({ path: 'dist/qa/events-mobile.png', fullPage: true });
   await page.locator('[data-search-open]').click(); await page.locator('#search-input').fill('providers');
   await page.locator('.search-result').first().waitFor();
   await page.locator('#search-close').click();

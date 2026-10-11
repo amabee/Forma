@@ -72,13 +72,19 @@ code generation remain later roadmap work. Component-specific CSS, JavaScript
 scripts and custom JSON values are available through **Custom Properties…**
 below the property search field. See [component customization](component-customization.md).
 
+The Events inspector generates per-component event.js methods with subscriptions
+in script.js. forma.root listens on the active form. Event payloads include
+component handles, typed input values, cancellation controls and portable logging;
+PropertyChanged observes runtime changes. C# handler execution and transaction
+tracing remain pending. See [events and payloads](events.md).
+
 CheckBox/RadioButton expose Checked. RadioButton browser interactions group by
 parent container. ComboBox/ListBox expose newline-separated Items and Selected
 index. Image offers a Choose image file picker, also accepts a URL or absolute
 file path, and supports contain/cover/fill sizing.
 DataGridView exposes newline-separated Columns, Rows as JSON arrays, and Read only;
-editing cells in Preview updates C# rows. Sorting, data binding and virtualization
-are future work.
+editing cells in Preview updates C# rows. Sorting, filtering and row selection are
+implemented; advanced binding and virtualization remain future work.
 
 Timer and BackgroundWorker appear in a nonvisual tray. Enable a Timer in its
 inspector and enter Preview to see ticks in the Builder window title. Returning
