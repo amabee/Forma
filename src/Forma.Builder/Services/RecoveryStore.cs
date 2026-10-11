@@ -12,8 +12,7 @@ public sealed record RecoveryEntry(string Id, string DocumentPath, string? Proje
 /// </summary>
 public sealed class RecoveryStore(string folder)
 {
-    public static RecoveryStore Default { get; } = new(Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Forma", "Recovery"));
+    public static RecoveryStore Default { get; } = new(Path.Combine(FormaPaths.DataFolder, "Recovery"));
 
     public string Folder { get; } = folder;
 

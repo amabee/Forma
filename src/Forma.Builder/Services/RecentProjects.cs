@@ -7,8 +7,7 @@ public sealed class RecentProjects(string file)
 {
     public const int Limit = 8;
 
-    public static RecentProjects Default { get; } = new(Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Forma", "recent-projects.json"));
+    public static RecentProjects Default { get; } = new(Path.Combine(FormaPaths.DataFolder, "recent-projects.json"));
 
     public IReadOnlyList<string> Load()
     {
