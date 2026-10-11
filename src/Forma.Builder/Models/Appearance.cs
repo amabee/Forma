@@ -10,6 +10,16 @@ public sealed class Appearance
     private string _anchor = "top,left";
     public static readonly string[] DockValues = ["none", "top", "bottom", "left", "right", "fill"];
     public static readonly string[] AnchorValues = ["none", "top,left", "top,right", "bottom,left", "bottom,right", "top,left,right", "bottom,left,right", "top,bottom,left", "top,bottom,right", "top,bottom,left,right", "top", "bottom", "left", "right", "top,bottom", "left,right"];
+    public static readonly string[] BorderSideValues = ["all", "none", "top", "bottom", "left", "right", "top,bottom", "left,right", "top,left,right", "bottom,left,right"];
+    private string _borderSides = "all";
+    /// <summary>Which edges draw the border, e.g. "bottom" for a divider-style line.</summary>
+    public string BorderSides
+    {
+        get => _borderSides;
+        set => _borderSides = BorderSideValues.Contains(value) ? value : throw new ArgumentException("Invalid BorderSides value.");
+    }
+    /// <summary>The border width drawn on one edge ("top", "right", "bottom" or "left").</summary>
+    public int BorderOn(string side) => BorderSides == "all" || BorderSides.Split(',').Contains(side) ? BorderWidth : 0;
     public string Dock
     {
         get => _dock;

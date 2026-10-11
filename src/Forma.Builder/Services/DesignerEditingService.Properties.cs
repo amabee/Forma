@@ -249,6 +249,9 @@ public sealed partial class DesignerEditingService
             case "borderWidth" when number is int bw:
                 a.BorderWidth = Math.Clamp(bw, 0, 10);
                 break;
+            case "borderSides" when text is not null && Appearance.BorderSideValues.Contains(text):
+                a.BorderSides = text;
+                break;
             case "borderRadius" when number is int br:
                 a.BorderRadius = Math.Clamp(br, 0, 100);
                 break;

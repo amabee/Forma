@@ -93,6 +93,7 @@ const CSS_FOR_PROPERTY = {
   fontSize: ["font", "font-size"], fontFamily: ["font", "font-family"], fontWeight: ["font", "font-weight"], fontStyle: ["font", "font-style"],
   textAlign: ["text-align"], lineHeight: ["line-height"], letterSpacing: ["letter-spacing"],
   borderColor: ["border", "border-color"], borderWidth: ["border", "border-width"], borderStyle: ["border", "border-style"], borderRadius: ["border-radius"],
+  borderSides: ["border", "border-width", "border-top", "border-right", "border-bottom", "border-left"],
   paddingTop: ["padding", "padding-top"], paddingRight: ["padding", "padding-right"], paddingBottom: ["padding", "padding-bottom"], paddingLeft: ["padding", "padding-left"],
   opacity: ["opacity"], cursor: ["cursor"], zIndex: ["z-index"],
 };
@@ -111,6 +112,10 @@ function hostDeclarations(css) {
 // Box-model declarations that move a control's contents relative to the designer's layout.
 const LAYOUT_CSS = new Set(["padding", "padding-top", "padding-right", "padding-bottom", "padding-left",
   "border", "border-width", "border-top", "border-right", "border-bottom", "border-left"]);
+function borderEdge(item, side) {
+  const sides = item.borderSides ?? "all";
+  return sides === "all" || sides.split(",").includes(side) ? Number(item.borderWidth) || 0 : 0;
+}
 const COLOR_KEY = "forma.inspector.colors";
 const PRESET_COLORS = ["#ffffff", "#1f2937", "#2878ff", "#16a34a", "#dc2626", "#f59e0b", "#7c3aed", "#f3f6fb"];
 function recentColors() {
@@ -670,7 +675,8 @@ window.formaDesigner = {
       Object.assign(el.style, {
         borderStyle: item.borderStyle,
         borderColor: item.borderColor,
-        borderWidth: `${item.borderWidth}px`,
+        // Per-edge widths so "Border sides" can draw, say, only a bottom divider line.
+        borderWidth: ["top", "right", "bottom", "left"].map((side) => `${borderEdge(item, side)}px`).join(" "),
         borderRadius: `${item.borderRadius}px`,
         padding: `${item.padding}px`,
         opacity: String(

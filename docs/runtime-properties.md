@@ -30,7 +30,7 @@ Visual controls support these fields where the inspector exposes them:
 | Child assignment | layoutSlot | One-based integer pane/tab/cell |
 | Free-position layout | dock, anchor | Inspector option strings; layout providers retain control of child placement |
 | Colors | backColor, foreColor, borderColor | Six-digit hex string or transparent |
-| Border | borderStyle, borderWidth, borderRadius | Inspector option string; integer pixels |
+| Border | borderStyle, borderWidth, borderSides, borderRadius | Inspector option string; integer pixels; `borderSides` is one of `all`, `none`, `top`, `bottom`, `left`, `right`, `top,bottom`, `left,right`, `top,left,right`, `bottom,left,right` |
 | Typography | fontFamily, fontSize, fontWeight, fontStyle, textAlign, lineHeight, letterSpacing | Inspector option strings; fontSize integer, lineHeight/letterSpacing finite numbers |
 | Spacing | marginTop/Right/Bottom/Left, paddingTop/Right/Bottom/Left | Integers, 0–64 |
 | Appearance | opacity, shadow, cursor, cssClass | Percent integer; inspector option strings; CSS class string |

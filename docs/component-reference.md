@@ -37,6 +37,7 @@ property categories, for both visual controls and tray components.
 | `borderStyle` | Border style | select | `none`, `solid`, `dashed`, `dotted` | Editable; children only |
 | `borderColor` | Border color | color | — | Editable; children only |
 | `borderWidth` | Border width | number | 0 to 10 | Editable; children only |
+| `borderSides` | Border sides | select | all, none, top, bottom, left, right, top,bottom, left,right, top,left,right, bottom,left,right | Editable; children only. `bottom` draws a divider-style line |
 | `borderRadius` | Radius | number | 0 to 100 | Editable; children only |
 | `opacity` | Opacity (%) | number | 10 to 100 | Editable; children only |
 | `shadow` | Shadow | select | `None`, `Small`, `Medium`, `Large` | Editable; children only |

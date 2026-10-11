@@ -17,6 +17,7 @@
     "borderStyle",
     "borderColor",
     "borderWidth",
+    "borderSides",
     "borderRadius",
     "opacity",
     "shadow",

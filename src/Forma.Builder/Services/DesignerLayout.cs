@@ -22,8 +22,8 @@ public sealed class DesignerLayout(BuilderViewModel viewModel)
             : parent is Forma.Core.Controls.Accordion accordion ? (accordion.Tabs.Length + 1) * 36
             : parent is Forma.Core.Controls.TabControl tabs && tabs.Orientation != "vertical" ? 36
             : 0;
-        var width = a.Width - a.PaddingLeft - a.PaddingRight - 2 * a.BorderWidth;
-        var height = a.Height - a.PaddingTop - a.PaddingBottom - 2 * a.BorderWidth - header;
+        var width = a.Width - a.PaddingLeft - a.PaddingRight - a.BorderOn("left") - a.BorderOn("right");
+        var height = a.Height - a.PaddingTop - a.PaddingBottom - a.BorderOn("top") - a.BorderOn("bottom") - header;
         if (parent is Forma.Core.Controls.TabControl verticalTabs && parent is not Forma.Core.Controls.Accordion && verticalTabs.Orientation == "vertical") width -= 120;
         if (parent is Forma.Core.Controls.SplitContainer split)
         {

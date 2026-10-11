@@ -115,6 +115,7 @@ public static class InspectorCatalog
         ),
         new("borderColor", "Border color", "Appearance", "color", ChildOnly: true),
         new("borderWidth", "Border width", "Appearance", "number", 0, 10, ChildOnly: true),
+        new("borderSides", "Border sides", "Appearance", "select", Options: Appearance.BorderSideValues, ChildOnly: true),
         new("borderRadius", "Radius", "Appearance", "number", 0, 100, ChildOnly: true),
         new("opacity", "Opacity (%)", "Appearance", "number", 10, 100, ChildOnly: true),
         new(

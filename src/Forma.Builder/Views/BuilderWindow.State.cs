@@ -153,6 +153,7 @@ public sealed partial class BuilderWindow
         borderStyle = a.BorderStyle,
         borderColor = a.BorderColor,
         borderWidth = a.BorderWidth,
+        borderSides = a.BorderSides,
         borderRadius = a.BorderRadius,
         padding = a.Padding,
         opacity = a.Opacity,

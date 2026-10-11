@@ -13,10 +13,16 @@
     return { width: Math.max(0, host.clientWidth ? host.clientWidth - paddingX : fallback.width),
       height: Math.max(0, host.clientHeight ? host.clientHeight - paddingY : fallback.height), x: px, y: py };
   }
+  // Border width on one edge; "borderSides" limits the border to some edges (default all).
+  function borderEdge(item, side) {
+    const sides = item.borderSides ?? 'all';
+    return sides === 'all' || sides.split(',').includes(side) ? number(item.borderWidth) : 0;
+  }
   function reference(parent) {
     if (parent.kind === 'form') return { width: number(parent.width), height: number(parent.height) };
-    let width = number(parent.width) - number(parent.paddingLeft) - number(parent.paddingRight) - 2 * number(parent.borderWidth);
-    let height = number(parent.height) - number(parent.paddingTop) - number(parent.paddingBottom) - 2 * number(parent.borderWidth);
+    const edge = side => borderEdge(parent, side);
+    let width = number(parent.width) - number(parent.paddingLeft) - number(parent.paddingRight) - edge('left') - edge('right');
+    let height = number(parent.height) - number(parent.paddingTop) - number(parent.paddingBottom) - edge('top') - edge('bottom');
     if (parent.kind === 'groupbox') height -= 28;
     if (parent.kind === 'card' && parent.headerVisible) height -= 56;
     if (parent.kind === 'tabcontrol') { if (parent.orientation === 'vertical') width -= 120; else height -= 36; }

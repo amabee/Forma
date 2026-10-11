@@ -232,7 +232,7 @@ public sealed class PreviewSession : IDisposable
         if (RuntimePropertyService.TrySet(control, Appearance[id], property, value))
         {
             if (property is "width" or "height" or "minimumWidth" or "minimumHeight" or "maximumWidth" or "maximumHeight"
-                or "paddingTop" or "paddingRight" or "paddingBottom" or "paddingLeft" or "borderWidth" or "headerVisible" or "aspectRatio")
+                or "paddingTop" or "paddingRight" or "paddingBottom" or "paddingLeft" or "borderWidth" or "borderSides" or "headerVisible" or "aspectRatio")
                 ResizeAnchoredChildren(control, oldContent);
             return;
         }
@@ -243,8 +243,8 @@ public sealed class PreviewSession : IDisposable
     {
         var a = Appearance[control.Id];
         if (control == Form) return (a.Width, a.Height);
-        var width = a.Width - a.PaddingLeft - a.PaddingRight - 2 * a.BorderWidth;
-        var height = a.Height - a.PaddingTop - a.PaddingBottom - 2 * a.BorderWidth;
+        var width = a.Width - a.PaddingLeft - a.PaddingRight - a.BorderOn("left") - a.BorderOn("right");
+        var height = a.Height - a.PaddingTop - a.PaddingBottom - a.BorderOn("top") - a.BorderOn("bottom");
         if (control is Forma.Core.Controls.GroupBox) height -= 28;
         if (control is Card { HeaderVisible: true }) height -= 56;
         if (control is Accordion accordion) height -= (accordion.Tabs.Length + 1) * 36;
