@@ -84,7 +84,12 @@ public sealed class DataGridView : Control
             return;
         var cells = _rows[row];
         if (cells.Length < _columns.Length)
+        {
+            // Pad with empty cells: filtering, sorting and the Rows setter all assume non-null cells.
+            var length = cells.Length;
             Array.Resize(ref cells, _columns.Length);
+            Array.Fill(cells, "", length, cells.Length - length);
+        }
         if (cells[column] == value)
             return;
         cells[column] = value;

@@ -37,6 +37,7 @@ public sealed class ProjectNode
 public static class ProjectFile
 {
     public const long MaximumBytes = 50 * 1024 * 1024;
+    public const long MaxEmbeddedImageBytes = 10 * 1024 * 1024;
     private static readonly JsonSerializerOptions Options = new()
     {
         WriteIndented = true,
@@ -181,7 +182,8 @@ public static class ProjectFile
     public static ProjectDocument Capture(
         FControl root,
         Func<FControl, JsonElement> appearance,
-        bool embedImages = false
+        bool embedImages = false,
+        ICollection<string>? skippedImages = null
     )
     {
         ProjectNode Node(FControl control)
@@ -198,22 +200,12 @@ public static class ProjectFile
                 && uri.IsFile
             )
             {
-                var info = new FileInfo(uri.LocalPath);
-                if (info.Length > 10 * 1024 * 1024)
-                    throw new InvalidDataException("An image exceeds the 10 MB image limit.");
-                var mime = Path.GetExtension(info.Name).ToLowerInvariant() switch
-                {
-                    ".svg" => "image/svg+xml",
-                    ".jpg" or ".jpeg" => "image/jpeg",
-                    ".gif" => "image/gif",
-                    ".webp" => "image/webp",
-                    ".bmp" => "image/bmp",
-                    ".ico" => "image/x-icon",
-                    _ => "image/png",
-                };
-                properties["Source"] = JsonSerializer.SerializeToElement(
-                    $"data:{mime};base64,{Convert.ToBase64String(File.ReadAllBytes(info.FullName))}"
-                );
+                // Embedding is best-effort: a moved, unreadable or oversized image keeps its
+                // file URI so saving and undo never fail because of an external file.
+                if (EmbeddedImage(uri.LocalPath) is string dataUri)
+                    properties["Source"] = JsonSerializer.SerializeToElement(dataUri);
+                else
+                    skippedImages?.Add(image.Source);
             }
             return new()
             {
@@ -227,9 +219,49 @@ public static class ProjectFile
         return new() { Root = Node(root) };
     }
 
-    public static ProjectDocument CaptureProject(IEnumerable<Forma.Core.Form> forms, Func<FControl, JsonElement> appearance, bool embedImages = false)
+    // Undo snapshots embed images on every edit; cache the encoded file until it changes on disk.
+    private static readonly Dictionary<string, (long Length, DateTime WrittenUtc, string DataUri)> EmbeddedImages = new(StringComparer.OrdinalIgnoreCase);
+
+    private static string? EmbeddedImage(string path)
     {
-        var nodes = forms.Select(form => Capture(form, appearance, embedImages).Root).ToList();
+        try
+        {
+            var info = new FileInfo(path);
+            if (!info.Exists || info.Length > MaxEmbeddedImageBytes)
+                return null;
+            lock (EmbeddedImages)
+            {
+                if (EmbeddedImages.TryGetValue(info.FullName, out var cached)
+                    && cached.Length == info.Length && cached.WrittenUtc == info.LastWriteTimeUtc)
+                    return cached.DataUri;
+            }
+            var mime = Path.GetExtension(info.Name).ToLowerInvariant() switch
+            {
+                ".svg" => "image/svg+xml",
+                ".jpg" or ".jpeg" => "image/jpeg",
+                ".gif" => "image/gif",
+                ".webp" => "image/webp",
+                ".bmp" => "image/bmp",
+                ".ico" => "image/x-icon",
+                _ => "image/png",
+            };
+            var dataUri = $"data:{mime};base64,{Convert.ToBase64String(File.ReadAllBytes(info.FullName))}";
+            lock (EmbeddedImages)
+            {
+                if (EmbeddedImages.Count >= 32) EmbeddedImages.Clear();
+                EmbeddedImages[info.FullName] = (info.Length, info.LastWriteTimeUtc, dataUri);
+            }
+            return dataUri;
+        }
+        catch (Exception error) when (error is IOException or UnauthorizedAccessException or ArgumentException or NotSupportedException)
+        {
+            return null;
+        }
+    }
+
+    public static ProjectDocument CaptureProject(IEnumerable<Forma.Core.Form> forms, Func<FControl, JsonElement> appearance, bool embedImages = false, ICollection<string>? skippedImages = null)
+    {
+        var nodes = forms.Select(form => Capture(form, appearance, embedImages, skippedImages).Root).ToList();
         if (nodes.Count == 0) throw new InvalidOperationException("No forms are open.");
         return nodes.Count == 1 ? new() { Root = nodes[0] } : new() { Version = 2, Root = nodes[0], Forms = nodes };
     }

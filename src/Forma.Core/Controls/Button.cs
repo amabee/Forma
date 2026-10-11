@@ -6,7 +6,12 @@ public class Button : Control
 {
     public event EventHandler? Click;
 
-    public bool Enabled { get; set; } = true;
+    private bool _enabled = true;
+    public bool Enabled
+    {
+        get => _enabled;
+        set => SetProperty(ref _enabled, value);
+    }
 
     public event EventHandler<MouseEventArgs>? MouseDown;
     public event EventHandler<MouseEventArgs>? MouseUp;

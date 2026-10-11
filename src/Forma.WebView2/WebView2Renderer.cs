@@ -93,6 +93,7 @@ public sealed class WebView2Renderer : IRenderer
     {
         var properties = new Dictionary<string, object?> { ["text"] = control.Text, ["x"] = control.X, ["y"] = control.Y, ["layoutSlot"] = control.LayoutSlot };
         if (control is CheckBox check) properties["checked"] = check.Checked;
+        if (control is Button button) properties["enabled"] = button.Enabled;
         if (control is NumericControl numeric) { properties["minimum"] = numeric.Minimum; properties["maximum"] = numeric.Maximum; properties["increment"] = numeric.Increment; properties["number"] = numeric.Value; }
         if (control is DateTimeInput date) properties["dateValue"] = date.DateValue;
         if (control is ColorPicker color) properties["color"] = color.Color;
@@ -318,9 +319,7 @@ public sealed class WebView2Renderer : IRenderer
         if (registration.Control is CheckBox check && message.Event == "checked"
             && data.TryGetProperty("checked", out var checkedValue) && checkedValue.ValueKind is JsonValueKind.True or JsonValueKind.False)
         {
-            if (check is RadioButton && checkedValue.GetBoolean())
-                foreach (var other in _controls.Values.Select(r => r.Control).OfType<RadioButton>())
-                    if (other != check && other.Parent == check.Parent) other.Checked = false;
+            // RadioButton.Checked unchecks its siblings itself.
             check.Checked = checkedValue.GetBoolean();
         }
         if (registration.Control is ChoiceControl choice && message.Event == "selection"

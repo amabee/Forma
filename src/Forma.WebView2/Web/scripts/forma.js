@@ -644,6 +644,8 @@ window.forma = {
         input.readOnly = properties.readOnly || input.dataset.entryReadOnly === "true";
       });
     }
+    // Runtime Button.Enabled; in the Builder, appearance Enabled drives the disabled state instead.
+    if (kind === "button" && "enabled" in properties && !window.formaDesigner) element.disabled = properties.enabled === false;
     if (kind === "togglebutton") { element.setAttribute("aria-pressed", String(properties.checked ?? false)); element.classList.toggle("toggle-active", properties.checked ?? false); }
     if (["textbox", "maskedtextbox", "searchbox", "passwordbox", "textarea"].includes(kind) && "placeholder" in properties) element.placeholder = properties.placeholder ?? "";
     if ("layoutSlot" in properties) element.dataset.slot = properties.layoutSlot;
@@ -723,10 +725,13 @@ window.forma = {
           });
           return button;
         }));
-        const addTab = document.createElement("button"); addTab.type = "button"; addTab.textContent = "+";
-        addTab.dataset.tabAdd = "true"; addTab.setAttribute("aria-label", kind === "accordion" ? "Add section" : "Add tab");
-        addTab.addEventListener("click", () => { if (window.formaDesigner?.preview === false) window.forma.send({ type: "designer", id: element.id, event: "command", payload: { command: "add-tab" } }); });
-        bar.appendChild(addTab);
+        // The "+" is a design-time affordance; end-user apps (no Builder) never get it.
+        if (window.formaDesigner) {
+          const addTab = document.createElement("button"); addTab.type = "button"; addTab.textContent = "+";
+          addTab.dataset.tabAdd = "true"; addTab.setAttribute("aria-label", kind === "accordion" ? "Add section" : "Add tab");
+          addTab.addEventListener("click", () => { if (window.formaDesigner?.preview === false) window.forma.send({ type: "designer", id: element.id, event: "command", payload: { command: "add-tab" } }); });
+          bar.appendChild(addTab);
+        }
         if (kind === "accordion") {
           const active = bar.querySelector(`[data-tab-index="${properties.selectedTab ?? 0}"]`);
           if (active) active.after(host); else bar.append(host);

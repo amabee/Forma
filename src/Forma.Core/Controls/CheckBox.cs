@@ -10,9 +10,15 @@ public class CheckBox : Control
         {
             if (_checked == value)
                 return;
-            SetProperty(ref _checked, value);
-            CheckedChanged?.Invoke(this, EventArgs.Empty);
+            _checked = value;
+            OnCheckedChanged();
         }
     }
     public event EventHandler? CheckedChanged;
+
+    protected virtual void OnCheckedChanged()
+    {
+        OnPropertyChanged(nameof(Checked));
+        CheckedChanged?.Invoke(this, EventArgs.Empty);
+    }
 }

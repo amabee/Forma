@@ -1478,6 +1478,11 @@ document.addEventListener(
   (event) => {
     const d = window.formaDesigner,
       root = d.root();
+    // Keyboard activation (Enter/Space) fires click with detail 0; mouse users double-click or drag.
+    if (event.detail === 0 && event.target.closest?.(".tool-group [data-kind]")) {
+      addTool(event);
+      return;
+    }
     if (event.target.closest("[data-handle]")) {
       event.preventDefault();
       event.stopImmediatePropagation();
@@ -1540,12 +1545,13 @@ document.addEventListener(
   },
   true,
 );
-document.addEventListener("dblclick", (event) => {
+function addTool(event) {
   const d = window.formaDesigner,
     tool = event.target.closest("[data-kind]");
   if (tool && !d.preview)
     send("drop", d.rootId, { control: tool.dataset.kind, x: 32, y: 32 });
-});
+}
+document.addEventListener("dblclick", addTool);
 document.addEventListener("change", (event) => {
   const d = window.formaDesigner,
     input = event.target;
@@ -1644,6 +1650,8 @@ document.addEventListener("keydown", (event) => {
     send("command", d.rootId, { command: event.shiftKey ? "new-project" : "new" });
   }
   if (d.preview) return;
+  // Delete and arrow nudges act on the canvas selection; don't hijack them from side panels or menus.
+  if (event.target.closest("aside, nav, [role=menu], [role=tablist], [role=tree]")) return;
   if (event.key === "Delete") {
     event.preventDefault();
     send("command", d.rootId, { command: "delete" });

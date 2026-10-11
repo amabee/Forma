@@ -25,6 +25,7 @@ public sealed class BuilderWindow : System.Windows.Forms.Form
     private bool _codeVisible;
     private bool _closingEditors;
     private readonly HashSet<FControl> _subscribedControls = [];
+    private readonly HashSet<string> _orphanedEditors = [];
     private string _workspaceTheme = "dark";
     private readonly BuilderViewModel _viewModel = new();
 
@@ -152,7 +153,9 @@ public sealed class BuilderWindow : System.Windows.Forms.Form
         // WebView2 forbids nested modal message loops in its callbacks. Post the
         // command to WinForms so dialogs open after the WebView2 callback returns.
         BeginInvoke(new Action(async () => {
-            if (!IsDisposed && !Disposing) await HandleDesignerMessageAsync(message);
+            // async void: an escaping exception would crash the WinForms message loop.
+            try { if (!IsDisposed && !Disposing) await HandleDesignerMessageAsync(message); }
+            catch (Exception error) { if (!IsDisposed) await StateAsync($"Designer error: {error.Message}"); }
         }));
     }
 
@@ -160,14 +163,14 @@ public sealed class BuilderWindow : System.Windows.Forms.Form
     {
         if (message.Type == "designer" && message.Event == "theme" && message.Payload is JsonElement themePayload
             && themePayload.ValueKind == JsonValueKind.Object && themePayload.TryGetProperty("theme", out var themeValue)) {
-            var theme = themeValue.GetString();
+            var theme = themeValue.ValueKind == JsonValueKind.String ? themeValue.GetString() : null;
             if (theme is "light" or "dark") { _workspaceTheme = theme; foreach (var editor in _editors.Values) editor.ApplyTheme(theme); }
             return;
         }
         if (message.Type == "custom" && message.Event == "error" && _ready
-            && message.Payload is JsonElement errorPayload && errorPayload.TryGetProperty("message", out var errorMessage))
+            && message.Payload is JsonElement errorPayload && String(errorPayload, "message") is string errorMessage)
         {
-            await StateAsync($"Component style error: {errorMessage.GetString()}");
+            await StateAsync($"Component style error: {errorMessage}");
             return;
         }
         if (message.Type != "designer" || !_ready || _viewModel.Form is null || _bridge is null)
@@ -289,8 +292,14 @@ public sealed class BuilderWindow : System.Windows.Forms.Form
                                         if (owner is null) throw new InvalidOperationException("This component no longer belongs to the project.");
                                         if (_viewModel.Form != owner) await SwitchFormAsync(owner.Id);
                                     }
-                                    var result = globalEditor ? _viewModel.ExecuteEdit("global-script", selected.Id, JsonSerializer.SerializeToElement(new { script = source.Behavior }))
-                                        : _viewModel.ExecuteEdit("customize", selected.Id, JsonSerializer.SerializeToElement(source));
+                                    DesignerEditResult result;
+                                    try {
+                                        result = globalEditor ? _viewModel.ExecuteEdit("global-script", selected.Id, JsonSerializer.SerializeToElement(new { script = source.Behavior }))
+                                            : _viewModel.ExecuteEdit("customize", selected.Id, JsonSerializer.SerializeToElement(source));
+                                    } catch (Exception error) {
+                                        await RollBackFailedEditAsync($"Could not apply component code: {error.Message}");
+                                        throw;
+                                    }
                                     await StateAsync(result.Status);
                                 }, () => new { controls = Walk(globalEditor ? _viewModel.Form : _viewModel.Forms.FirstOrDefault(form => Walk(form).Any(control => control.Id == selected.Id)) ?? _viewModel.Form).Select(c => new { id = c.Id, name = c.Name, kind = c.ControlType, properties = InspectorCatalog.ForKind(c.ControlType).Select(p => new { key = p.Id, type = p.Editor, options = p.Options }).ToArray() }).ToArray(), modules = ComponentEditorService.ModuleNames(_viewModel.GlobalScript), globalSource = _viewModel.GlobalScript, projectFiles = ProjectEntryService.ModuleSources(_viewModel.Files).Select(file => new { path = file.Path, content = file.Content }).ToArray() }, globalScript: globalEditor, componentKind: selected.ControlType);
                             _editors.Add(targetKey, editor);
@@ -340,8 +349,18 @@ public sealed class BuilderWindow : System.Windows.Forms.Form
         }
         catch (Exception error)
         {
-            if (!IsDisposed) await StateAsync($"Designer error: {error.Message}");
+            if (IsDisposed) return;
+            if (!await RollBackFailedEditAsync($"Designer error: {error.Message} (change reverted)"))
+                await StateAsync($"Designer error: {error.Message}");
         }
+    }
+
+    /// <summary>Restores the design when a failed edit left partial changes behind.</summary>
+    private async Task<bool> RollBackFailedEditAsync(string status)
+    {
+        if (_viewModel.TakeFailedEdit() is not { } before) return false;
+        await RestoreHistoryAsync(before, status);
+        return true;
     }
 
     private void SubscribeControl(FControl control)
@@ -410,8 +429,11 @@ public sealed class BuilderWindow : System.Windows.Forms.Form
                 if (entry is null) editor.Close(); else editor.RefreshProjectSource(entry.Name, entry.Content);
                 continue;
             }
-            if (key != "global:" + _viewModel.ProjectRoot.Id && !ids.Contains(key)) editor.Close();
-            else editor.RefreshCompletionContext();
+            if (key == "global:" + _viewModel.ProjectRoot.Id || ids.Contains(key)) { _orphanedEditors.Remove(key); editor.RefreshCompletionContext(); }
+            // Undo, redo or a canvas delete removed this component. Keep unsaved code open so it
+            // isn't lost silently; redo restores the component, or the user can copy the code.
+            else if (!editor.HasUnsavedChanges) editor.Close();
+            else if (_orphanedEditors.Add(key)) status = $"{editor.DocumentName}: its component was removed; unsaved code kept open";
         }
         return _bridge.SendAsync(
             new
@@ -425,7 +447,7 @@ public sealed class BuilderWindow : System.Windows.Forms.Form
                 forms = _viewModel.Forms.Select(form => new { id = form.Id, name = form.Name, title = form.Title }).ToArray(),
                 selectedId = _viewModel.SelectedControl.Id,
                 canUndo = _viewModel.CanUndo, canRedo = _viewModel.CanRedo,
-                hasUnsavedChanges = _viewModel.HasUnsavedChanges,
+                hasUnsavedChanges = _viewModel.IsMarkedUnsaved,
                 status,
                 propertySchema = InspectorCatalog
                     .ForKind(_viewModel.SelectedControl.ControlType)
@@ -694,7 +716,8 @@ public sealed class BuilderWindow : System.Windows.Forms.Form
             path = dialog.FileName;
         }
         try {
-            var document = CaptureProject(embedImages: true);
+            var skippedImages = new List<string>();
+            var document = _viewModel.CaptureProject(embedImages: true, skippedImages);
             ProjectFile.Write(path, document);
             // Keep the opened image available even if its original file is moved later.
             void UseEmbeddedImages(ProjectNode node) {
@@ -703,7 +726,9 @@ public sealed class BuilderWindow : System.Windows.Forms.Form
             }
             foreach (var root in document.Version == 1 ? new[] { document.Root } : document.Forms.ToArray()) UseEmbeddedImages(root);
             _viewModel.ProjectPath = path; _viewModel.MarkSaved(); UpdateProjectTitle();
-            _ = StateAsync($"Saved {Path.GetFileName(path)}"); return true;
+            _ = StateAsync(skippedImages.Count == 0 ? $"Saved {Path.GetFileName(path)}"
+                : $"Saved {Path.GetFileName(path)}; {skippedImages.Count} image(s) are missing or over 10 MB and stay linked, not embedded");
+            return true;
         } catch (Exception error) {
             MessageBox.Show(this, error.Message, "Could not save design", MessageBoxButtons.OK, MessageBoxIcon.Error); return false;
         }
@@ -734,7 +759,8 @@ public sealed class BuilderWindow : System.Windows.Forms.Form
     }
     protected override void OnFormClosing(FormClosingEventArgs e)
     {
-        if (_ready && !ConfirmDiscard()) e.Cancel = true;
+        // Ask even mid-render (_ready is false then); only skip before a design exists.
+        if (_viewModel.Form is not null && !ConfirmDiscard()) e.Cancel = true;
         base.OnFormClosing(e);
     }
 
@@ -767,7 +793,7 @@ public sealed class BuilderWindow : System.Windows.Forms.Form
     {
         editor.MetadataChanged += async (_, _) => await PublishEditorTabsAsync();
         editor.Closed += async (_, _) => {
-            _editors.Remove(targetKey);
+            _editors.Remove(targetKey); _orphanedEditors.Remove(targetKey);
             var wasActive = ReferenceEquals(_componentEditor, editor);
             if (wasActive) {
                 _componentEditor = null; _editorTargetId = null;
