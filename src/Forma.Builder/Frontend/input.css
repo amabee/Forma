@@ -512,6 +512,63 @@
   .property-reset {
     @apply absolute top-1.5 left-[78px] size-5 rounded text-[12px] leading-none text-muted hover:bg-hover hover:text-ink;
   }
+  /* Command palette and keyboard shortcuts sheet */
+  .palette-backdrop {
+    @apply fixed inset-0 z-[1200] flex items-start justify-center bg-black/30 px-4 pt-[12vh];
+  }
+  .palette {
+    @apply flex max-h-[70vh] w-[560px] max-w-full flex-col overflow-hidden rounded-xl border border-line bg-raised text-ink;
+    box-shadow: 0 24px 64px -16px rgb(0 0 0 / 0.55);
+  }
+  .palette-input {
+    @apply w-full shrink-0 border-b border-line bg-transparent px-4 py-3 text-[14px] text-ink outline-none placeholder:text-faint;
+  }
+  .palette-results {
+    @apply min-h-0 overflow-y-auto p-1.5;
+  }
+  .palette-item {
+    @apply flex cursor-pointer items-center gap-3 rounded-md px-3 py-2 text-[13px];
+  }
+  .palette-item[aria-selected="true"] {
+    @apply bg-accent-soft;
+  }
+  .palette-group {
+    @apply w-14 shrink-0 text-[11px] text-faint uppercase;
+  }
+  .palette-label {
+    @apply min-w-0 flex-1 truncate;
+  }
+  .palette-hint {
+    @apply shrink-0 text-[12px] text-muted;
+  }
+  .palette-empty {
+    @apply px-3 py-4 text-center text-[13px] text-faint;
+  }
+  .palette.shortcuts {
+    @apply gap-4 overflow-y-auto p-5;
+  }
+  .palette-header {
+    @apply flex items-center justify-between;
+  }
+  .palette-header h2 {
+    @apply text-base font-semibold;
+  }
+  .palette-close {
+    @apply size-8 rounded-md text-xl leading-none text-muted hover:bg-hover hover:text-ink;
+  }
+  .shortcut-group h3 {
+    @apply mb-1.5 text-[12px] font-semibold tracking-wide text-muted uppercase;
+  }
+  .shortcut-group dl {
+    @apply grid grid-cols-[minmax(0,14rem)_1fr] gap-x-4 gap-y-1 text-[13px];
+  }
+  .shortcut-group dt {
+    @apply font-mono text-[12px] text-ink;
+  }
+  .shortcut-group dd {
+    @apply text-muted;
+  }
+
   /* Start page: a dialog over the workspace with templates and recent projects */
   .start-page {
     @apply fixed inset-0 z-[1100] flex items-center justify-center bg-black/40 p-4;
