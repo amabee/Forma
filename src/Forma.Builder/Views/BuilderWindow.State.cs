@@ -38,6 +38,8 @@ public sealed partial class BuilderWindow
                 forms = _viewModel.Forms.Select(form => new { id = form.Id, name = form.Name, title = form.Title }).ToArray(),
                 selectedId = _viewModel.SelectedControl.Id,
                 selectedIds = _viewModel.SelectedIds,
+                // Properties every selected control has, for editing several controls at once.
+                sharedProperties = SharedProperties(),
                 canPaste = _viewModel.Clipboard.Count > 0,
                 canUndo = _viewModel.CanUndo, canRedo = _viewModel.CanRedo,
                 hasUnsavedChanges = _viewModel.IsMarkedUnsaved,
@@ -219,5 +221,15 @@ public sealed partial class BuilderWindow
                     .ToArray(),
             }
         );
+    }
+
+    private string[] SharedProperties()
+    {
+        var kinds = _viewModel.ProjectControls.Where(control => _viewModel.SelectedIds.Contains(control.Id))
+            .Select(control => control.ControlType).Distinct().ToList();
+        if (kinds.Count == 0) return [];
+        return kinds.Select(kind => InspectorCatalog.ForKind(kind).Select(property => property.Id))
+            .Aggregate((shared, next) => shared.Intersect(next))
+            .Where(id => id is not ("name" or "id")).ToArray();
     }
 }

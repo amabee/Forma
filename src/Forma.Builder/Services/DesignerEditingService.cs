@@ -151,8 +151,13 @@ public sealed partial class DesignerEditingService(BuilderViewModel viewModel)
                 selectedPicker.SelectedPath = path;
                 return new("Path selected");
             case "property" when control == _viewModel.SelectedControl:
-                ApplyProperty(control, payload);
-                return new("Property updated");
+                // With several controls selected, the edit applies to each one that has the
+                // property; each control still enforces its own schema and lock.
+                var editing = IdList(payload) is { Count: > 1 } && String(payload, "property") is not ("name" or "id")
+                    ? Walk(form).Where(item => item != form && _viewModel.SelectedIds.Contains(item.Id)).ToList()
+                    : [control];
+                foreach (var item in editing) ApplyProperty(item, payload);
+                return new(editing.Count > 1 ? $"Updated {editing.Count} controls" : "Property updated");
         }
         return new("Ready");
     }

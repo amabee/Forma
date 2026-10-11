@@ -502,6 +502,14 @@
     outline: 2px solid rgb(59 130 246 / 0.85);
     outline-offset: 1px;
   }
+  /* Multi-selection inspector: properties not shared by every selected control are hidden. */
+  .property-group label.multi-hidden,
+  .property-group.multi-empty {
+    display: none;
+  }
+  .property-group [data-mixed="true"]::placeholder {
+    @apply italic;
+  }
   .selection-path {
     @apply mb-2 flex flex-wrap items-center gap-1 text-[12px] text-faint;
   }

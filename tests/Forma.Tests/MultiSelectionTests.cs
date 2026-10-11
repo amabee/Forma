@@ -121,4 +121,26 @@ public class MultiSelectionTests
         var pasted = Assert.Single(model.ExecuteEdit("command", model.Form.Id, Payload(new { command = "paste" })).Added);
         Assert.Equal("label", pasted.ControlType);
     }
+
+    [Fact]
+    public void PropertyEditsApplyToEverySelectedControlThatHasTheProperty()
+    {
+        var model = NewDesign();
+        var button = Add(model, "button"); var label = Add(model, "label", x: 200); var timer = Add(model, "timer");
+        model.Appearance[label.Id].Locked = true;
+        var other = Add(model, "button", x: 300);
+        var ids = new[] { button.Id, label.Id, timer.Id, other.Id };
+        model.ExecuteEdit("select", other.Id, Payload(new { ids }));
+        model.ExecuteEdit("property", other.Id, Payload(new { property = "foreColor", value = "#ff0000", ids }));
+        Assert.Equal("#ff0000", model.Appearance[button.Id].ForeColor);
+        Assert.Equal("#ff0000", model.Appearance[other.Id].ForeColor);
+        Assert.NotEqual("#ff0000", model.Appearance[label.Id].ForeColor);
+        // Names stay unique: renaming never fans out to the whole selection.
+        model.ExecuteEdit("property", other.Id, Payload(new { property = "name", value = "renamed", ids }));
+        Assert.Equal("renamed", other.Name);
+        Assert.NotEqual("renamed", button.Name);
+        // One undo step restores every control.
+        var undo = model.Undo()!;
+        Assert.DoesNotContain("renamed", undo.Json);
+    }
 }

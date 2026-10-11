@@ -884,7 +884,13 @@ window.formaDesigner = {
       if (["y", "height"].includes(property))
         input.max =
           selected.id === this.rootId ? 1200 : this.root().clientHeight;
+      this.showSharedValue(input, property, selected);
     }
+    // Hide categories whose every property is hidden for this multi-selection.
+    byId("property-editors")?.querySelectorAll(".property-group").forEach((group) => {
+      const rows = [...group.querySelectorAll("label")];
+      group.classList.toggle("multi-empty", rows.length > 0 && rows.every((row) => row.classList.contains("multi-hidden")));
+    });
     if (byId("selection-status"))
       byId("selection-status").textContent =
         (window.formaSelection?.ids.length ?? 0) > 1
@@ -893,6 +899,30 @@ window.formaDesigner = {
             ? "Form selected"
             : `Selected ${selected.name}`;
     this.coordinates(selected.x, selected.y);
+  },
+  /**
+   * With several controls selected, only properties they all have stay visible, and a
+   * field whose values differ shows "Mixed" until the user sets one value for all.
+   */
+  showSharedValue(input, property, selected) {
+    const ids = window.formaSelection?.ids ?? [];
+    const others = ids.length > 1 ? ids.map((id) => this.controlById(id)).filter(Boolean) : [];
+    const row = input.closest("label");
+    const shared = new Set(this.state?.sharedProperties ?? []);
+    row?.classList.toggle("multi-hidden", others.length > 1 && !shared.has(property));
+    const mixed = others.length > 1 && shared.has(property)
+      && others.some((item) => JSON.stringify(item[property]) !== JSON.stringify(selected[property]));
+    if (input.type === "checkbox") input.indeterminate = mixed;
+    else if (mixed && document.activeElement !== input) {
+      input.dataset.placeholder ??= input.placeholder;
+      input.value = "";
+      input.placeholder = "Mixed";
+    } else if (!mixed && input.dataset.placeholder !== undefined) {
+      input.placeholder = input.dataset.placeholder;
+      delete input.dataset.placeholder;
+    }
+    if (mixed) input.dataset.mixed = "true";
+    else delete input.dataset.mixed;
   },
   buildEditors(schema) {
     const container = byId("property-editors");
@@ -1576,13 +1606,16 @@ document.addEventListener("change", (event) => {
   } else if (input.id === "selection") send("select", input.value);
   else if (input.dataset.property && !d.preview) {
     if (gridFields.has(input.dataset.property)) return; // Valid grid drafts commit on input, before selection or Save.
+    // A "Mixed" field left empty means "keep each control's own value".
+    if (input.dataset.mixed === "true" && input.type !== "checkbox" && input.value === "") return;
     const value =
       input.type === "checkbox"
         ? input.checked
         : input.type === "number"
           ? Number(input.value)
           : input.value;
-    send("property", d.selectedId, { property: input.dataset.property, value });
+    const ids = window.formaSelection?.ids ?? [];
+    send("property", d.selectedId, { property: input.dataset.property, value, ...(ids.length > 1 ? { ids } : {}) });
   }
 });
 document.addEventListener("input", (event) => {

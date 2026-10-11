@@ -129,3 +129,26 @@ test('drag-selecting on the form background picks the controls the rectangle tou
   assert.equal(last().event, 'select');
   assert.deepEqual(plain(last().payload.ids), ['a', 'b']);
 });
+
+test('the inspector shows shared properties, marks differing values Mixed and edits every control', () => {
+  const { document, window, last } = fixture();
+  const schema = [
+    { id: 'text', label: 'Text', category: 'General', editor: 'text' },
+    { id: 'width', label: 'Width', category: 'Layout', editor: 'number' },
+    { id: 'enabled', label: 'Enabled', category: 'Behavior', editor: 'checkbox' },
+    { id: 'iconName', label: 'Icon', category: 'Content', editor: 'text' },
+  ];
+  const items = controls.map(control => ({ ...control, text: control.id === 'c' ? 'Other' : 'Same', enabled: control.id !== 'b' }));
+  window.formaDesigner.receive({ action: 'state', id: 'root', title: 'Form1', status: 'Ready', selectedId: 'b', selectedIds: ['a', 'b'],
+    sharedProperties: ['text', 'width', 'enabled'], controls: items, propertySchema: schema });
+  const text = document.getElementById('prop-text'), width = document.getElementById('prop-width'), enabled = document.getElementById('prop-enabled');
+  assert.equal(text.value, 'Same');
+  assert.equal(text.dataset.mixed, undefined);
+  assert.equal(width.dataset.mixed, 'true', 'widths 100 and 60 differ');
+  assert.equal(width.placeholder, 'Mixed');
+  assert.equal(enabled.indeterminate, true);
+  assert.ok(document.getElementById('prop-iconName').closest('label').classList.contains('multi-hidden'));
+  width.value = '120';
+  width.dispatchEvent(new window.Event('change', { bubbles: true }));
+  assert.deepEqual(plain([last().event, last().payload.property, last().payload.value, last().payload.ids]), ['property', 'width', 120, ['a', 'b']]);
+});
