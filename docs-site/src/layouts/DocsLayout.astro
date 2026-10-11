@@ -33,7 +33,7 @@ const editPath = kind ? 'docs/component-reference.md' : slug.startsWith('guides/
   <body>
     <a class="skip-link" href="#content">Skip to content</a>
     <header class="site-header">
-      <a class="brand" href={href()} aria-label="Forma documentation home"><span class="brand-symbol" aria-hidden="true">F</span><strong>Forma</strong><span class="brand-divider"></span><span class="brand-docs">docs</span></a>
+      <a class="brand" href={href()} aria-label="Forma documentation home"><img class="brand-symbol" src={`${base}/favicon.svg`} alt="" /><strong>Forma</strong><span class="brand-divider"></span><span class="brand-docs">docs</span></a>
       <button class="search-launch" data-search-open><span aria-hidden="true">⌕</span><span>Find your next move…</span><kbd>Ctrl K</kbd></button>
       <nav class="header-actions" aria-label="Site actions">
         <a href={href('components')} class="desktop-link">Components</a>

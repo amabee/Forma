@@ -1308,7 +1308,7 @@
     @apply flex shrink-0 items-center gap-1;
   }
   .forma-logo {
-    @apply grid size-8 place-items-center rounded-lg bg-accent-soft text-lg leading-none text-accent;
+    @apply h-7 w-auto shrink-0;
   }
   .project-bar strong {
     @apply mr-3 ml-2 text-[15px] font-semibold tracking-tight text-ink;

@@ -38,6 +38,8 @@ public sealed partial class BuilderWindow : System.Windows.Forms.Form
             if (change.PropertyName == nameof(BuilderViewModel.WindowTitle))
                 Text = _viewModel.WindowTitle;
         };
+        // The exe's embedded Forma icon also brands the title bar and taskbar.
+        Icon = Icon.ExtractAssociatedIcon(Application.ExecutablePath);
         ClientSize = new Size(1280, 840);
         MinimumSize = new Size(1000, 650);
         StartPosition = FormStartPosition.CenterScreen;

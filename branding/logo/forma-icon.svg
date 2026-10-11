@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Forma">
+  <defs>
+    <linearGradient id="forma-arm" x1="30" y1="260" x2="358" y2="30" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#2f22b8"/>
+      <stop offset="0.55" stop-color="#5a4bff"/>
+      <stop offset="1" stop-color="#cdb8ff"/>
+    </linearGradient>
+    <linearGradient id="forma-stem" x1="90" y1="160" x2="60" y2="400" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#5d51ff"/>
+      <stop offset="0.6" stop-color="#3d32d6"/>
+      <stop offset="1" stop-color="#140f78"/>
+    </linearGradient>
+    <linearGradient id="forma-leaf" x1="170" y1="285" x2="312" y2="190" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#2a22b8"/>
+      <stop offset="1" stop-color="#6157ff"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="116" fill="#fdfcfb"/>
+  <rect x="1" y="1" width="510" height="510" rx="115" fill="none" stroke="#ece8f4" stroke-width="2"/>
+  <g transform="translate(104.68 88.30) scale(0.78)">
+    <path fill="url(#forma-arm)" d="M30 268V165A135 135 0 0 1 165 30H358C346 98 298 148 236 148H162A14 14 0 0 0 148 162V172L30 290Z"/>
+    <path fill="url(#forma-stem)" d="M148 172V300C148 358 98 400 30 400V244C30 194 70 160 120 160H136A12 12 0 0 1 148 172Z"/>
+    <path fill="url(#forma-leaf)" d="M163 285V252A62 62 0 0 1 225 190H312C300 246 266 285 218 285Z"/>
+  </g>
+</svg>

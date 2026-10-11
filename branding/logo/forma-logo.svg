@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 640" role="img" aria-label="Forma">
+  <defs>
+    <linearGradient id="forma-arm" x1="30" y1="260" x2="358" y2="30" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#2f22b8"/>
+      <stop offset="0.55" stop-color="#5a4bff"/>
+      <stop offset="1" stop-color="#cdb8ff"/>
+    </linearGradient>
+    <linearGradient id="forma-stem" x1="90" y1="160" x2="60" y2="400" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#5d51ff"/>
+      <stop offset="0.6" stop-color="#3d32d6"/>
+      <stop offset="1" stop-color="#140f78"/>
+    </linearGradient>
+    <linearGradient id="forma-leaf" x1="170" y1="285" x2="312" y2="190" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#2a22b8"/>
+      <stop offset="1" stop-color="#6157ff"/>
+    </linearGradient>
+  </defs>
+  
+  <g transform="translate(186.00 15.00) scale(1)">
+    <path fill="url(#forma-arm)" d="M30 268V165A135 135 0 0 1 165 30H358C346 98 298 148 236 148H162A14 14 0 0 0 148 162V172L30 290Z"/>
+    <path fill="url(#forma-stem)" d="M148 172V300C148 358 98 400 30 400V244C30 194 70 160 120 160H136A12 12 0 0 1 148 172Z"/>
+    <path fill="url(#forma-leaf)" d="M163 285V252A62 62 0 0 1 225 190H312C300 246 266 285 218 285Z"/>
+  </g>
+  <g transform="translate(86.00 520)">
+  <g fill="none" stroke="#14125c" stroke-width="11" stroke-linejoin="miter">
+    <path transform="translate(0 0)" d="M5.5 0V80M5.5 5.5H44M5.5 41H40"/>
+    <path transform="translate(100 0)" d="M45 5.5A39.5 34.5 0 1 1 44.9 5.5Z"/>
+    <path transform="translate(246 0)" d="M5.5 80V5.5H33A19 19 0 0 1 33 43.5H5.5M31 43.5L58 80"/>
+    <path transform="translate(360 0)" d="M5.5 80V2L42 56L78.5 2V80"/>
+    <path transform="translate(500 0)" d="M0 80L44 2L88 80"/>
+  </g>
+  </g>
+</svg>
