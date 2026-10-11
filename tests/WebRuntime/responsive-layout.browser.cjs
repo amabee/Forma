@@ -1,8 +1,8 @@
-// Optional rendered-layout smoke check: npm ci in docs-site, then run this file.
+// Optional rendered-layout smoke check: npm ci in src/Forma.Builder/Frontend, then run this file.
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
-const { chromium } = require('../../docs-site/node_modules/playwright');
+const { chromium } = require('../../src/Forma.Builder/Frontend/node_modules/playwright');
 const root = path.join(__dirname, '../..');
 (async () => {
   const browser = await chromium.launch({ channel: process.env.DOCS_BROWSER_CHANNEL || 'msedge' });

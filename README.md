@@ -20,6 +20,9 @@
 
 Browse the [Forma documentation website](https://forma-documentation.vercel.app/) for component references, scripting, and architecture guides.
 
+Documentation source is maintained in a separate private repository. This
+application repository contains the runtime, Builder, examples, and tests.
+
 It aims to combine the developer experience that made WinForms so productive with the rendering, styling, animation, and component ideas of modern web UI.
 
 ```text
@@ -330,7 +333,6 @@ Forma/
 │   └── Forma.Demo/
 │
 ├── tests/
-├── docs-site/       # Site source retained pending migration
 ├── examples/
 │
 ├── build/
